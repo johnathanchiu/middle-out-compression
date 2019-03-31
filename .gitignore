@@ -1,3 +1,5 @@
 *.iml
 *.xml
 *.pyc
+*.bz2
+*.bin

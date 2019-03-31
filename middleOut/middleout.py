@@ -3,17 +3,23 @@ import lz4.frame as lz
 
 class MiddleOutUtils:
     @staticmethod
-    def convertBin(intList):
+    def convertBin(num, bits=8):
+        def bindigits(val, bits=8):
+            s = bin(val & int("1" * bits, 2))[2:]
+            return ("{0:0>%s}" % (bits)).format(s)
+        return bindigits(num, bits=bits)
+
+    def convertBin_list(intList, bits=8):
         def bindigits(val, bits=8):
             s = bin(val & int("1" * bits, 2))[2:]
             return ("{0:0>%s}" % (bits)).format(s)
         binary = ''
         for x in intList:
-            binary += bindigits(x)
+            binary += bindigits(x, bits=bits)
         return binary
 
     @staticmethod
-    def convertInt(binary):
+    def convertInt_list(binary, bits=8):
         def two_complement(binary, bits=8):
             binary = int(binary, 2)
             """compute the 2's complement of int value val"""
@@ -22,18 +28,18 @@ class MiddleOutUtils:
             return binary  # return positive value as is
         intList = []
         for x in range(0, len(binary), 8):
-            intList.append(two_complement(binary[x:x+8]))
+            intList.append(two_complement(binary[x:x+8], bits=bits))
         return intList
 
     @staticmethod
-    def convertInt_comp(binr, bits=2):
+    def convertInt(binary, bits=8):
         def two_complement(binary, bits=8):
             binary = int(binary, 2)
             """compute the 2's complement of int value val"""
             if (binary & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
                 binary = binary - (1 << bits)  # compute negative value
             return binary  # return positive value as is
-        return two_complement(binr, bits=bits)
+        return two_complement(binary, bits=bits)
 
     @staticmethod
     def unaryconverter(lis):
@@ -53,132 +59,221 @@ class MiddleOutUtils:
         return compressed_ac, compressed_dc
 
     @staticmethod
-    def convert_bin(num, three=True):
-        def bindigits(val, bits=3):
-            s = bin(val & int("1" * bits, 2))[2:]
-            return ("{0:0>%s}" % (bits)).format(s)
-        if three:
-            return bindigits(num)
-        return bindigits(num, bits=2)
+    def count_rep(part_stream, typing='0', stop=0):
+        count = 0
+        for y in part_stream:
+            if y == typing:
+                if count >= stop:
+                    return count
+                count += 1
+            else:
+                return count
+        return count
+
+    @staticmethod
+    def get_literal(stream):
+        return '01' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream
+
+    @staticmethod
+    def get_literal_small(stream):
+        return '00' + stream
+
+    @staticmethod
+    def keywithmaxval(d):
+        """ a) create a list of the dict's keys and values;
+            b) return the key with the max value"""
+        v = list(d.values())
+        k = list(d.keys())
+        return k[v.index(max(v))]
 
 
 class MiddleOut:
     @staticmethod
-    def compressStream(bitStream, dictionary):
-        # compressed = ''
-        # count = 0
-        # bitStream += ' '
-        # while count < len(bitStream)-1:
-        #     compressor = 1
-        #     stringLength = bitStream[count:count + compressor]
-        #     while stringLength in dictionary:
-        #         compressor += 1
-        #         stringLength = bitStream[count:count + compressor]
-        #     if len(stringLength) < 7:
-        #         compressed += '0' + bitStream[count:count + 7]
-        #         count += 7
-        #     else:
-        #         compressor -= 1
-        #         stringLength = bitStream[count:count + compressor]
-        #         compressed += dictionary[stringLength]
-        #         count += compressor
-        # return compressed
-        return
-
-    @staticmethod
     def decompressStream(compressed):
-        uncompressed = ''
-        temp = []
+        uncompressed, temp = '', []
+        new_run = True
         x = 0
         while x < len(compressed):
-            if compressed[x] == '0':
-                uncompressed += compressed[x+1:x+8]
-            elif compressed[x:x+1] == '10':
-                [temp.append('0') for _ in range(MiddleOutUtils.convertInt_comp(compressed[x+1:x+3], 3))]
+            if new_run:
+                eight_lib = compressed[x:x+8]
+                new_run = False
+                x += 8
+            elif compressed[x] == '0':
+                if compressed[x+1] == '1':
+                    [temp.append('0') for _ in range(MiddleOutUtils.convertInt(compressed[x+1:x+4], 3))]
+                    uncompressed.join(temp)
+                    temp = []
+                    x += 5
+                else:
+                    uncompressed += compressed[x + 2]
+            elif compressed[x:x+2] == '10':
+                if compressed[x+2] == '1':
+                    return
+                else:
+                    num = MiddleOutUtils.convertInt(compressed[x+3:x+5], 2)
+                    [temp.append(compressed[y+x+5]) for y in range(num)]
+                    uncompressed.join(temp)
+                    temp = []
+                    x += num + x + 5
+            elif compressed[x:x+3] == '110':
+                [temp.append('1') for _ in range(MiddleOutUtils.convertInt(compressed[x+3:x+5], 2))]
                 uncompressed.join(temp)
                 temp = []
-            elif compressed[x:x+2] == '110':
-                [temp.append('1') for _ in range(MiddleOutUtils.convertInt_comp(compressed[x+2:x+4], 2))]
-                uncompressed.join(temp)
-                temp = []
+                x += 5
+            elif compressed[x:x+5] == '11110':
+                uncompressed += eight_lib
+                x += 5
+            elif compressed[x:x+4] == '1110':
+                uncompressed += eight_lib[x:x+MiddleOutUtils.convertInt(compressed[x+4:x+7], bits=3)]
+                x += 4
         return uncompressed
 
     @staticmethod
-    def build_library(uncompressed):
+    def build_library(uncompressed, size=8):
         dictionary = {}
         for x in uncompressed:
-            if len(x) >= 8:
-                for y in range(x - 8):
-                    par = x[y:y+8]
+            if len(x) >= size:
+                for y in range(len(x) - size):
+                    par = x[y:y+size]
                     if par not in dictionary:
                         dictionary[par] = 1
                     else:
                         dictionary[par] += 1
-        return dictionary
-
-    @staticmethod
-    def pop_zero_one(uncompressed):
-        def count_zero(part_stream):
-            count = 0
-            for y in part_stream:
-                if y == '0':
-                    if count >= 13:
-                        break
-                    count += 1
-                else:
-                    break
-            return count
-
-        def count_one(part_stream):
-            count = 0
-            for y in part_stream:
-                if y == '1':
-                    if count >= 9:
-                        break
-                    count += 1
-                else:
-                    break
-            return count
-
-        x = 0
-        res = ''
-        partial_decomp = []
-        uncomp_partition = []
-        while x < len(uncompressed):
-            if uncompressed[x] == '0':
-                counter = count_zero(uncompressed[x:])
-                if counter >= 6:
-                    if res != '':
-                        partial_decomp.append('0' + res)
-                        uncomp_partition.append(res)
-                        res = ''
-                    header = MiddleOutUtils.convert_bin(counter - 6)
-                    partial_decomp.append('10' + header)
-                    x += counter
-                else:
-                    res += uncompressed[x:x+1]
-                    x += 1
-            elif uncompressed[x] == '1':
-                counter = count_one(uncompressed[x:])
-                if counter >= 6:
-                    if res != '':
-                        partial_decomp.append('0' + res)
-                        uncomp_partition.append(res)
-                        res = ''
-                    header = MiddleOutUtils.convert_bin(counter - 6, three=False)
-                    partial_decomp.append('110' + header)
-                    x += counter
-                else:
-                    res += uncompressed[x:x + 1]
-                    x += 1
-        return ''.join(partial_decomp), uncomp_partition
+        print(dictionary)
+        return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod
     def build_dict(bit_lib):
         compression_dict = {}
-        for x in range(len(bit_lib)):
-            compression_dict[bit_lib[:x + 1]] = '0' + format(x, "03b")
+        for x in range(len(bit_lib) - 1):
+            compression_dict[bit_lib[:x + 1]] = '1110' + format(x, "03b")
         return compression_dict
+
+    @staticmethod
+    def layer_one_compression(uncompressed):
+        x = 0
+        res = ''
+        a = len(uncompressed)
+        count = 0
+        count0 = 0
+        partial_decomp, uncomp_partition = [], []
+        while x < len(uncompressed):
+            if uncompressed[x] == '0':
+                counter = MiddleOutUtils.count_rep(uncompressed[x:], typing='0', stop=13)
+                if counter >= 6:
+                    if res != '':
+                        partial_decomp.append(0)
+                        uncomp_partition.append(res)
+                        res = ''
+                    header = MiddleOutUtils.convertBin(counter - 6, bits=3)
+                    partial_decomp.append('10' + header)
+                    x += counter
+                    a -= (counter - 5)
+                    count0 += 1
+                else:
+                    res += uncompressed[x]
+                    x += 1
+            else:
+                counter = MiddleOutUtils.count_rep(uncompressed[x:], typing='1', stop=9)
+                if counter >= 6:
+                    if res != '':
+                        partial_decomp.append(0)
+                        uncomp_partition.append(res)
+                        res = ''
+                    header = MiddleOutUtils.convertBin(counter - 6, bits=2)
+                    partial_decomp.append('110' + header)
+                    x += counter
+                    a -= (counter - 5)
+                else:
+                    res += uncompressed[x]
+                    x += 1
+        if res != '':
+            partial_decomp.append(0)
+            uncomp_partition.append(res)
+        print(a)
+        print("count", count)
+        print(count0)
+        return partial_decomp, uncomp_partition
+
+    @staticmethod
+    def layer_two_compression(uncompressed_list, lib):
+        compressed, uncompressed = [], []
+        bc = ''
+        a = 0
+        for x in uncompressed_list:
+            len_of_x = len(x)
+            if len_of_x == 1:
+                compressed.append(MiddleOutUtils.get_literal_small(x))
+                a += 2
+            elif len_of_x <= 5:
+                compressed.append(MiddleOutUtils.get_literal(x))
+                a += (len_of_x + 4)
+            elif len_of_x >= 8:
+                y = 0
+                while y < len_of_x:
+                    par = x[y:y+8]
+                    if par == lib:
+                        if bc != '':
+                            compressed.append(0)
+                            uncompressed.append(bc)
+                            bc = ''
+                        compressed.append('11110')
+                        a -= 3
+                        y += 8
+                    else:
+                        bc += x[y]
+                        y += 1
+                if bc != '':
+                    compressed.append(0)
+                    uncompressed.append(bc)
+                    bc = ''
+            else:
+                compressed.append(0)
+                uncompressed.append(x)
+        print(a)
+        return compressed, uncompressed
+
+    @staticmethod
+    def filter_values(bitStream, lib_dict):
+        comp, tes = '', ''
+        count = 0
+        bitStream += ' '
+        while count < len(bitStream) - 1:
+            compressor = 1
+            stringLength = bitStream[count:count + compressor]
+            while stringLength in lib_dict:
+                compressor += 1
+                stringLength = bitStream[count:count + compressor]
+            stringLength = bitStream[count:count + compressor - 1]
+            if len(stringLength) >= 6:
+                if tes != '':
+                    comp += MiddleOut.__helper(tes)
+                    tes = ''
+                comp += lib_dict[stringLength]
+                count += len(stringLength)
+            else:
+                tes += bitStream[count]
+                count += 1
+        if tes != '':
+            comp += MiddleOut.__helper(tes)
+        return comp
+
+    @staticmethod
+    def __helper(lis):
+        len_of_lis = len(lis)
+        if len_of_lis == 1:
+            return MiddleOutUtils.get_literal_small(lis)
+        elif len_of_lis <= 5:
+            return MiddleOutUtils.get_literal(lis)
+        else:
+            return MiddleOutUtils.get_literal(lis[:5]) + MiddleOut.__helper(lis[5:])
+
+    @staticmethod
+    def merge_compressed(first_layer, second_layer):
+        for x in range(len(first_layer)):
+            if first_layer[x] == 0:
+                first_layer[x] = second_layer.pop(0)
+        return ''.join(first_layer)
 
 
 class EntropyReduction:
@@ -225,59 +320,35 @@ class EntropyReduction:
         return list(decompressed)
 
     @staticmethod
-    def rle_bit(stream):
-        def count_zero(part_stream):
-            count = 0
-            for y in part_stream:
-                if y == 0:
-                    count += 1
-                else:
-                    break
-            return count
+    def __countzero(part_stream):
+        count = 0
+        for y in part_stream:
+            if y == 0:
+                count += 1
+            else:
+                break
+        return count
 
-        def count_one(part_stream):
-            count = 0
-            for y in part_stream:
-                if y == '1':
-                    count += 1
-                else:
-                    break
-            return count
-
-        run_length = []
-        x = 0
-        while x < len(stream):
-            if stream[x] == '0':
-                run_length.append(0)
-                countzero = count_zero(stream[x:])
-                run_length.append(countzero)
-                x += countzero
-            elif stream[x] == '1':
-                run_length.append(1)
-                countone = count_one(stream[x:])
-                run_length.append(countone)
-                x += countone
-        return run_length
+    @staticmethod
+    def __countone(part_stream):
+        count = 0
+        for y in part_stream:
+            if y == '1':
+                count += 1
+            else:
+                break
+        return count
 
     @staticmethod
     def rle(stream):
-        def count_zero(part_stream):
-            count = 0
-            for y in part_stream:
-                if y == 0:
-                    count += 1
-                else:
-                    break
-            return count
-
         run_length = []
         x = 0
         while x < len(stream):
             if stream[x] == 0:
                 run_length.append(0)
-                countzero = count_zero(stream[x:])
-                run_length.append(countzero)
-                x += countzero
+                count_zero = EntropyReduction.__countzero(stream[x:])
+                run_length.append(count_zero)
+                x += count_zero
             else:
                 run_length.append(stream[x])
                 x += 1
@@ -297,6 +368,23 @@ class EntropyReduction:
                 count += 1
             count += 1
         return decoded
+
+    @staticmethod
+    def rle_bit(stream):
+        run_length = []
+        x = 0
+        while x < len(stream):
+            if stream[x] == '0':
+                run_length.append(0)
+                count_zero = EntropyReduction.__countzero(stream[x:])
+                run_length.append(count_zero)
+                x += count_zero
+            elif stream[x] == '1':
+                run_length.append(1)
+                count_one = EntropyReduction.__countone(stream[x:])
+                run_length.append(count_one)
+                x += count_one
+        return run_length
 
     @staticmethod
     def rld_bit(stream):

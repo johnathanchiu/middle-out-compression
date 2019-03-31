@@ -11,29 +11,6 @@ import bz2
 import os
 
 
-# def rle(stream):
-#     def count_zero(part_stream):
-#         count = 0
-#         for y in part_stream:
-#             if y == '0':
-#                 count += 1
-#             if y != '0' or count > 15:
-#                 break
-#         return count
-#     run_length = []
-#     x = 0
-#     while x < len(stream):
-#         if stream[x] == '0':
-#             run_length.append(0)
-#             countzero = count_zero(stream[x:])
-#             run_length.append(countzero)
-#             x += countzero
-#         elif stream[x] != '0':
-#             run_length.append(int(stream[x]))
-#             x += 1
-#     return run_length
-
-
 def split(array, nrows, ncols):
     """Split a matrix into sub-matrices."""
     return [array[x:x + nrows, y:y + ncols] for x in range(0, array.shape[0], nrows) for y in range(0, array.shape[1],
@@ -237,12 +214,12 @@ def entropy_comp(compressed, output_file):
         with bz2.open(filename, "wb") as f:
             output = bz2.compress(output, 9)
             f.write(output)
-        print("file size:", os.path.getsize(filename)); print()
-        return filename
-    print("size:", sys.getsizeof(compressed)); print()
+        print("bz2 file size:", os.path.getsize(filename)); print()
+        return os.path.getsize(filename), filename
+    print("current size:", sys.getsizeof(compressed)); print()
     compressed = (struct.pack('b' * len(compressed), *compressed))
-    print("size:", sys.getsizeof(compressed)); print()
-    bz2_comp(compressed, output_file)
+    size, filename = bz2_comp(compressed, output_file)
+    return size, filename
 
 
 def entropy_decomp(file_name):
