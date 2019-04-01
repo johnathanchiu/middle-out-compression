@@ -1,11 +1,13 @@
+from middleOut.EntropyReduction import *
+from middleOut.MiddleOut import *
+from middleOut.utils import *
+
 import collections
 import imageio
-import time
+import array
 
 import argparse
-
-from middleOut.utils import *
-from middleOut.middleout import *
+import time
 
 
 def compress_image(image, file_name):
@@ -28,15 +30,18 @@ def compress_image(image, file_name):
 
     def middleout(values):
         values_bin = MiddleOutUtils.convertBin_list(values)
-        print(len(values_bin))
         layer_one, uncomp_part = MiddleOut.layer_one_compression(values_bin)
-        # print(layer_one)
-        # print(uncomp_part)
+        print(layer_one)
+        print(uncomp_part)
         lib = MiddleOut.build_library(uncomp_part)
         print(lib)
         layer_two, unc = MiddleOut.layer_two_compression(uncomp_part, lib)
-        # print(layer_two)
-        # print(unc)
+        print(layer_two)
+        print(unc)
+        lib2 = MiddleOut.build_library(unc, size=4)
+        layer_three = MiddleOut.layer_three_compressed(unc, lib2)
+        compressed = MiddleOut.merge_compressed(layer_one, layer_two, layer_three)
+        print(len(compressed))
         return compressed
 
     o_length, o_width = image[:, :, 0].shape
@@ -62,7 +67,7 @@ def compress_image(image, file_name):
     # array.array('b', [p_length]) + array.array('b', [p_width])
     compressed = compressedY
     print(len(compressed) * 8)
-    size, filename = entropy_comp(compressed, file_name)
+    size, filename = EntropyReduction.bz2(compressed, file_name)
 
     middleout(compressed)
     return size, filename

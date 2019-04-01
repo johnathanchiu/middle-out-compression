@@ -12,7 +12,7 @@ import os
 import argparse
 
 from middleOut.utils import *
-from middleOut.middleout import MiddleOut
+from middleOut.MiddleOut import MiddleOut
 
 
 def decompress_image(file_name):

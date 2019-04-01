@@ -1,5 +1,5 @@
 # from middleOut.utils import *
-from middleOut.middleout import *
+from middleOut.MiddleOut import *
 
 # from random import shuffle
 # import numpy as np

@@ -4,12 +4,6 @@ import numpy as np
 
 from io import StringIO
 
-import struct
-import array
-import sys
-import bz2
-import os
-
 
 def split(array, nrows, ncols):
     """Split a matrix into sub-matrices."""
@@ -34,6 +28,7 @@ def ycbcr2rgb(im):
     np.putmask(rgb, rgb > 255, 255)
     np.putmask(rgb, rgb < 0, 0)
     return np.uint8(rgb)
+
 
 # padding the image
 def matrix_multiple_of_eight(image):
@@ -208,40 +203,4 @@ def writeFile(bitstring, fileName=None):
     f.close()
 
 
-def entropy_comp(compressed, output_file):
-    def bz2_comp(output, output_file):
-        filename = output_file + ".bz2"
-        with bz2.open(filename, "wb") as f:
-            output = bz2.compress(output, 9)
-            f.write(output)
-        print("bz2 file size:", os.path.getsize(filename)); print()
-        return os.path.getsize(filename), filename
-    print("current size:", sys.getsizeof(compressed)); print()
-    compressed = (struct.pack('b' * len(compressed), *compressed))
-    size, filename = bz2_comp(compressed, output_file)
-    return size, filename
-
-
-def entropy_decomp(file_name):
-    def bz2_decomp(file):
-        with bz2.open(file, "rb") as f:
-            f_content = f.read()
-            f_content = bz2.decompress(f_content)
-        return f_content
-    result_bytes = bz2_decomp(file_name + '.bz2')
-    fmt = "%db" % len(result_bytes)
-    result_bytes = np.asarray(list(struct.unpack(fmt, result_bytes)))
-    return result_bytes
-
-
-# def twos_comp(val, bits):
-#     """compute the 2's complement of int value val"""
-#     if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
-#         val = val - (1 << bits)        # compute negative value
-#     return val                         # return positive value as is
-#
-#
-# def bindigits(n, bits):
-#     s = bin(n & int("1"*bits, 2))[2:]
-#     return ("{0:0>%s}" % (bits)).format(s)
 
