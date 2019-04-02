@@ -30,19 +30,15 @@ def compress_image(image, file_name):
 
     def middleout(values):
         values_bin = MiddleOutUtils.convertBin_list(values)
-        layer_one, uncomp_part = MiddleOut.layer_one_compression(values_bin)
-        print(layer_one)
-        print(uncomp_part)
-        lib = MiddleOut.build_library(uncomp_part)
-        print(lib)
-        layer_two, unc = MiddleOut.layer_two_compression(uncomp_part, lib)
-        print(layer_two)
-        print(unc)
-        lib2 = MiddleOut.build_library(unc, size=4)
-        layer_three = MiddleOut.layer_three_compressed(unc, lib2)
+        layer_one, uncomp = MiddleOut.layer_one_compression(values_bin)
+        lib = MiddleOut.build_library(uncomp)
+        layer_two, unc = MiddleOut.layer_two_compression(uncomp, lib)
+        lib_four = MiddleOut.build_library(unc, size=4)
+        layer_three = MiddleOut.layer_three_compression(unc, lib_four)
+        print(layer_three)
         compressed = MiddleOut.merge_compressed(layer_one, layer_two, layer_three)
         print(len(compressed))
-        return compressed
+        return lib + lib_four + compressed
 
     o_length, o_width = image[:, :, 0].shape
     print("original file dimensions: ", o_length, o_width); print()
@@ -66,11 +62,11 @@ def compress_image(image, file_name):
 
     # array.array('b', [p_length]) + array.array('b', [p_width])
     compressed = compressedY
-    print(len(compressed) * 8)
-    size, filename = EntropyReduction.bz2(compressed, file_name)
+    orig_size = (len(compressed) * 8)
+    # size, filename = EntropyReduction.bz2(compressed, file_name)
 
     middleout(compressed)
-    return size, filename
+    return orig_size, size * 8, filename
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -86,11 +82,9 @@ if __name__ == '__main__':
     # image_name, compressed_file = args["image"], args["compressed"]
     # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     compressed_file_name = compressed_file
-    file_size = os.path.getsize(root_path + "tests/" + image_name)
-    print("original file size: ", file_size); print()
     image = imageio.imread(root_path + "tests/" + image_name)
-    size, filename = compress_image(image, compressed_file_name)
-    print("file size after compression: ", size)
+    file_size, size, filename = compress_image(image, compressed_file_name)
+    print("file size after (entropy) compression: ", size)
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
