@@ -50,6 +50,8 @@ class MiddleOutUtils:
             count += 1
         return count
 
+    # TODO: add get-literal functions
+
     @staticmethod
     def get_literal(stream):
         return '100' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream
@@ -104,10 +106,12 @@ class MiddleOut:
             elif compressed[x:x+5] == '11110':
                 uncompressed += eight_lib
                 x += 5
+            # TODO: Make sure this library is correct
             elif compressed[x:x+4] == '1110':
                 num = MiddleOutUtils.convertInt(compressed[x + 4])
                 uncompressed += eight_lib[x:x + num]
                 x += 5
+        # TODO: add extra libraries for the literals
         return uncompressed
 
     @staticmethod
@@ -134,6 +138,7 @@ class MiddleOut:
         compression_dict[bit_lib] = '11110'
         return compression_dict
 
+    # Don't touch, layer one is okay
     @staticmethod
     def layer_one_compression(uncompressed):
         x = 0
@@ -175,6 +180,7 @@ class MiddleOut:
         print(a)
         return partial_decomp, uncomp_partition
 
+    # TODO: look over this method, most likely not needed though, looks good for the most part
     @staticmethod
     def layer_two_compression(uncompressed_list, lib):
         compressed, uncompressed = [], []
@@ -192,6 +198,7 @@ class MiddleOut:
                 uncompressed.append(x)
         return compressed, uncompressed
 
+    # TODO: work on filter values
     @staticmethod
     def filter_values(bitStream, lib_dict):
         count = 0
@@ -222,6 +229,8 @@ class MiddleOut:
             comp.append(1)
         return comp, unc
 
+    # TODO: find better way to compress literals, need to use less bits
+    # TODO: fix the append issue between layer three to two and then two to one
     @staticmethod
     def layer_three_compression(uncompressed, lib):
         compressed, res = [], ''
@@ -257,6 +266,7 @@ class MiddleOut:
         else:
             return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.__getliteral(lis[6:])
 
+    # TODO: fix this too
     @staticmethod
     def merge_compressed(first_layer, second_layer, third_layer):
         # for x in range(len(second_layer)):
