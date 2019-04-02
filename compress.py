@@ -63,7 +63,7 @@ def compress_image(image, file_name):
     # array.array('b', [p_length]) + array.array('b', [p_width])
     compressed = compressedY
     orig_size = (len(compressed) * 8)
-    # size, filename = EntropyReduction.bz2(compressed, file_name)
+    size, filename = EntropyReduction.bz2(compressed, file_name)
 
     middleout(compressed)
     return orig_size, size * 8, filename
