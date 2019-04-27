@@ -1,3 +1,7 @@
+from middleOut.EntropyReduction import *
+from middleOut.MiddleOut import *
+from middleOut.utils import *
+
 import numpy as np
 
 from operator import itemgetter

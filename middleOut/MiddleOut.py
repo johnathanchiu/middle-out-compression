@@ -51,9 +51,16 @@ class MiddleOutUtils:
         return count
 
     # TODO: add get-literal functions
+    # TODO: check literal functions
+    @staticmethod
+    def get_literal_long(stream):
+        return '11110' + MiddleOutUtils.convertBin(len(stream), bits=6) + stream
 
     @staticmethod
     def get_literal(stream):
+        print("length", len(stream))
+        print(MiddleOutUtils.convertBin(len(stream) - 2, bits=2))
+        print("compressing lit", '100' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream)
         return '100' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream
 
     @staticmethod
@@ -76,6 +83,9 @@ class MiddleOut:
         new_run = True
         x, count = 0, 0
         while x < len(compressed):
+            print("unc", uncompressed)
+            print(x)
+            print(compressed[x:])
             if new_run:
                 eight_lib = compressed[x:x+8]
                 four_lib = compressed[x+8:x+12]
@@ -88,8 +98,8 @@ class MiddleOut:
                     x += 5
                 else:
                     num = MiddleOutUtils.convertInt(compressed[x+2]) + 1
-                    uncompressed += compressed[x+4:x+4+num]
-                    x += 3
+                    uncompressed += compressed[x+3:x+3+num]
+                    x += 3 + num
             elif compressed[x:x+2] == '10':
                 if compressed[x+2] == '1':
                     uncompressed += four_lib
@@ -108,39 +118,47 @@ class MiddleOut:
                 x += 5
             # TODO: Make sure this library is correct
             elif compressed[x:x+4] == '1110':
-                num = MiddleOutUtils.convertInt(compressed[x + 4])
-                uncompressed += eight_lib[x:x + num]
+                uncompressed += eight_lib[x:x + MiddleOutUtils.convertInt(compressed[x + 4])]
                 x += 5
+            elif compressed[x:x+6] == '111110':
+                new_run = True
+                x += 6
         # TODO: add extra libraries for the literals
         return uncompressed
 
     @staticmethod
     def build_library(uncompressed, size=8):
         dictionary = {}
-        for x in uncompressed:
-            len_of_x = len(x)
-            if len_of_x >= size:
-                for y in range(len_of_x - size + 1):
-                    par = x[y:y+size]
-                    if par not in dictionary:
-                        dictionary[par] = 1
-                    else:
-                        dictionary[par] += 1
+        if size == 8:
+            for x in uncompressed:
+                len_of_x = len(x)
+                if len_of_x >= size:
+                    for y in range(len_of_x - size + 1):
+                        par = x[y:y+size]
+                        if par not in dictionary:
+                            dictionary[par] = 1
+                        else:
+                            dictionary[par] += 1
+        else:
+            for x in uncompressed:
+                if x == 1 or x == 0:
+                    continue
+                len_of_x = len(x)
+                if len_of_x >= size:
+                    for y in range(len_of_x - size + 1):
+                        par = x[y:y+size]
+                        if par not in dictionary:
+                            dictionary[par] = 1
+                        else:
+                            dictionary[par] += 1
         return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod
     def build_dict(bit_lib):
-        compression_dict = {}
-        for x in range(len(bit_lib) - 2):
-            compression_dict[bit_lib[:x + 1]] = '1110'
-        compression_dict[bit_lib[:7]] = '1110' + format(0, '01b')
-        compression_dict[bit_lib[:8]] = '1110' + format(1, '01b')
-        compression_dict[bit_lib] = '11110'
-        return compression_dict
+        return {bit_lib: '11110', bit_lib[:6]: '1110' + format(0, '01b'), bit_lib[:7]: '1110' + format(1, '01b')}
 
-    # Don't touch, layer one is okay
     @staticmethod
-    def layer_one_compression(uncompressed):
+    def zero_one_filter(uncompressed):
         x = 0
         res = ''
         a = len(uncompressed)
@@ -180,15 +198,15 @@ class MiddleOut:
         print(a)
         return partial_decomp, uncomp_partition
 
-    # TODO: look over this method, most likely not needed though, looks good for the most part
     @staticmethod
-    def layer_two_compression(uncompressed_list, lib):
+    def eight_bit_compression(uncompressed_list, lib):
         compressed, uncompressed = [], []
         lib_dict = MiddleOut.build_dict(lib)
         for x in uncompressed_list:
             len_of_x = len(x)
             if len_of_x <= 2:
                 compressed.append(MiddleOutUtils.get_literal_small(x))
+                compressed.append(0)
             elif len_of_x >= 8:
                 comp, unc = MiddleOut.filter_values(x, lib_dict)
                 compressed.extend(comp)
@@ -198,52 +216,59 @@ class MiddleOut:
                 uncompressed.append(x)
         return compressed, uncompressed
 
-    # TODO: work on filter values
     @staticmethod
     def filter_values(bitStream, lib_dict):
-        count = 0
         comp, unc = [], []
         res = ''
         bitStream += ' '
+        count = 0
         while count < len(bitStream) - 1:
-            compressor = 1
+            compressor = 6
             stringLength = bitStream[count:count + compressor]
             while stringLength in lib_dict:
                 compressor += 1
                 stringLength = bitStream[count:count + compressor]
-            if len(stringLength) > 1:
-                stringLength = stringLength[:-1]
+            stringLength = stringLength[:-1]
             length_string = len(stringLength)
             if length_string >= 6:
                 if res != '':
                     unc.append(res)
+                    unc.append(1)
                     comp.append(1)
                     res = ''
                 comp.append(lib_dict[stringLength])
                 count += length_string
             else:
-                res += stringLength
-                count += length_string
+                res += bitStream[count]
+                count += 1
         if res != '':
             unc.append(res)
             comp.append(1)
+        unc.append(0)
         return comp, unc
 
     # TODO: find better way to compress literals, need to use less bits
-    # TODO: fix the append issue between layer three to two and then two to one
     @staticmethod
-    def layer_three_compression(uncompressed, lib):
+    def four_bit_compression(uncompressed, lib):
         compressed, res = [], ''
         for x in uncompressed:
+            print(x)
+            print(compressed)
+            if x == 1 or x == 0:
+                compressed.append(x)
+                continue
             len_of_x = len(x)
             if x == lib:
                 compressed.append('101')
             elif len_of_x >= 5:
                 y = 0
                 while y < len_of_x:
+                    print("res", res)
+                    print("rest", x[y:])
                     if x[y:y+4] == lib:
                         if res != '':
-                            compressed.append(MiddleOut.__getliteral(res) + '101')
+                            compressed.append(MiddleOut.getliteral(res) + '101')
+                            res = ''
                         else:
                             compressed.append('101')
                         y += 4
@@ -251,29 +276,47 @@ class MiddleOut:
                         res += x[y]
                         y += 1
                 if res != '':
-                    compressed[len(compressed) - 1] += MiddleOut.__getliteral(res)
+                    print(res)
+                    compressed[len(compressed) - 1] += MiddleOut.getliteral(res)
             else:
-                compressed.append(MiddleOut.__getliteral(x))
+                compressed[len(compressed) - 1] += MiddleOut.getliteral(res)
         return compressed
 
     @staticmethod
-    def __getliteral(lis):
+    def getliteral(lis):
         len_of_lis = len(lis)
         if len_of_lis <= 2:
             return MiddleOutUtils.get_literal_small(lis)
         elif len_of_lis <= 6:
             return MiddleOutUtils.get_literal(lis)
         else:
-            return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.__getliteral(lis[6:])
+            return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
 
-    # TODO: fix this too
     @staticmethod
-    def merge_compressed(first_layer, second_layer, third_layer):
-        # for x in range(len(second_layer)):
-        #     if second_layer[x] == 0:
-        #         second_layer[x] = third_layer.pop(0)
-        # for x in range(len(first_layer)):
-        #     if first_layer[x] == 0:
-        #         first_layer[x] = second_layer.pop(0)
-        # return ''.join(first_layer)
-        return ''
+    def merge_compression(first_layer, second_layer, third_layer):
+        third_layer.append(0)
+        temp = []
+        count, ext, temp_count = 0, 0, 0
+        for x in range(len(second_layer) - 1):
+            if second_layer[x] == 0:
+                temp.append(third_layer[count])
+                ext = third_layer[count + 1]
+                count += 1
+                temp_count += 1
+            elif second_layer[x] == 1:
+                temp[temp_count - 1] += third_layer[count]
+                ext = third_layer[count + 1]
+                count += 1
+            else:
+                if ext == 1:
+                    temp[temp_count - 1] += second_layer[x]
+                    ext = third_layer[count + 1]
+                    count += 1
+                else:
+                    temp.append(second_layer[x])
+        count = 0
+        for x in range(len(first_layer)):
+            if first_layer[x] == 0:
+                first_layer[x] = temp[count]
+                count += 1
+        return ''.join(first_layer)

@@ -47,12 +47,12 @@ def compress_image(image, file_name):
     print("original file dimensions: ", o_length, o_width); print()
     YCBCR = rgb2ycbcr(image)
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 1])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 2])[:o_length, :o_width]
-    Y, Cb, Cr = (YCBCR[:, :, 0])[1000:1128, 1000:1128], \
-                (YCBCR[:, :, 1])[1000:1128, 1000:1128], \
-                (YCBCR[:, :, 2])[1000:1128, 1000:1128]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
+                (YCBCR[:, :, 1])[:o_length, :o_width],\
+                (YCBCR[:, :, 2])[:o_length, :o_width]
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[1000:1128, 1000:1128], \
+    #             (YCBCR[:, :, 1])[1000:1128, 1000:1128], \
+    #             (YCBCR[:, :, 2])[1000:1128, 1000:1128]
 
     p_length, p_width = calc_matrix_eight_size(Y)
     b_lengths, b_width = int(p_length / 8), int(p_width / 8)
@@ -63,13 +63,15 @@ def compress_image(image, file_name):
                                               compress(Cb, debug=False, c_layer=True), \
                                               compress(Cr, debug=False, c_layer=True)
 
-    # array.array('b', [p_length]) + array.array('b', [p_width])
-    compressed = compressedY
-    orig_size = (len(compressed) * 8)
-    size, filename = EntropyReduction.bz2(compressed, file_name)
+    print("done")
 
-    middleout(compressed)
-    return orig_size, size * 8, filename
+    # array.array('b', [p_length]) + array.array('b', [p_width])
+    # compressed = compressedY
+    # orig_size = (len(compressed) * 8)
+    # size, filename = EntropyReduction.bz2(compressed, file_name)
+    #
+    # middleout(compressed)
+    # return orig_size, size * 8, filename
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -86,9 +88,9 @@ if __name__ == '__main__':
     # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     compressed_file_name = compressed_file
     image = imageio.imread(root_path + "tests/" + image_name)
-    file_size, size, filename = compress_image(image, compressed_file_name)
-    print("file size after (entropy) compression: ", size)
-    print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
-    print("compression converges, new file name: ", filename)
+    # file_size, size, filename = compress_image(image, compressed_file_name)
+    # print("file size after (entropy) compression: ", size)
+    # print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
+    # print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
 
