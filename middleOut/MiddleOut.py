@@ -1,10 +1,16 @@
 class MiddleOutUtils:
     @staticmethod
     def convertBin(num, bits=8):
-        def bindigits(val, bits=8):
-            s = bin(val & int("1" * bits, 2))[2:]
-            return ("{0:0>%s}" % (bits)).format(s)
-        return bindigits(num, bits=bits)
+        s = bin(num & int("1" * bits, 2))[2:]
+        return ("{0:0>%s}" % (bits)).format(s)
+
+    @staticmethod
+    def convertInt(binary, bits=8):
+        binary = int(binary, 2)
+        """compute the 2's complement of int value val"""
+        if (binary & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
+            binary = binary - (1 << bits)  # compute negative value
+        return binary  # return positive value as is
 
     @staticmethod
     def convertBin_list(intList, bits=8):
@@ -28,10 +34,6 @@ class MiddleOutUtils:
         for x in range(0, len(binary), bits):
             intList.append(two_complement(binary[x:x+bits], bits=bits))
         return intList
-
-    @staticmethod
-    def convertInt(binary):
-        return int(binary, 2)
 
     @staticmethod
     def unaryconverter(lis):
@@ -58,10 +60,7 @@ class MiddleOutUtils:
 
     @staticmethod
     def get_literal(stream):
-        print("length", len(stream))
-        print(MiddleOutUtils.convertBin(len(stream) - 2, bits=2))
-        print("compressing lit", '100' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream)
-        return '100' + MiddleOutUtils.convertBin(len(stream) - 2, bits=2) + stream
+        return '100' + MiddleOutUtils.convertBin(len(stream) - 3, bits=2) + stream
 
     @staticmethod
     def get_literal_small(stream):
@@ -83,9 +82,6 @@ class MiddleOut:
         new_run = True
         x, count = 0, 0
         while x < len(compressed):
-            print("unc", uncompressed)
-            print(x)
-            print(compressed[x:])
             if new_run:
                 eight_lib = compressed[x:x+8]
                 four_lib = compressed[x+8:x+12]
@@ -105,9 +101,8 @@ class MiddleOut:
                     uncompressed += four_lib
                     x += 3
                 else:
-                    num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 2
-                    for y in range(num):
-                        uncompressed += compressed[y + x + 5]
+                    num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 3
+                    uncompressed += compressed[x + 5: x + 5 + num]
                     x += num + 5
             elif compressed[x:x+3] == '110':
                 for _ in range(MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 6):
@@ -195,7 +190,6 @@ class MiddleOut:
         if res != '':
             partial_decomp.append(0)
             uncomp_partition.append(res)
-        print(a)
         return partial_decomp, uncomp_partition
 
     @staticmethod
@@ -247,40 +241,36 @@ class MiddleOut:
         unc.append(0)
         return comp, unc
 
-    # TODO: find better way to compress literals, need to use less bits
-    @staticmethod
-    def four_bit_compression(uncompressed, lib):
-        compressed, res = [], ''
-        for x in uncompressed:
-            print(x)
-            print(compressed)
-            if x == 1 or x == 0:
-                compressed.append(x)
-                continue
-            len_of_x = len(x)
-            if x == lib:
-                compressed.append('101')
-            elif len_of_x >= 5:
-                y = 0
-                while y < len_of_x:
-                    print("res", res)
-                    print("rest", x[y:])
-                    if x[y:y+4] == lib:
-                        if res != '':
-                            compressed.append(MiddleOut.getliteral(res) + '101')
-                            res = ''
-                        else:
-                            compressed.append('101')
-                        y += 4
-                    else:
-                        res += x[y]
-                        y += 1
-                if res != '':
-                    print(res)
-                    compressed[len(compressed) - 1] += MiddleOut.getliteral(res)
-            else:
-                compressed[len(compressed) - 1] += MiddleOut.getliteral(res)
-        return compressed
+    # # TODO: find better way to compress literals, need to use less bits
+    # @staticmethod
+    # def four_bit_compression(uncompressed, lib):
+    #     compressed, res = [], ''
+    #     for x in uncompressed:
+    #         if x == 1 or x == 0:
+    #             compressed.append(x)
+    #             continue
+    #         len_of_x = len(x)
+    #         if x == lib:
+    #             compressed.append('101')
+    #         elif len_of_x >= 5:
+    #             y = 0
+    #             while y < len_of_x:
+    #                 if x[y:y+4] == lib:
+    #                     if res != '':
+    #                         compressed.append(MiddleOut.getliteral(res) + '101')
+    #                         res = ''
+    #                     else:
+    #                         compressed.append('101')
+    #                     y += 4
+    #                 else:
+    #                     res += x[y]
+    #                     y += 1
+    #             if res != '':
+    #                 compressed[len(compressed) - 1] += MiddleOut.getliteral(res)
+    #         else:
+    #             compressed.append(MiddleOut.getliteral(res))
+    #         res = ''
+    #     return compressed
 
     @staticmethod
     def getliteral(lis):
@@ -293,30 +283,34 @@ class MiddleOut:
             return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
 
     @staticmethod
-    def merge_compression(first_layer, second_layer, third_layer):
-        third_layer.append(0)
+    def merge_compression(layer_one, layer_two, layer_three):
+        layer_three.append(0)
         temp = []
         count, ext, temp_count = 0, 0, 0
-        for x in range(len(second_layer) - 1):
-            if second_layer[x] == 0:
-                temp.append(third_layer[count])
-                ext = third_layer[count + 1]
+        print(len(layer_one), len(layer_two), len(layer_three))
+        for x in range(len(layer_two) - 1):
+            print(temp)
+            if layer_two[x] == 0:
+                print(layer_three[count])
+                temp.append(layer_three[count])
+                ext = layer_three[count + 1]
                 count += 1
                 temp_count += 1
-            elif second_layer[x] == 1:
-                temp[temp_count - 1] += third_layer[count]
-                ext = third_layer[count + 1]
+            elif layer_two[x] == 1:
+                # print("temp", temp[count-1])
+                temp[temp_count - 1] += layer_three[count]
+                ext = layer_three[count + 1]
                 count += 1
             else:
                 if ext == 1:
-                    temp[temp_count - 1] += second_layer[x]
-                    ext = third_layer[count + 1]
+                    temp[temp_count - 1] += layer_two[x]
+                    ext = layer_three[count + 1]
                     count += 1
                 else:
-                    temp.append(second_layer[x])
+                    temp.append(layer_two[x])
         count = 0
-        for x in range(len(first_layer)):
-            if first_layer[x] == 0:
-                first_layer[x] = temp[count]
+        for x in range(len(layer_one)):
+            if layer_one[x] == 0:
+                layer_one[x] = temp[count]
                 count += 1
-        return ''.join(first_layer)
+        return ''.join(layer_one)
