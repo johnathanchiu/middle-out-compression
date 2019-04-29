@@ -45,7 +45,8 @@ class TestMiddleOut(unittest.TestCase):
 
 if __name__ == '__main__':
     start_time = time.time()
-    bitseta, bisetb = TestMiddleOut.test_middleout(100000, set_seed=True)
-    TestMiddleOut.check_differences(TestMiddleOut(), bitseta, bisetb)
+    for _ in range(100):
+        bitseta, bisetb = TestMiddleOut.test_middleout(100000, set_seed=True)
+        TestMiddleOut.check_differences(TestMiddleOut(), bitseta, bisetb)
     print("--- %s seconds ---" % (time.time() - start_time))
 

@@ -146,15 +146,12 @@ class EntropyReduction:
             with bz2.open(filename, "wb") as f:
                 output = bz2.compress(output, 9)
                 f.write(output)
-            print("bz2 file size:", os.path.getsize(filename));
-            print()
             return os.path.getsize(filename), filename
 
-        print("current size:", sys.getsizeof(compressed));
-        print()
+        orig_file = sys.getsizeof(compressed)
         compressed = (struct.pack('b' * len(compressed), *compressed))
         size, filename = bz2_comp(compressed, output_file)
-        return size, filename
+        return orig_file, size, filename
 
     @staticmethod
     def bz2_unc(file_name):

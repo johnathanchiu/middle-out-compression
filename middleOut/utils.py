@@ -203,4 +203,7 @@ def writeFile(bitstring, fileName=None):
     f.close()
 
 
+def readFile():
+    return
+
 

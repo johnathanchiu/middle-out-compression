@@ -240,3 +240,11 @@ class MiddleOut:
                 layer_one[x] = layer_two[count]
                 count += 1
         return ''.join(layer_one)
+
+    @staticmethod
+    def middle_out(stream):
+        middle_comp, unc = MiddleOut.zero_one_filter(stream)
+        eight_bit = MiddleOut.build_library(unc)
+        outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
+        y = MiddleOut.merge_compression(middle_comp, outer_comp)
+        return eight_bit + y + '111110'
