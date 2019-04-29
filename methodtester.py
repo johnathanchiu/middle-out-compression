@@ -1,29 +1,51 @@
 from middleOut.MiddleOut import *
 
-import collections
+import unittest
 
-x = '0000100111110000000011001111111011111010000000010000000111111000000110100000010000001000111110001111111111111111' \
-    # '11111110000000010000111100001001000000'
-# x = '000000000101001001011000100101010010001110000011111111110000000000'
-# '000000000 10100100 101100010010 10100100 011100000 1111111111 0000000000'
-layer_one, uncomp_part = MiddleOut.zero_one_filter(x)
-print("layer one", layer_one)
-print(uncomp_part)
-lib = MiddleOut.build_library(uncomp_part)
-print(lib)
-layer_two, unc = MiddleOut.eight_bit_compression(uncomp_part, lib)
-print("layer2", layer_two)
-print("uncompressed", unc)
-lib2 = MiddleOut.build_library(unc, size=4)
-print(lib2)
-layer_three = MiddleOut.four_bit_compression(unc, lib2)
-print("layer3", layer_three)
-y = MiddleOut.merge_compression(layer_one, layer_two, layer_three)
-print("y", y)
-lib += lib2 + y
-y = lib
-print("asdf", y)
-z = MiddleOut.decompressStream(y)
-print(z)
-print(x)
-print(z == x)
+import random
+import time
+
+
+class TestMiddleOut(unittest.TestCase):
+
+    def check_differences(self, a, b):
+        try:
+            self.assertEqual(a, b)
+        except:
+            counter = len(a)
+            if len(a) != len(b):
+                print("wrong lengths")
+                counter = len(a) if len(a) > len(b) else len(b)
+            count = 0
+            while count < counter:
+                if a[count] != b[count]:
+                    print("error starts here: ", a[count:])
+                    return
+                count += 1
+        print("bitsets are the same")
+
+
+    @staticmethod
+    def test_middleout(bitset_size, set_seed=False, seed=0):
+        x = ''
+        if (set_seed):
+            random.seed(seed)
+        for _ in range(bitset_size):
+            x += str(random.randint(0, 1))
+
+        layer_one, uncomp_part = MiddleOut.zero_one_filter(x)
+        lib = MiddleOut.build_library(uncomp_part)
+        layer_two = MiddleOut.eight_bit_compression(uncomp_part, lib)
+        y = MiddleOut.merge_compression(layer_one, layer_two)
+        lib += y
+        z = MiddleOut.decompressStream(lib)
+        print("compressed bits: ", bitset_size - len(lib))
+        return x, z
+
+
+if __name__ == '__main__':
+    start_time = time.time()
+    bitseta, bisetb = TestMiddleOut.test_middleout(100000, set_seed=True)
+    TestMiddleOut.check_differences(TestMiddleOut(), bitseta, bisetb)
+    print("--- %s seconds ---" % (time.time() - start_time))
+
