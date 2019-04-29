@@ -93,9 +93,12 @@ class MiddleOut:
                     uncompressed += compressed[x+3:x+3+num]
                     x += 3 + num
             elif compressed[x:x+2] == '10':
-                num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 3
-                uncompressed += compressed[x + 5: x + 5 + num]
-                x += num + 5
+                if compressed[x+2] == '0':
+                    num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 3
+                    uncompressed += compressed[x + 5: x + 5 + num]
+                    x += num + 5
+                # else:
+                #     num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) +
             elif compressed[x:x+3] == '110':
                 for _ in range(MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 6):
                     uncompressed += '1'
@@ -230,6 +233,8 @@ class MiddleOut:
         elif len_of_lis <= 6:
             return MiddleOutUtils.get_literal(lis)
         else:
+            if len_of_lis <= 23:
+                return MiddleOutUtils.get_literal(lis[:23]) + MiddleOut.getliteral(lis[23:])
             return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
 
     @staticmethod

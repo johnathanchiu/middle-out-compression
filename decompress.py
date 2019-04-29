@@ -37,7 +37,10 @@ def decompress_image(file_name):
                 pbar.set_description("Running modified jpeg decompression")
                 append(idct_2d(undo_quantize(zig_zag_reverse(rebuild(x)), c_layer=c_layer)))
         if debug: print(image_partitions); print()
-        image = merge_blocks(image_partitions, dimx, dimy)
+        pbar2 = tqdm(range(1))
+        for _ in pbar2:
+            pbar2.set_description("Merging blocks back to form whole image")
+            image = merge_blocks(image_partitions, dimx, dimy)
         if debug: print(image); print()
         if debug: print("image: ", np.round(image + 128))
         return image + 128
@@ -49,7 +52,7 @@ def decompress_image(file_name):
     # compressed_bitset = readFile()
     pbar = tqdm(range(1))
     for _ in pbar:
-        pbar.set_description("Reading bits file using entropy decompressor")
+        pbar.set_description("Reading bits from file using entropy decompressor")
         compressed_bitset = EntropyReduction.bz2_unc(file_name)
 
     # p_length, p_width = MiddleOutUtils.convertInt(compressed_bitset[:16], bits=16), \
@@ -78,8 +81,11 @@ def decompress_image(file_name):
                          decompress(compressedCb, dimx=s_length, dimy=s_width, debug=False, c_layer=True), \
                          decompress(compressedCr, dimx=s_length, dimy=s_width, debug=False, c_layer=True)
 
-    rgbArray = np.flip(
-        ycbcr2rgb(np.array([newY[0:length, 0:width], newCb[0:length, 0:width], newCr[0:length, 0:width]]).T), axis=1)
+    pbar = tqdm(range(1))
+    for _ in pbar:
+        pbar.set_description("Converting image sample space YCbCr -> RGB")
+        rgbArray = np.flip(ycbcr2rgb(np.array([newY[0:length, 0:width], newCb[0:length, 0:width],
+                                newCr[0:length, 0:width]]).T), axis=1)
 
     img = Image.fromarray(rgbArray)
     img.save(image_save, "PNG", optimize=True)
@@ -97,7 +103,7 @@ if __name__ == '__main__':
     # args = vars(ap.parse_args())
     # compressed_file, decompressed_image = args[0], args[1]
     compressed_file, decompressed_image = input("compressed file path without extension: "), \
-                                          input("name of decompressed image without extension: ")
+                                          input("Name of decompressed image without extension: ")
     print();
     image_save = root_path + "compressed/testCases/" + decompressed_image + ".png"
     compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file

@@ -47,7 +47,11 @@ def compress_image(image, file_name):
     o_length, o_width = image[:, :, 0].shape
     print()
     print("original file dimensions: ", o_length, o_width)
-    YCBCR = rgb2ycbcr(image)
+
+    pbar = tqdm(range(1))
+    for _ in pbar:
+        pbar.set_description("Converting image sample space RGB -> YCbCr")
+        YCBCR = rgb2ycbcr(image)
 
     Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
                 (YCBCR[:, :, 1])[:o_length, :o_width],\
