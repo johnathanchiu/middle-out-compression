@@ -45,22 +45,21 @@ def compress_image(image, file_name):
         return compressed
 
     o_length, o_width = image[:, :, 0].shape
-    print("original file dimensions: ", o_length, o_width); print()
+    print()
+    print("original file dimensions: ", o_length, o_width)
     YCBCR = rgb2ycbcr(image)
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 1])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 2])[:o_length, :o_width]
-    Y, Cb, Cr = (YCBCR[:, :, 0])[1000:1128, 1000:1128], \
-                (YCBCR[:, :, 1])[1000:1128, 1000:1128], \
-                (YCBCR[:, :, 2])[1000:1128, 1000:1128]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
+                (YCBCR[:, :, 1])[:o_length, :o_width],\
+                (YCBCR[:, :, 2])[:o_length, :o_width]
 
-    c_length, c_width = Y.shape
+    # c_length, c_width = Y.shape
+    c_length, c_width = o_length, o_width
     p_length, p_width = calc_matrix_eight_size(Y)
     print("padded image dimensions: ", p_length, p_width); print()
     b_lengths, b_width = int(p_length / 8), int(p_width / 8)
-    dimensions = MiddleOutUtils.convertBin(o_length, bits=16) + MiddleOutUtils.convertBin(o_width, bits=16)
-    padding = [p_length - c_length, p_length - c_width]
+    dimensions = MiddleOutUtils.convertBin(c_length, bits=16) + MiddleOutUtils.convertBin(c_width, bits=16)
+    padding = [p_length - c_length, p_width - c_width]
     p_length = [MiddleOutUtils.convertInt(dimensions[:8], bits=8),
                 MiddleOutUtils.convertInt(dimensions[8:16], bits=8)]
     p_width = [MiddleOutUtils.convertInt(dimensions[16:24], bits=8),
@@ -93,7 +92,7 @@ def compress_image(image, file_name):
 
 if __name__ == '__main__':
     start_time = time.time()
-    print(start_time); print()
+    # print(start_time); print()
     root_path = '/Users/johnathanchiu/Documents/CompressionPics/'  # enter file path of image
     # ap = argparse.ArgumentParser()
     # ap.add_argument("-i", "--image", required=True,
@@ -101,7 +100,7 @@ if __name__ == '__main__':
     # ap.add_argument("-c", "--compressed", required=True,
     #                 help="compressed file name")
     # args = vars(ap.parse_args())
-    image_name, compressed_file = input("image path: "), input("compressed file name: ")
+    image_name, compressed_file = input("Image path: "), input("Compressed file name: ")
     # image_name, compressed_file = args["image"], args["compressed"]
     # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     compressed_file_name = root_path + 'compressed/' + 'fileSizes/' + compressed_file

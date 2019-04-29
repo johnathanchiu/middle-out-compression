@@ -33,7 +33,7 @@ def decompress_image(file_name):
             for x in compressed_split:
                 idct_2d(undo_quantize(zig_zag_reverse(rebuild(x)), debug=True, c_layer=c_layer), debug=True)
         else:
-            for x in compressed_split:
+            for x in pbar:
                 pbar.set_description("Running modified jpeg decompression")
                 append(idct_2d(undo_quantize(zig_zag_reverse(rebuild(x)), c_layer=c_layer)))
         if debug: print(image_partitions); print()
@@ -87,7 +87,7 @@ def decompress_image(file_name):
 
 if __name__ == '__main__':
     start_time = time.time()
-    print(start_time); print()
+    # print(start_time); print()
     root_path = '/Users/johnathanchiu/Documents/CompressionPics/'  # enter file path of image
     # ap = argparse.ArgumentParser()
     # ap.add_argument("-c", "--compressed", required=True,
@@ -96,8 +96,11 @@ if __name__ == '__main__':
     #                 help="decompressed image")
     # args = vars(ap.parse_args())
     # compressed_file, decompressed_image = args[0], args[1]
-    compressed_file, decompressed_image = input("compressed file path: "), input("name of decompressed image: ")
-    image_save = root_path + "compressed/testCases" + decompressed_image + ".png"
+    compressed_file, decompressed_image = input("compressed file path without extension: "), \
+                                          input("name of decompressed image without extension: ")
+    print();
+    image_save = root_path + "compressed/testCases/" + decompressed_image + ".png"
     compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     decompress_image(compressed_file_name)
+    print(); print("decompression converged, your file is at: ", image_save)
     print("--- %s seconds ---" % (time.time() - start_time))
