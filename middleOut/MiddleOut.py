@@ -55,7 +55,7 @@ class MiddleOutUtils:
     # TODO: add get-literal functions
     @staticmethod
     def get_literal_long(stream):
-        return '11110' + MiddleOutUtils.convertBin(len(stream), bits=6) + stream
+        return '101' + MiddleOutUtils.convertBin(len(stream), bits=6) + stream
 
     @staticmethod
     def get_literal(stream):
@@ -232,10 +232,7 @@ class MiddleOut:
             return MiddleOutUtils.get_literal_small(lis)
         elif len_of_lis <= 6:
             return MiddleOutUtils.get_literal(lis)
-        else:
-            if len_of_lis <= 23:
-                return MiddleOutUtils.get_literal(lis[:23]) + MiddleOut.getliteral(lis[23:])
-            return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
+        return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
 
     @staticmethod
     def merge_compression(layer_one, layer_two):

@@ -6,22 +6,20 @@ import random
 import time
 
 
-class TestMiddleOut(unittest.TestCase):
+class TestMiddleOut:
 
-    def check_differences(self, a, b):
-        try:
-            self.assertEqual(a, b)
-        except:
-            counter = len(a)
-            if len(a) != len(b):
-                print("wrong lengths")
-                counter = len(a) if len(a) > len(b) else len(b)
-            count = 0
-            while count < counter:
-                if a[count] != b[count]:
-                    print("error starts here: ", a[count:])
-                    return
-                count += 1
+    @staticmethod
+    def check_differences(a, b):
+        counter = len(a)
+        if len(a) != len(b):
+            print("wrong lengths")
+            counter = len(a) if len(a) > len(b) else len(b)
+        count = 0
+        while count < counter:
+            if a[count] != b[count]:
+                print("error starts here: ", a[count:])
+                return
+            count += 1
         print("bitsets are the same")
 
 
@@ -45,7 +43,7 @@ class TestMiddleOut(unittest.TestCase):
 
 if __name__ == '__main__':
     start_time = time.time()
-    bitseta, bisetb = TestMiddleOut.test_middleout(100000, set_seed=True)
-    TestMiddleOut.check_differences(TestMiddleOut(), bitseta, bisetb)
+    bitseta, bitsetb = TestMiddleOut.test_middleout(100000)
+    TestMiddleOut.check_differences(bitseta, bitsetb)
     print("--- %s seconds ---" % (time.time() - start_time))
 
