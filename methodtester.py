@@ -31,19 +31,15 @@ class TestMiddleOut:
         for _ in range(bitset_size):
             x += str(random.randint(0, 1))
 
-        layer_one, uncomp_part = MiddleOut.zero_one_filter(x)
-        lib = MiddleOut.build_library(uncomp_part)
-        layer_two = MiddleOut.eight_bit_compression(uncomp_part, lib)
-        y = MiddleOut.merge_compression(layer_one, layer_two)
-        lib += y
-        z = MiddleOut.decompressStream(lib)
-        print("compressed bits: ", bitset_size - len(lib))
+        comp = MiddleOut.middle_out(x)
+        z = MiddleOut.decompressStream(comp)
+        print("compressed bits: ", bitset_size - len(comp))
         return x, z
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    bitseta, bitsetb = TestMiddleOut.test_middleout(100000)
+    bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=0)
     TestMiddleOut.check_differences(bitseta, bitsetb)
     print("--- %s seconds ---" % (time.time() - start_time))
 

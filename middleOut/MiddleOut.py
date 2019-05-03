@@ -52,10 +52,16 @@ class MiddleOutUtils:
             count += 1
         return count
 
+    @staticmethod
+    def keywithmaxval(d):
+        v = list(d.values())
+        k = list(d.keys())
+        return k[v.index(max(v))]
+
     # TODO: add get-literal functions
     @staticmethod
     def get_literal_long(stream):
-        return '101' + MiddleOutUtils.convertBin(len(stream), bits=6) + stream
+        return '101' + MiddleOutUtils.convertBin(len(stream) - 7, bits=4) + stream
 
     @staticmethod
     def get_literal(stream):
@@ -66,19 +72,38 @@ class MiddleOutUtils:
         return '00' + MiddleOutUtils.convertBin(len(stream) - 1, bits=1) + stream
 
     @staticmethod
-    def keywithmaxval(d):
-        v = list(d.values())
-        k = list(d.keys())
-        return k[v.index(max(v))]
+    def get_literal_large(stream):
+        return '111110' + MiddleOutUtils.convertBin(len(stream) - 24, bits=6) + stream
+
 
 
 class MiddleOut:
+    @staticmethod
+    def build_library(uncompressed, size=8):
+        dictionary = {}
+        for x in uncompressed:
+            len_of_x = len(x)
+            if len_of_x >= size:
+                for y in range(len_of_x - size + 1):
+                    par = x[y:y+size]
+                    if par not in dictionary:
+                        dictionary[par] = 1
+                    else:
+                        dictionary[par] += 1
+        return MiddleOutUtils.keywithmaxval(dictionary)
+
+    @staticmethod
+    def build_dict(bit_lib):
+        return {bit_lib: '11110', bit_lib[:6]: '1110' + format(0, '01b'), bit_lib[:7]: '1110' + format(1, '01b')}
+
     @staticmethod
     def decompressStream(compressed):
         uncompressed = ''
         new_run = True
         x, count = 0, 0
         while x < len(compressed):
+            # print(x)
+            # print(compressed[x:])
             if new_run:
                 eight_lib = compressed[x:x+8]
                 new_run = False
@@ -97,8 +122,10 @@ class MiddleOut:
                     num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 3
                     uncompressed += compressed[x + 5: x + 5 + num]
                     x += num + 5
-                # else:
-                #     num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) +
+                else:
+                    num = MiddleOutUtils.convertInt(compressed[x+3:x+7]) + 7
+                    uncompressed += compressed[x+7:x+7+num]
+                    x += num + 7
             elif compressed[x:x+3] == '110':
                 for _ in range(MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 6):
                     uncompressed += '1'
@@ -110,28 +137,14 @@ class MiddleOut:
                 uncompressed += eight_lib[:6 + MiddleOutUtils.convertInt(compressed[x + 4])]
                 x += 5
             elif compressed[x:x+6] == '111110':
+                num = MiddleOutUtils.convertInt(compressed[x+6:x+12]) + 24
+                uncompressed += compressed[x+12:x+12+num]
+                x += num + 12
+            elif compressed[x:x+7] == '1111110':
                 new_run = True
                 x += 6
         # TODO: add extra libraries for the literals
         return uncompressed
-
-    @staticmethod
-    def build_library(uncompressed, size=8):
-        dictionary = {}
-        for x in uncompressed:
-            len_of_x = len(x)
-            if len_of_x >= size:
-                for y in range(len_of_x - size + 1):
-                    par = x[y:y+size]
-                    if par not in dictionary:
-                        dictionary[par] = 1
-                    else:
-                        dictionary[par] += 1
-        return MiddleOutUtils.keywithmaxval(dictionary)
-
-    @staticmethod
-    def build_dict(bit_lib):
-        return {bit_lib: '11110', bit_lib[:6]: '1110' + format(0, '01b'), bit_lib[:7]: '1110' + format(1, '01b')}
 
     @staticmethod
     def zero_one_filter(uncompressed):
@@ -232,7 +245,11 @@ class MiddleOut:
             return MiddleOutUtils.get_literal_small(lis)
         elif len_of_lis <= 6:
             return MiddleOutUtils.get_literal(lis)
-        return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
+        else:
+            if len_of_lis <= 23:
+                return MiddleOutUtils.get_literal(lis[:23]) + MiddleOut.getliteral(lis[23:])
+            else:
+                return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
 
     @staticmethod
     def merge_compression(layer_one, layer_two):
@@ -249,4 +266,4 @@ class MiddleOut:
         eight_bit = MiddleOut.build_library(unc)
         outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
         y = MiddleOut.merge_compression(middle_comp, outer_comp)
-        return eight_bit + y + '111110'
+        return eight_bit + y + '1111110'
