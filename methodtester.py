@@ -17,7 +17,7 @@ class TestMiddleOut:
         count = 0
         while count < counter:
             if a[count] != b[count]:
-                print("error starts here: ", a[count:])
+                print("error starts here: ", b[count:])
                 return
             count += 1
         print("bitsets are the same")
@@ -39,7 +39,7 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=0)
+    bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=10)
     TestMiddleOut.check_differences(bitseta, bitsetb)
     print("--- %s seconds ---" % (time.time() - start_time))
 

@@ -73,8 +73,7 @@ class MiddleOutUtils:
 
     @staticmethod
     def get_literal_large(stream):
-        return '111110' + MiddleOutUtils.convertBin(len(stream) - 24, bits=6) + stream
-
+        return '111110' + MiddleOutUtils.convertBin(len(stream) - 23, bits=6) + stream
 
 
 class MiddleOut:
@@ -102,8 +101,6 @@ class MiddleOut:
         new_run = True
         x, count = 0, 0
         while x < len(compressed):
-            # print(x)
-            # print(compressed[x:])
             if new_run:
                 eight_lib = compressed[x:x+8]
                 new_run = False
@@ -137,7 +134,7 @@ class MiddleOut:
                 uncompressed += eight_lib[:6 + MiddleOutUtils.convertInt(compressed[x + 4])]
                 x += 5
             elif compressed[x:x+6] == '111110':
-                num = MiddleOutUtils.convertInt(compressed[x+6:x+12]) + 24
+                num = MiddleOutUtils.convertInt(compressed[x+6:x+12]) + 23
                 uncompressed += compressed[x+12:x+12+num]
                 x += num + 12
             elif compressed[x:x+7] == '1111110':
@@ -150,7 +147,7 @@ class MiddleOut:
     def zero_one_filter(uncompressed):
         x = 0
         res = ''
-        a = len(uncompressed)
+        # a = len(uncompressed)
         partial_decomp, uncomp_partition = [], []
         while x < len(uncompressed):
             if uncompressed[x] == '0':
@@ -163,7 +160,7 @@ class MiddleOut:
                     header = MiddleOutUtils.convertBin(counter - 6, bits=3)
                     partial_decomp.append('01' + header)
                     x += counter
-                    a -= (counter - 5)
+                    # a -= (counter - 5)
                 else:
                     res += uncompressed[x]
                     x += 1
@@ -177,13 +174,14 @@ class MiddleOut:
                     header = MiddleOutUtils.convertBin(counter - 6, bits=2)
                     partial_decomp.append('110' + header)
                     x += counter
-                    a -= (counter - 5)
+                    # a -= (counter - 5)
                 else:
                     res += uncompressed[x]
                     x += 1
         if res != '':
             partial_decomp.append(0)
             uncomp_partition.append(res)
+        # print(a)
         return partial_decomp, uncomp_partition
 
     @staticmethod
@@ -245,11 +243,11 @@ class MiddleOut:
             return MiddleOutUtils.get_literal_small(lis)
         elif len_of_lis <= 6:
             return MiddleOutUtils.get_literal(lis)
-        else:
-            if len_of_lis <= 23:
-                return MiddleOutUtils.get_literal(lis[:23]) + MiddleOut.getliteral(lis[23:])
-            else:
-                return MiddleOutUtils.get_literal(lis[:6]) + MiddleOut.getliteral(lis[6:])
+        elif len_of_lis <= 22:
+            return MiddleOutUtils.get_literal_long(lis)
+        elif len_of_lis <= 86:
+            return MiddleOutUtils.get_literal_large(lis)
+        return MiddleOutUtils.get_literal_large(lis[:86]) + MiddleOut.getliteral(lis[86:])
 
     @staticmethod
     def merge_compression(layer_one, layer_two):
