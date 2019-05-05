@@ -89,6 +89,8 @@ class MiddleOut:
                         dictionary[par] = 1
                     else:
                         dictionary[par] += 1
+        if len(dictionary) == 0:
+            return '00000000'
         return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod

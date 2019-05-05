@@ -35,18 +35,19 @@ def compress_image(image, file_name):
 
     def middleout(values):
         values_bin = MiddleOutUtils.convertBin_list(values)
+        print(values)
         compressed = ''
-        pbar = tqdm(range(0, len(values_bin), 100000))
+        # pbar = tqdm(range(0, len(values_bin), 100000))
+        pbar = tqdm(range(1))
         for x in pbar:
             pbar.set_description("Running middle-out compression")
-            curr_stream = values_bin[x:x+100000]
+            # curr_stream = values_bin[x:x+100000]
+            curr_stream = values_bin
             compressed_bitset = MiddleOut.middle_out(curr_stream)
             compressed += compressed_bitset
         return compressed
 
     o_length, o_width = image[:, :, 0].shape
-    print()
-    print("original file dimensions: ", o_length, o_width)
 
     pbar = tqdm(range(1))
     for _ in pbar:
@@ -56,21 +57,25 @@ def compress_image(image, file_name):
     Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
                 (YCBCR[:, :, 1])[:o_length, :o_width],\
                 (YCBCR[:, :, 2])[:o_length, :o_width]
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[:64, :64], \
+    #             (YCBCR[:, :, 1])[:64, :64],\
+    #             (YCBCR[:, :, 2])[:64, :64]
 
-    # c_length, c_width = Y.shape
-    c_length, c_width = o_length, o_width
+    c_length, c_width = Y.shape
+    # print()
+    # print("original file dimensions: ", c_length, c_width); print()
+
     p_length, p_width = calc_matrix_eight_size(Y)
-    print("padded image dimensions: ", p_length, p_width); print()
-    b_lengths, b_width = int(p_length / 8), int(p_width / 8)
-    dimensions = MiddleOutUtils.convertBin(c_length, bits=16) + MiddleOutUtils.convertBin(c_width, bits=16)
+    # print("padded image dimensions: ", p_length, p_width); print()
+    dimensions = MiddleOutUtils.convertBin(p_length, bits=16) + MiddleOutUtils.convertBin(p_width, bits=16)
     padding = [p_length - c_length, p_width - c_width]
     p_length = [MiddleOutUtils.convertInt(dimensions[:8], bits=8),
                 MiddleOutUtils.convertInt(dimensions[8:16], bits=8)]
     p_width = [MiddleOutUtils.convertInt(dimensions[16:24], bits=8),
                MiddleOutUtils.convertInt(dimensions[24:32], bits=8)]
 
-    # padding = MiddleOutUtils.convertBin(p_length - o_length, bits=8) + \
-    #           MiddleOutUtils.convertBin(p_length - o_width, bits=8)
+    # padding = MiddleOutUtils.convertBin(p_length - c_length, bits=8) + \
+    #           MiddleOutUtils.convertBin(p_length - c_width, bits=8)
 
     compressedY = compress(Y, debug=False)
     compressedCb = compress(Cb, debug=False, c_layer=True)
@@ -92,7 +97,9 @@ def compress_image(image, file_name):
     # bit_file = dimensions + padding + compress_bitset_y + compress_bitset_cb + compress_bitset_cr
     # appended_bits = len(bit_file) - (len(bit_file) % 8)
     # bit_file += MiddleOutUtils.convertBin(appended_bits, bits=3)
+    # size = len(bit_file)
     # writeFile(bit_file)
+
 
 if __name__ == '__main__':
     start_time = time.time()

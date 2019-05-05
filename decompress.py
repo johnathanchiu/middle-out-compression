@@ -1,14 +1,11 @@
 import imageio
 from PIL import Image
+import cv2
 
-from scipy import *
-import numpy as np
-import struct
+from scipy.ndimage import *
 
 from tqdm import tqdm
 import time
-import sys
-import os
 
 import argparse
 
@@ -22,9 +19,9 @@ def decompress_image(file_name):
     def decompress(input, dimx=0, dimy=0, debug=False, c_layer=False):
         input = np.asarray(list(input))
         if c_layer:
-            compressed_split = [input[i:i + 4] for i in range(0, len(input), 4)]
-        else:
             compressed_split = [input[i:i + 8] for i in range(0, len(input), 8)]
+        else:
+            compressed_split = [input[i:i + 16] for i in range(0, len(input), 16)]
         image_partitions = []
         pbar = tqdm(compressed_split)
         append = image_partitions.append
@@ -66,12 +63,13 @@ def decompress_image(file_name):
     s_length, s_width = int(p_length / 8), int(p_width / 8)
     # length, width = p_length - MiddleOutUtils.convertInt(compressed_bitset[32:40], bits=8), \
     #                 p_width - MiddleOutUtils.convertInt(compressed_bitset[40:48], bits=8)
+
     length, width = p_length - compressed_bitset[4], p_width - compressed_bitset[5]
 
     result_bytes = compressed_bitset[6:]
     # result_bytes = decompress_bitset(compressed_bitset[48:])
 
-    no_of_values, no_of_values_cr = int((p_length * p_width) / 8), int((p_length * p_width) / 16)
+    no_of_values, no_of_values_cr = int((p_length * p_width) / 4), int((p_length * p_width) / 8)
 
     compressedY, compressedCb, compressedCr = result_bytes[:no_of_values], \
                                               result_bytes[no_of_values:no_of_values+no_of_values_cr], \
@@ -86,6 +84,7 @@ def decompress_image(file_name):
         pbar.set_description("Converting image sample space YCbCr -> RGB")
         rgbArray = np.flip(ycbcr2rgb(np.array([newY[0:length, 0:width], newCb[0:length, 0:width],
                                 newCr[0:length, 0:width]]).T), axis=1)
+        rgbArray = rotate(rgbArray, 90)
 
     img = Image.fromarray(rgbArray)
     img.save(image_save, "PNG", optimize=True)

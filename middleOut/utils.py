@@ -53,8 +53,8 @@ def calc_matrix_eight_size(image_layer):
 # grab top row of 8 by 8 and 0:4
 def capture(image_patch, c_layer=False):
     if c_layer:
-        return np.round(image_patch[0,:][0:4].astype(int))
-    return np.round(image_patch[0,:].astype(int))
+        return np.round(image_patch[0,:].astype(int))
+    return np.round(np.append(image_patch[0,:].astype(int), image_patch[1,:].astype(int)))
 
 
 def rebuild(image):
@@ -126,17 +126,17 @@ def merge_blocks(input_list, rows, columns):
 
 def quantize(input, debug=False, c_layer=False):
     if debug: print(input); print()
-    q = np.array([[16, 13, 18, 15, 25, 27, 29, 31],
-                  [12, 11, 11, 19, 26, 58, 60, 55],
-                  [9, 14, 15, 27, 40, 57, 69, 56],
+    q = np.array([[16, 13, 18, 15, 13, 21, 29, 31],
+                  [12, 11, 11, 19, 12, 58, 60, 55],
+                  [9, 14, 15, 14, 40, 57, 69, 56],
                   [11, 13, 15, 29, 51, 87, 80, 62],
                   [11, 13, 15, 56, 68, 109, 103, 77],
                   [24, 35, 55, 64, 81, 104, 113, 92],
                   [49, 64, 78, 87, 103, 121, 120, 101],
                   [72, 92, 95, 98, 112, 100, 103, 99]])
-    q_c = np.array([[17, 19, 27, 47, 99, 99, 99, 99],
-                    [13, 16, 26, 66, 99, 99, 99, 99],
-                    [15, 26, 56, 99, 99, 99, 99, 99],
+    q_c = np.array([[12, 14, 12, 11, 99, 99, 99, 99],
+                    [8, 13, 13, 66, 99, 99, 99, 99],
+                    [9, 14, 56, 99, 99, 99, 99, 99],
                     [47, 66, 99, 99, 99, 99, 99, 99],
                     [99, 99, 99, 99, 99, 99, 99, 99],
                     [99, 99, 99, 99, 99, 99, 99, 99],
@@ -150,17 +150,17 @@ def quantize(input, debug=False, c_layer=False):
 
 def undo_quantize(input, debug=False, c_layer=False):
     if debug: print(input); print()
-    q = np.array([[16, 13, 18, 15, 25, 27, 29, 31],
-                  [12, 11, 11, 19, 26, 58, 60, 55],
-                  [9, 14, 15, 27, 40, 57, 69, 56],
+    q = np.array([[16, 13, 18, 15, 13, 21, 29, 31],
+                  [12, 11, 11, 19, 12, 58, 60, 55],
+                  [9, 14, 15, 14, 40, 57, 69, 56],
                   [11, 13, 15, 29, 51, 87, 80, 62],
                   [11, 13, 15, 56, 68, 109, 103, 77],
                   [24, 35, 55, 64, 81, 104, 113, 92],
                   [49, 64, 78, 87, 103, 121, 120, 101],
                   [72, 92, 95, 98, 112, 100, 103, 99]])
-    q_c = np.array([[17, 19, 27, 47, 99, 99, 99, 99],
-                    [13, 16, 26, 66, 99, 99, 99, 99],
-                    [15, 26, 56, 99, 99, 99, 99, 99],
+    q_c = np.array([[12, 14, 12, 11, 99, 99, 99, 99],
+                    [8, 13, 13, 66, 99, 99, 99, 99],
+                    [9, 14, 56, 99, 99, 99, 99, 99],
                     [47, 66, 99, 99, 99, 99, 99, 99],
                     [99, 99, 99, 99, 99, 99, 99, 99],
                     [99, 99, 99, 99, 99, 99, 99, 99],
@@ -172,25 +172,9 @@ def undo_quantize(input, debug=False, c_layer=False):
     return input * q
 
 
-# def rearrangeDC(compressed_values, layer=None):
-#     if layer == 1:
-#         for x in range(0, len(compressed_values), 3):
-#             compressed_values.append(compressed_values.pop(x))
-#         compressed_valuesAC = compressed_values[:int(len(compressed_values) * 3 / 4)]
-#         compressed_valuesDC = compressed_values[int(len(compressed_values) * 3 / 4):]
-#     else:
-#         for x in range(0, len(compressed_values), 7):
-#             compressed_values.append(compressed_values.pop(x))
-#         compressed_valuesAC = compressed_values[:int(len(compressed_values) * 7 / 8)]
-#         compressed_valuesDC = compressed_values[int(len(compressed_values) * 7 / 8):]
-#     compressed_valuesDC.insert(0, compressed_valuesDC.pop(len(compressed_valuesDC) - 1))
-#     return compressed_valuesAC, compressed_valuesDC
-
-
 def writeFile(bitstring, fileName=None):
     writeable_string = StringIO(bitstring)
     f = open(fileName + '.bin', 'w')
-
     while 1:
         b = writeable_string.read(8)
         if not b:
