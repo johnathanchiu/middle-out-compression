@@ -84,7 +84,7 @@ class MiddleOut:
         return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod
-    def build_library(uncompressed, size=8):
+    def build_library2(uncompressed, size=8):
         dictionary = {}
         for x in uncompressed:
             partition = uncompressed[count:count + 8]
