@@ -48,6 +48,8 @@ def compress_image(image, file_name):
         return compressed
 
     o_length, o_width = image[:, :, 0].shape
+    # print()
+    # print("original file dimensions: ", o_length, o_width); print()
 
     pbar = tqdm(range(1))
     for _ in pbar:
@@ -57,14 +59,8 @@ def compress_image(image, file_name):
     Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
                 (YCBCR[:, :, 1])[:o_length, :o_width],\
                 (YCBCR[:, :, 2])[:o_length, :o_width]
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:64, :64], \
-    #             (YCBCR[:, :, 1])[:64, :64],\
-    #             (YCBCR[:, :, 2])[:64, :64]
 
     c_length, c_width = Y.shape
-    # print()
-    # print("original file dimensions: ", c_length, c_width); print()
-
     p_length, p_width = calc_matrix_eight_size(Y)
     # print("padded image dimensions: ", p_length, p_width); print()
     dimensions = MiddleOutUtils.convertBin(p_length, bits=16) + MiddleOutUtils.convertBin(p_width, bits=16)

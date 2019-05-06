@@ -27,16 +27,15 @@ class TestMiddleOut:
     @staticmethod
     def test_middleout(bitset_size, set_seed=False, seed=0):
         x = []
-        bztest = []
+        # bztest = []
         if (set_seed):
             random.seed(seed)
         for _ in range(bitset_size):
             tem = random.randint(0, 30)
             x.append(tem)
-            bztest.append(tem)
+            # bztest.append(tem)
 
         x = MiddleOutUtils.convertBin_list(x)
-        EntropyReduction.bz2(bztest, '/Users/johnathanchiu/Downloads/test')
         comp = MiddleOut.middle_out(x)
         z = MiddleOut.decompressStream(comp)
         print("compressed bits: ", bitset_size - len(comp))
