@@ -36,14 +36,6 @@ class MiddleOutUtils:
         return intList
 
     @staticmethod
-    def unaryconverter(lis):
-        unary = []
-        for y in lis:
-            [unary.append('1') for _ in range(y)]
-            unary.append('0')
-        return ''.join(unary)
-
-    @staticmethod
     def count_rep(part_stream, typing='0', stop=0):
         count = 0
         for y in part_stream:
@@ -80,20 +72,34 @@ class MiddleOut:
     @staticmethod
     def build_library(uncompressed, size=8):
         dictionary = {}
-        for x in uncompressed:
-            len_of_x = len(x)
-            if len_of_x >= size:
-                for y in range(len_of_x - size + 1):
-                    par = x[y:y+size]
-                    if par not in dictionary:
-                        dictionary[par] = 1
-                    else:
-                        dictionary[par] += 1
+        count = 0
+        length = len(uncompressed)
+        while count < length - 8:
+            partition = uncompressed[count:count + 8]
+            if partition not in dictionary:
+                dictionary[partition] = 1
+            else:
+                dictionary[partition] += 1
+            count += 1
         return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod
-    def build_dict(bit_lib):
-        return {bit_lib: '11110', bit_lib[:6]: '1110' + format(0, '01b'), bit_lib[:7]: '1110' + format(1, '01b')}
+    def build_library(uncompressed, size=8):
+        dictionary = {}
+        for x in uncompressed:
+            partition = uncompressed[count:count + 8]
+            if partition not in dictionary:
+                dictionary[partition] = 1
+            else:
+                dictionary[partition] += 1
+            count += 1
+        return MiddleOutUtils.keywithmaxval(dictionary)
+
+    @staticmethod
+    def build_dict(bit_lib, sets=0):
+        if sets == 1:
+            return {bit_lib: '101', bit_lib[:6]: '110' + format(0, '01b'), bit_lib[:7]: '110' + format(1, '01b')}
+        return {bit_lib: '00', bit_lib[:6]: '01' + format(0, '01b'), bit_lib[:7]: '01' + format(1, '01b')}
 
     @staticmethod
     def decompressStream(compressed):
@@ -103,104 +109,59 @@ class MiddleOut:
         while x < len(compressed):
             if new_run:
                 eight_lib = compressed[x:x+8]
+                eight_lib_s = compressed[x+8:x+16]
                 new_run = False
-                x += 8
-            elif compressed[x] == '0':
+                x += 16
+            if compressed[x] == '0':
                 if compressed[x+1] == '1':
-                    for _ in range(MiddleOutUtils.convertInt(compressed[x + 2:x + 5]) + 6):
-                        uncompressed += '0'
-                    x += 5
+                    uncompressed += eight_lib
+                    x += 1
                 else:
-                    num = MiddleOutUtils.convertInt(compressed[x+2]) + 1
-                    uncompressed += compressed[x+3:x+3+num]
-                    x += 3 + num
-            elif compressed[x:x+2] == '10':
-                if compressed[x+2] == '0':
-                    num = MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 3
-                    uncompressed += compressed[x + 5: x + 5 + num]
-                    x += num + 5
-                else:
-                    num = MiddleOutUtils.convertInt(compressed[x+3:x+7]) + 7
-                    uncompressed += compressed[x+7:x+7+num]
-                    x += num + 7
-            elif compressed[x:x+3] == '110':
-                for _ in range(MiddleOutUtils.convertInt(compressed[x+3:x+5]) + 6):
-                    uncompressed += '1'
-                x += 5
-            elif compressed[x:x+5] == '11110':
-                uncompressed += eight_lib
-                x += 5
-            elif compressed[x:x+4] == '1110':
-                uncompressed += eight_lib[:6 + MiddleOutUtils.convertInt(compressed[x + 4])]
-                x += 5
-            elif compressed[x:x+6] == '111110':
-                num = MiddleOutUtils.convertInt(compressed[x+6:x+12]) + 23
-                uncompressed += compressed[x+12:x+12+num]
-                x += num + 12
+                    uncompressed += eight_lib_s
+            # elif uncompressed[x:x+2] == '10':
+            #     if uncompressed[x+2] ==  '1':
+            #         uncompressed += eight_lib_s
+            #         x += 3
+            #     else:
+            #         uncompressed += eight_lib
+            # elif uncompressed[x:x+3] == '110':
             elif compressed[x:x+7] == '1111110':
                 new_run = True
                 x += 6
-        # TODO: add extra libraries for the literals
         return uncompressed
 
     @staticmethod
-    def zero_one_filter(uncompressed):
-        x = 0
-        res = ''
-        # a = len(uncompressed)
-        partial_decomp, uncomp_partition = [], []
-        while x < len(uncompressed):
-            if uncompressed[x] == '0':
-                counter = MiddleOutUtils.count_rep(uncompressed[x:], typing='0', stop=13)
-                if counter >= 6:
-                    if res != '':
-                        partial_decomp.append(0)
-                        uncomp_partition.append(res)
-                        res = ''
-                    header = MiddleOutUtils.convertBin(counter - 6, bits=3)
-                    partial_decomp.append('01' + header)
-                    x += counter
-                    # a -= (counter - 5)
-                else:
-                    res += uncompressed[x]
-                    x += 1
+    def eight_bit_compression(uncompressed, lib):
+        count = 0
+        temp = ''
+        compressed, unc = [], []
+        uncompressed += ' '
+        total_count, count = 0, 0
+        compression_lib = MiddleOut.build_dict(lib)
+        while count < len(uncompressed) - 1:
+            compressor = 6
+            mo = uncompressed[count:count + compressor]
+            while mo in compression_lib:
+                compressor += 1
+                mo = uncompressed[count:count + compressor]
+            mo = mo[:-1]
+            length_string = len(mo)
+            if length_string >= 6:
+                if temp != '':
+                    unc.append(temp)
+                compressed.append(compression_lib[mo])
+                count += length_string
             else:
-                counter = MiddleOutUtils.count_rep(uncompressed[x:], typing='1', stop=9)
-                if counter >= 6:
-                    if res != '':
-                        partial_decomp.append(0)
-                        uncomp_partition.append(res)
-                        res = ''
-                    header = MiddleOutUtils.convertBin(counter - 6, bits=2)
-                    partial_decomp.append('110' + header)
-                    x += counter
-                    # a -= (counter - 5)
-                else:
-                    res += uncompressed[x]
-                    x += 1
-        if res != '':
-            partial_decomp.append(0)
-            uncomp_partition.append(res)
-        # print(a)
-        return partial_decomp, uncomp_partition
+                temp += uncompressed[count]
+                count += 1
+                total_count += 1
+        if temp != '':
+            unc.append(temp)
+        print("total count", total_count)
+        return compressed, unc
 
     @staticmethod
-    def eight_bit_compression(uncompressed_list, lib):
-        compressed = []
-        lib_dict = MiddleOut.build_dict(lib)
-        for x in uncompressed_list:
-            len_of_x = len(x)
-            if len_of_x <= 2:
-                compressed.append(MiddleOutUtils.get_literal_small(x))
-            elif len_of_x >= 8:
-                comp = MiddleOut.filter_values(x, lib_dict)
-                compressed.extend(comp)
-            else:
-                compressed.append(MiddleOut.getliteral(x))
-        return compressed
-
-    @staticmethod
-    def filter_values(bitStream, lib_dict):
+    def eight_bit_compression2(bitStream, lib_dict):
         comp = []
         res = ''
         bitStream += ' '
@@ -260,7 +221,7 @@ class MiddleOut:
 
     @staticmethod
     def middle_out(stream):
-        middle_comp, unc = MiddleOut.zero_one_filter(stream)
+        middle_comp, unc = MiddleOut.eight_bit_compression(stream)
         eight_bit = MiddleOut.build_library(unc)
         outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
         y = MiddleOut.merge_compression(middle_comp, outer_comp)

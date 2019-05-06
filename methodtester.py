@@ -23,6 +23,16 @@ class TestMiddleOut:
             count += 1
         print("bitsets are the same")
 
+    @staticmethod
+    def generate_random_bitset(bitset_size, set_seed=False, seed=0):
+        x = []
+        if (set_seed):
+            random.seed(seed)
+        for _ in range(bitset_size):
+            tem = random.randint(0, 30)
+            x.append(tem)
+        x = MiddleOutUtils.convertBin_list(x)
+        return x
 
     @staticmethod
     def test_middleout(bitset_size, set_seed=False, seed=0):
@@ -41,10 +51,27 @@ class TestMiddleOut:
         print("compressed bits: ", bitset_size - len(comp))
         return x, z
 
+    @staticmethod
+    def test_eight_compression(bitset):
+        lib = MiddleOut.build_library(bitset)
+        return MiddleOut.eight_bit_compression(bitset, lib)
+
+    @staticmethod
+    def test_eight_second_compression(unc):
+        # return MiddleOut
+        return
 
 if __name__ == '__main__':
     start_time = time.time()
-    bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=10)
-    TestMiddleOut.check_differences(bitseta, bitsetb)
+    bitset = TestMiddleOut.generate_random_bitset(10000, set_seed=True, seed=10)
+    compressed, unc = TestMiddleOut.test_eight_compression(bitset)
+    # print(compressed)
+    print(len(compressed))
+    # print(unc)
+    print(len(''.join(unc)))
+    print(len(unc))
+    # bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=10)
+    # TestMiddleOut.check_differences(bitseta, bitsetb)
+
     print("--- %s seconds ---" % (time.time() - start_time))
 

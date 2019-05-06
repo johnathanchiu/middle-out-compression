@@ -37,12 +37,10 @@ def compress_image(image, file_name):
         values_bin = MiddleOutUtils.convertBin_list(values)
         print(values)
         compressed = ''
-        # pbar = tqdm(range(0, len(values_bin), 100000))
-        pbar = tqdm(range(1))
+        pbar = tqdm(range(0, len(values_bin), 100000))
         for x in pbar:
             pbar.set_description("Running middle-out compression")
-            # curr_stream = values_bin[x:x+100000]
-            curr_stream = values_bin
+            curr_stream = values_bin[x:x+100000]
             compressed_bitset = MiddleOut.middle_out(curr_stream)
             compressed += compressed_bitset
         return compressed
