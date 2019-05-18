@@ -74,8 +74,8 @@ class MiddleOut:
         dictionary = {}
         count = 0
         length = len(uncompressed)
-        while count < length - 8:
-            partition = uncompressed[count:count + 8]
+        while count < length - size:
+            partition = uncompressed[count:count + size]
             if partition not in dictionary:
                 dictionary[partition] = 1
             else:
@@ -86,13 +86,15 @@ class MiddleOut:
     @staticmethod
     def build_library2(uncompressed, size=8):
         dictionary = {}
-        for x in uncompressed:
-            partition = uncompressed[count:count + 8]
-            if partition not in dictionary:
-                dictionary[partition] = 1
-            else:
-                dictionary[partition] += 1
-            count += 1
+        for part in uncompressed:
+            len_of_x = len(part)
+            if len_of_x >= size:
+                for y in range(len_of_x - size + 1):
+                    par = part[y:y+size]
+                    if par not in dictionary:
+                        dictionary[par] = 1
+                    else:
+                        dictionary[par] += 1
         return MiddleOutUtils.keywithmaxval(dictionary)
 
     @staticmethod
@@ -132,11 +134,10 @@ class MiddleOut:
 
     @staticmethod
     def eight_bit_compression(uncompressed, lib):
-        count = 0
         temp = ''
         compressed, unc = [], []
+        total_count, count = len(uncompressed), 0
         uncompressed += ' '
-        total_count, count = 0, 0
         compression_lib = MiddleOut.build_dict(lib)
         while count < len(uncompressed) - 1:
             compressor = 6
@@ -149,53 +150,46 @@ class MiddleOut:
             if length_string >= 6:
                 if temp != '':
                     unc.append(temp)
+                    temp = ''
+                    # compressed.append(0)
                 compressed.append(compression_lib[mo])
                 count += length_string
             else:
                 temp += uncompressed[count]
                 count += 1
-                total_count += 1
         if temp != '':
             unc.append(temp)
-        print("total count", total_count)
+            # compressed.append(0)
         return compressed, unc
 
     @staticmethod
-    def eight_bit_compression2(bitStream, lib_dict):
-        comp = []
-        res = ''
-        bitStream += ' '
-        count = 0
-        while count < len(bitStream) - 1:
-            compressor = 6
-            stringLength = bitStream[count:count + compressor]
-            while stringLength in lib_dict:
-                compressor += 1
-                stringLength = bitStream[count:count + compressor]
-            stringLength = stringLength[:-1]
-            length_string = len(stringLength)
-            if length_string >= 6:
-                if res != '':
-                    if len(comp) > 0:
-                        comp[0] += MiddleOut.getliteral(res) + lib_dict[stringLength]
-                        res = ''
-                    else:
-                        comp.append(MiddleOut.getliteral(res) + lib_dict[stringLength])
-                        res = ''
+    def eight_bit_compression2(uncompressed, lib):
+        compressed, unc = [], []
+        compression_lib = MiddleOut.build_dict(lib, sets=1)
+        for partition in uncompressed:
+            partition += ' '
+            count = 0
+            temp = ''
+            while count < len(partition) - 1:
+                compressor = 6
+                mo = partition[count:count + compressor]
+                while mo in compression_lib:
+                    compressor += 1
+                    mo = partition[count:count + compressor]
+                mo = mo[:-1]
+                length_string = len(mo)
+                if length_string >= 6:
+                    if temp != '':
+                        unc.append(temp)
+                        temp = ''
+                    compressed.append(compression_lib[mo])
+                    count += length_string
                 else:
-                    if len(comp) > 0:
-                        comp[0] += lib_dict[stringLength]
-                    else:
-                        comp.append(lib_dict[stringLength])
-                count += length_string
-            else:
-                res += bitStream[count]
-                count += 1
-        if res != '':
-            if len(comp) == 0:
-                return [MiddleOut.getliteral(res)]
-            comp[0] += MiddleOut.getliteral(res)
-        return comp
+                    temp += partition[count]
+                    count += 1
+            if temp != '':
+                unc.append(temp)
+        return compressed, unc
 
     @staticmethod
     def getliteral(lis):
@@ -219,10 +213,10 @@ class MiddleOut:
                 count += 1
         return ''.join(layer_one)
 
-    @staticmethod
-    def middle_out(stream):
-        middle_comp, unc = MiddleOut.eight_bit_compression(stream)
-        eight_bit = MiddleOut.build_library(unc)
-        outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
-        y = MiddleOut.merge_compression(middle_comp, outer_comp)
-        return eight_bit + y + '1111110'
+    # @staticmethod
+    # def middle_out(stream):
+    #     middle_comp, unc = MiddleOut.eight_bit_compression(stream)
+    #     eight_bit = MiddleOut.build_library(unc, size=8)
+    #     outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
+    #     y = MiddleOut.merge_compression(middle_comp, outer_comp)
+    #     return eight_bit + y + '1111110'
