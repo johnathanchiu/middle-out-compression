@@ -29,12 +29,11 @@ class TestMiddleOut:
         if (set_seed):
             random.seed(seed)
         for _ in range(bitset_size):
-            tem = random.randint(-128, 127)
+            tem = random.randint(0, 50)
             x.append(tem)
             y.append(tem)
-        return x, y
-        x = MiddleOutUtils.convertBin_list(x)
-        return x, y
+        return MiddleOutUtils.convertBin_list(x), y
+        # return x, y
 
     @staticmethod
     def test_middleout(bitset_size, set_seed=False, seed=0):
@@ -55,29 +54,33 @@ class TestMiddleOut:
 
     @staticmethod
     def test_eight_compression(bitset):
-        lib = MiddleOut.build_library(bitset, size=8)
+        lib = MiddleOutUtils.build_library(bitset, size=8)
         return MiddleOut.eight_bit_compression(bitset, lib)
 
     @staticmethod
     def test_eight_second_compression(unc):
-        lib = MiddleOut.build_library2(unc, size=8)
-        return MiddleOut.eight_bit_compression2(unc, lib)
+        lib = MiddleOutUtils.build_library(unc, size=8)
+        return MiddleOut.eight_bit_compression(unc, lib)
 
     @staticmethod
     def test_rle(stream):
         stream = np.asarray(stream)
         return EntropyReduction.rle_encoding(stream)
 
+    @staticmethod
+    def test_lib(coef, size=0):
+        return MiddleOut.build_library(coef, size=size)
+
 
 if __name__ == '__main__':
     start_time = time.time()
     bitset, test_list = TestMiddleOut.generate_random_bitset(10000, set_seed=True, seed=10)
     # EntropyReduction.bz2(test_list, '/Users/johnathanchiu/Downloads/test')
+    # print(bitset)
     compressed, unc = TestMiddleOut.test_eight_compression(bitset)
-    print(len(''.join(compressed)))
-    compressed2, unc2 = TestMiddleOut.test_eight_second_compression(unc)
-    # print(len(''.join(compressed2)))
-    # print(len(''.join(unc2)))
+    print(len(compressed))
+    print(compressed)
+    print(unc)
     # bitseta, bitsetb = TestMiddleOut.test_middleout(100000, set_seed=True, seed=10)
     # TestMiddleOut.check_differences(bitseta, bitsetb)
 
