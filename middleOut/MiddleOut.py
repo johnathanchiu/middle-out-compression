@@ -101,50 +101,53 @@ class MiddleOut:
                 new_lib = False
         return uncompressed
 
-    @staticmethod
-    def byte_compression(byte_stream, size=2, count_recursion=1):
-        print("count_recur", count_recursion)
-        count = 0
-        compressed = ''
-        uncompressed = []
-        if len(byte_stream) == 0:
-            return compressed
-        compression_lib = MiddleOutUtils.build_library(byte_stream)
-        compression_dict = MiddleOutUtils.build_dict(compression_lib)
-        compressed_lib = MiddleOutUtils.convertBin_list(compression_lib)
-        while count < len(byte_stream) - size:
-            compressor = 1
-            tup = tuple(byte_stream[count:count + compressor])
-            while tup in compression_dict:
-                compressor += 1
-                tup = tuple(byte_stream[count:count + compressor])
-            if tup not in compression_dict and len(tup) == 1:
-                compressed += '1'
-                uncompressed.append(byte_stream[count])
-            else:
-                tup = tuple(byte_stream[count:count + compressor - 1])
-                compressed += compression_dict[tup]
-            count += len(tup)
-        return compressed_lib + compressed + '0001' + MiddleOut.byte_compression(uncompressed,
-        size=size, count_recursion=count_recursion+1)
-
     # @staticmethod
-    # def byte_compression(byte_stream, item_count, count_recursion=1):
+    # def byte_compression(byte_stream, size=2, count_recursion=1):
+    #     print("count_recur", count_recursion)
     #     count = 0
     #     compressed = ''
     #     uncompressed = []
-    #     length_bytes = len(byte_stream)
-    #     if length_bytes == 0:
+    #     if len(byte_stream) == 0:
     #         return compressed
-    #     compressed_lib = MiddleOutUtils.max_key(item_count)
-    #     while count < length_bytes:
-    #         if byte_stream[count] == compressed_lib:
-    #             compressed += '0'
-    #
-    #         else:
+    #     compression_lib = MiddleOutUtils.build_library(byte_stream)
+    #     compression_dict = MiddleOutUtils.build_dict(compression_lib)
+    #     compressed_lib = MiddleOutUtils.convertBin_list(compression_lib)
+    #     while count < len(byte_stream) - size:
+    #         compressor = 1
+    #         tup = tuple(byte_stream[count:count + compressor])
+    #         while tup in compression_dict:
+    #             compressor += 1
+    #             tup = tuple(byte_stream[count:count + compressor])
+    #         if tup not in compression_dict and len(tup) == 1:
     #             compressed += '1'
-    #     item_count[compressed_lib] = 0
-    #     return compressed_lib + compressed + MiddleOut.byte_compression(uncompressed, item_count, count_recursion=count_recursion+1)
+    #             uncompressed.append(byte_stream[count])
+    #         else:
+    #             tup = tuple(byte_stream[count:count + compressor - 1])
+    #             compressed += compression_dict[tup]
+    #         count += len(tup)
+    #     return compressed_lib + compressed + '0001' + MiddleOut.byte_compression(uncompressed,
+    #     size=size, count_recursion=count_recursion+1)
+
+    @staticmethod
+    def byte_compression(byte_stream, item_count, count_recursion=1):
+        print("recursion count", count_recursion)
+        compressed = ''
+        uncompressed = []
+        length_bytes = len(byte_stream)
+        if length_bytes == 0:
+            return compressed
+        compressed_lib = MiddleOutUtils.max_key(item_count)
+        print(compressed_lib)
+        print(item_count[compressed_lib])
+        for byte in byte_stream:
+            if byte == compressed_lib:
+                compressed += '0'
+            else:
+                compressed += '1'
+                uncompressed.append(byte)
+        item_count[compressed_lib] = 0
+        return MiddleOutUtils.convertBin(compressed_lib) + compressed + '01' + \
+               MiddleOut.byte_compression(uncompressed, item_count, count_recursion=count_recursion+1)
 
     @staticmethod
     def middle_out(image_coefficients):
