@@ -1,4 +1,4 @@
-""" This file contains unused methods that may be helpful for the future """
+""" This file contains unused functions that may be useful for the future """
 from middleOut.MiddleOut import MiddleOutUtils
 from middleOut.MiddleOut import MiddleOut
 
@@ -108,3 +108,16 @@ def get_literal_small(stream):
 @staticmethod
 def get_literal_large(stream):
     return '111110' + MiddleOutUtils.convertBin(len(stream) - 23, bits=6) + stream
+
+@staticmethod
+def get_literal_size(stream):
+    if len(stream) <= 2:
+        return '00' + MiddleOutUtils.convertBin(len(stream) - 1, bits=1)  # get small literals
+    elif len(stream) <= 6:
+        return '01' + MiddleOutUtils.convertBin(len(stream) - 3, bits=2)  # medium literals
+    elif len(stream) <= 22:
+        return '1101' + MiddleOutUtils.convertBin(len(stream) - 7, bits=4)  # larger literals
+    elif len(stream) <= 86:
+        return '1110' + MiddleOutUtils.convertBin(len(stream) - 23, bits=6)  # largest literals
+    return '1110' + MiddleOutUtils.convertBin(len(stream[:86]) - 23, bits=6) + \
+           MiddleOutUtils.get_literal_size(stream[86:])

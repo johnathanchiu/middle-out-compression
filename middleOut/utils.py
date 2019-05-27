@@ -53,8 +53,8 @@ def calc_matrix_eight_size(image_layer):
 # grab top row of 8 by 8 and 0:4
 def capture(image_patch, c_layer=False):
     if c_layer:
-        return np.round(image_patch[0,:].astype(int))
-    return np.round(np.append(image_patch[0,:].astype(int), image_patch[1,:].astype(int)))
+        return np.round(image_patch[0, :].astype(int))
+    return np.round(np.append(image_patch[0, :].astype(int), image_patch[1, :].astype(int)))
 
 
 def rebuild(image):

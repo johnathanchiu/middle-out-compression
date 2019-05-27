@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class MiddleOutUtils:
     @staticmethod
     def convertBin(num, bits=8):
@@ -51,88 +54,99 @@ class MiddleOutUtils:
         return k[v.index(max(v))]
 
     @staticmethod
-    def get_literal_size(stream):
-        if len(stream) <= 2:
-            return '00' + MiddleOutUtils.convertBin(len(stream) - 1, bits=1)  # get small literals
-        elif len(stream) <= 6:
-            return '01' + MiddleOutUtils.convertBin(len(stream) - 3, bits=2)  # medium literals
-        elif len(stream) <= 22:
-            return '1101' + MiddleOutUtils.convertBin(len(stream) - 7, bits=4)  # larger literals
-        elif len(stream) <= 86:
-            return '1110' + MiddleOutUtils.convertBin(len(stream) - 23, bits=6)  # largest literals
-        return '1110' + MiddleOutUtils.convertBin(len(stream[:86]) - 23, bits=6) + \
-               MiddleOutUtils.get_literal_size(stream[86:])
-
-    @staticmethod
-    def build_library(uncompressed, size=8):
-        dictionary = {}
+    def build_library(byte_stream, size=2):
         count = 0
-        length = len(uncompressed)
-        while count < length - size:
-            partition = str(uncompressed[count:count + size])
+        dictionary = {}
+        if len(byte_stream) < size:
+            for _ in range(size - len(byte_stream)):
+                temp = list([0])
+                temp.append(byte_stream)
+                byte_stream = temp
+        while count <= len(byte_stream) - size:
+            partition = tuple(byte_stream[count:count + size])
             if partition not in dictionary:
                 dictionary[partition] = 1
             else:
                 dictionary[partition] += 1
             count += 1
-        largest = MiddleOutUtils.max_key(dictionary)
-        print(largest, dictionary[largest])
-        return largest
+        large_occur = MiddleOutUtils.max_key(dictionary)
+        print("lib", large_occur, dictionary[large_occur])
+        return large_occur
 
     @staticmethod
-    def build_dict(bit_lib):
-        return {bit_lib: '10', bit_lib[:6]: '11' + format(0, '01b'), bit_lib[:7]: '11' + format(1, '01b')}
+    def build_library(byte_stream):
+        return Counter(byte_stream)
+
+    @staticmethod
+    def build_dict(byte_lib):
+        return {byte_lib: '00',
+                tuple(byte_lib[:1]): '01' + format(0, '02b'),
+                tuple(byte_lib[:2]): '01' + format(1, '02b'),
+                tuple(byte_lib[2:]): '01' + format(2, '02b'),
+                tuple(byte_lib[1:]): '01' + format(3, '02b')}
+
+        # return {byte_lib: '00',
+        #         tuple(byte_lib[:1]): '01' + format(0, '01b'),
+        #         tuple(byte_lib[1:]): '01' + format(1, '01b')}
+
 
 class MiddleOut:
     @staticmethod
-    def decompressStream(compressed):
-        uncompressed = ''
-        new_run = True
+    def decompress(compressed):
+        new_lib = True
         x, count = 0, 0
+        uncompressed = ''
         while x < len(compressed):
-            if new_run:
-                eight_lib = compressed[x:x+8]
-                new_run = False
-                x += 16
-            elif compressed[x:x+7] == '1111110':
-                new_run = True
-                x += 6
+            if new_lib:
+                new_lib = False
         return uncompressed
 
     @staticmethod
-    def eight_bit_compression(uncompressed, lib):
-        temp = ''
-        compressed, unc = [], []
-        total_count, count = len(uncompressed), 0
-        uncompressed += ' '
-        compression_lib = MiddleOutUtils.build_dict(lib)
-        while count < len(uncompressed) - 1:
-            compressor = 6
-            mo = uncompressed[count:count + compressor]
-            while mo in compression_lib:
+    def byte_compression(byte_stream, size=2, count_recursion=1):
+        print("count_recur", count_recursion)
+        count = 0
+        compressed = ''
+        uncompressed = []
+        if len(byte_stream) == 0:
+            return compressed
+        compression_lib = MiddleOutUtils.build_library(byte_stream)
+        compression_dict = MiddleOutUtils.build_dict(compression_lib)
+        compressed_lib = MiddleOutUtils.convertBin_list(compression_lib)
+        while count < len(byte_stream) - size:
+            compressor = 1
+            tup = tuple(byte_stream[count:count + compressor])
+            while tup in compression_dict:
                 compressor += 1
-                mo = uncompressed[count:count + compressor]
-            mo = mo[:-1]
-            length_string = len(mo)
-            if length_string >= 6:
-                if temp != '':
-                    unc.append(temp)
-                    compressed.append(MiddleOutUtils.get_literal_size(temp))
-                    temp = ''
-                compressed.append(compression_lib[mo])
-                count += length_string
+                tup = tuple(byte_stream[count:count + compressor])
+            if tup not in compression_dict and len(tup) == 1:
+                compressed += '1'
+                uncompressed.append(byte_stream[count])
             else:
-                temp += uncompressed[count]
-                count += 1
-        if temp != '':
-            unc.append(temp)
-            compressed.append(MiddleOutUtils.get_literal_size(temp))
-        return compressed, unc
+                tup = tuple(byte_stream[count:count + compressor - 1])
+                compressed += compression_dict[tup]
+            count += len(tup)
+        return compressed_lib + compressed + '0001' + MiddleOut.byte_compression(uncompressed,
+        size=size, count_recursion=count_recursion+1)
 
     # @staticmethod
-    # def middle_out(stream):
-    #     middle_comp, unc = MiddleOut.eight_bit_compression(stream)
-    #     eight_bit = MiddleOut.build_library(unc, size=8)
-    #     outer_comp = MiddleOut.eight_bit_compression(unc, eight_bit)
-    #     y = MiddleOut.merge_compression(middle_comp, outer_comp)
-    #     return eight_bit + y + '1111110'
+    # def byte_compression(byte_stream, item_count, count_recursion=1):
+    #     count = 0
+    #     compressed = ''
+    #     uncompressed = []
+    #     length_bytes = len(byte_stream)
+    #     if length_bytes == 0:
+    #         return compressed
+    #     compressed_lib = MiddleOutUtils.max_key(item_count)
+    #     while count < length_bytes:
+    #         if byte_stream[count] == compressed_lib:
+    #             compressed += '0'
+    #
+    #         else:
+    #             compressed += '1'
+    #     item_count[compressed_lib] = 0
+    #     return compressed_lib + compressed + MiddleOut.byte_compression(uncompressed, item_count, count_recursion=count_recursion+1)
+
+    @staticmethod
+    def middle_out(image_coefficients):
+        items = MiddleOutUtils.build_library(image_coefficients)
+        return MiddleOut.byte_compression(image_coefficients, items)

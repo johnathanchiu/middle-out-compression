@@ -1,3 +1,8 @@
 from middleOut.MiddleOut import MiddleOutUtils
 
-print(MiddleOutUtils.convertInt('000001', bits=6))
+l = list([0])
+
+temp = list([0])
+temp.extend(l)
+
+print(temp)

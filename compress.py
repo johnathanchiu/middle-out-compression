@@ -33,18 +33,6 @@ def compress_image(image, file_name):
         if debug: print("compressed data: ", compressed_data); print()
         return compressed_data
 
-    def middleout(values):
-        values_bin = MiddleOutUtils.convertBin_list(values)
-        print(values)
-        compressed = ''
-        pbar = tqdm(range(0, len(values_bin), 100000))
-        for x in pbar:
-            pbar.set_description("Running middle-out compression")
-            curr_stream = values_bin[x:x+100000]
-            compressed_bitset = MiddleOut.middle_out(curr_stream)
-            compressed += compressed_bitset
-        return compressed
-
     o_length, o_width = image[:, :, 0].shape
     # print()
     # print("original file dimensions: ", o_length, o_width); print()
@@ -71,9 +59,12 @@ def compress_image(image, file_name):
     # padding = MiddleOutUtils.convertBin(p_length - c_length, bits=8) + \
     #           MiddleOutUtils.convertBin(p_length - c_width, bits=8)
 
-    compressedY = compress(Y, debug=False)
-    compressedCb = compress(Cb, debug=False, c_layer=True)
-    compressedCr = compress(Cr, debug=False, c_layer=True)
+    compressedY = compress(Y, debug=False)[:1024]
+    compressedCb = compress(Cb, debug=False, c_layer=True)[:512]
+    compressedCr = compress(Cr, debug=False, c_layer=True)[:512]
+
+    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    print("size after middleout:", len(middleout))
 
     dim = array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
     compressed = dim + compressedY + compressedCb + compressedCr
