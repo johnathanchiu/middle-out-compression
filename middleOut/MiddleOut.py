@@ -92,7 +92,7 @@ class MiddleOutUtils:
 
     @staticmethod
     def build_dict(byte_lib):
-        return {byte_lib: '00', tuple(byte_lib[:1]): '010', tuple(byte_lib[:2]): '011'}
+        return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}
 
     @staticmethod
     def build_decomp_library(lib):
@@ -126,7 +126,7 @@ class MiddleOut:
         return decompressed
 
     @staticmethod
-    def byte_compression_16(byte_stream, size=2, count_recursion=1, debug=True):
+    def byte_compression_16(byte_stream, size=2, count_recursion=1, debug=False):
         if debug:
             print("recursion count", count_recursion, "remaining length", len(byte_stream))
         count = 0
@@ -143,20 +143,22 @@ class MiddleOut:
             while tup in compression_dict:
                 compressor += 1
                 tup = tuple(byte_stream[count:count + compressor])
+            if len(tup) > 1:
+                tup = tuple(byte_stream[count:count + compressor - 1])
+            # print(tup, tup in compression_dict)
             if tup not in compression_dict:
                 compressed += '1'
                 uncompressed.append(byte_stream[count])
             else:
-                tup = tuple(byte_stream[count:count + compressor - 1])
                 compressed += compression_dict[tup]
             count += len(tup)
         if debug:
             print(uncompressed)
         return compressed_lib + compressed + \
-                    MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1)
+                    MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
 
     @staticmethod
-    def byte_compression_8(byte_stream, item_count, count_recursion=1, debug=True):
+    def byte_compression_8(byte_stream, item_count, count_recursion=1, debug=False):
         if debug:
             print("recursion count", count_recursion, "remaining length", len(byte_stream))
         compressed = ''
@@ -183,6 +185,6 @@ class MiddleOut:
         AssertionError(b == 8 and b == 16)
         if b == 8:
             items = MiddleOutUtils.make_count(image_coefficients)
-            return MiddleOut.byte_compression_8(image_coefficients, items)
+            return MiddleOut.byte_compression_8(image_coefficients, items, debug=False)
         elif b == 16:
-            return MiddleOut.byte_compression_16(image_coefficients)
+            return MiddleOut.byte_compression_16(image_coefficients, debug=False)

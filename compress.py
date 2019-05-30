@@ -109,7 +109,7 @@ if __name__ == '__main__':
     file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
     print()
     print("file size after (entropy) compression: ", size)
-    print("middle out compressed the file an extra: ", abs(mo_filesize - size), " bits")
+    print("middle out reduced the file: ", abs(mo_filesize - size * 8), "bits")
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
