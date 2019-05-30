@@ -68,7 +68,7 @@ def compress_image(image, file_name):
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
     print(len(compressedY + compressedCb + compressedCr))
-    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr, b=16)
     print("size after middleout:", len(middleout))
 
     dim = array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
@@ -78,7 +78,7 @@ def compress_image(image, file_name):
         pbar.set_description("writing file with entropy compressor")
         orig_size, size, filename = EntropyReduction.bz2(compressed, file_name)
 
-    return orig_size, size, filename
+    return orig_size, size, filename, len(middleout)
 
     # compress_bitset_y = middleout(compressedY)
     # compress_bitset_cb = middleout(compressedCb)
@@ -106,9 +106,10 @@ if __name__ == '__main__':
     # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     compressed_file_name = root_path + 'compressed/' + 'fileSizes/' + compressed_file
     image = imageio.imread(root_path + "tests/" + image_name)
-    file_size, size, filename = compress_image(image, compressed_file_name)
+    file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
     print()
     print("file size after (entropy) compression: ", size)
+    print("middle out compressed the file an extra: ", abs(mo_filesize - size), " bits")
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))

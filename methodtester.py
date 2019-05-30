@@ -44,16 +44,14 @@ class TestMiddleOut:
             x.append(tem)
         return MiddleOut.middle_out(x)
 
-    @staticmethod
-    def test_lib(coef, size=4):
-        return MiddleOutUtils.build_library(coef, size=size)
-
 
 if __name__ == '__main__':
     start_time = time.time()
     _, test_list = TestMiddleOut.generate_random_bitset(1000, set_seed=True, seed=8)
     EntropyReduction.bz2(test_list, '/Users/johnathanchiu/Downloads/test')
     compressed = TestMiddleOut.test_middleout_compression(1000, set_seed=True, seed=8)
+    uncompressed = TestMiddleOut.test_middleout_decompression(compressed)
+    TestMiddleOut.check_differences(test_list, uncompressed)
     print("len of compressed", len(compressed))
     print("--- %s seconds ---" % (time.time() - start_time))
 
