@@ -105,7 +105,10 @@ class MiddleOutUtils:
         return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', compression_lib
 
     @staticmethod
-    def build_decomp_library(lib):
+    def build_decomp_library(iden, lib):
+        if iden == '1':
+            tup = tuple([lib[0], lib[0]])
+            return {'00': tup, '010': lib[0], '011': lib[1]}
         return {'00': lib, '010': lib[0], '011': lib[1]}
 
 
@@ -116,11 +119,11 @@ class MiddleOut:
         count, other_counter = 0, 0
         if len(compressed) == 0:
             return decompressed
-        partition = compressed[16:length+16]
+        partition = compressed[17:length+17]
         length_other = MiddleOutUtils.get_count(partition)
-        bit_library = MiddleOutUtils.convertInt_list(compressed[:16], bits=8)
-        decompression_library = MiddleOutUtils.build_decomp_library(bit_library)
-        succeeding_values = MiddleOut.decompress(compressed[length+16:], length_other)
+        bit_library, identifier = MiddleOutUtils.convertInt_list(compressed[1:17], bits=8), compressed[0]
+        decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
+        succeeding_values = MiddleOut.decompress(compressed[length+17:], length_other)
         while count < length:
             if partition[count] == '0':
                 if partition[count + 1] == '1':
@@ -150,7 +153,7 @@ class MiddleOut:
         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict)
         if debug:
             print(uncompressed)
-        return identifier + compressed_lib + compressed +\
+        return identifier + compressed_lib + compressed + \
                MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
 
     @staticmethod
@@ -172,7 +175,6 @@ class MiddleOut:
             else:
                 compressed += compression_dict[tup]
             count += len(tup)
-        # print("compressed values", countc)
         return compressed, uncompressed
 
     @staticmethod
