@@ -68,8 +68,10 @@ def compress_image(image, file_name):
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
     print(len(compressedY + compressedCb + compressedCr))
-    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
     print("size after middleout:", len(middleout))
+    # if len(uncompressed) > 0:
+    #     EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
 
     dim = array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
     compressed = dim + compressedY + compressedCb + compressedCr

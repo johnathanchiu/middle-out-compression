@@ -133,18 +133,20 @@ class MiddleOut:
         if debug:
             print("recursion count", count_recursion, "remaining length", len(byte_stream))
         compressed = ''
+        uncompressed = []
         if len(byte_stream) == 0:
-            return compressed
+            return compressed, uncompressed
         compression_lib, occprob = MiddleOutUtils.build_library(byte_stream, debug=debug)
-        # if occprob / len(byte_stream) >= 0.5:
+        if debug:
+            print(occprob)
         compression_dict = MiddleOutUtils.build_dict(compression_lib)
         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict)
-        # TODO: build tree
         if debug:
             print(uncompressed)
         compressed_lib = MiddleOutUtils.convertBin_list(compression_lib)
-        return compressed_lib + compressed + \
-                    MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+        comp, uncompressed = MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+        return compressed_lib + compressed + comp, uncompressed
+
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, size=2):
@@ -169,4 +171,4 @@ class MiddleOut:
 
     @staticmethod
     def middle_out(image_coefficients):
-        return MiddleOut.byte_compression(image_coefficients, debug=False)
+        return MiddleOut.byte_compression(image_coefficients, debug=True)
