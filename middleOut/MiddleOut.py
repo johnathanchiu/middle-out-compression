@@ -91,7 +91,12 @@ class MiddleOutUtils:
         return Counter(byte_stream)
 
     @staticmethod
-    def build_dict(byte_lib):
+    def build_dict(byte_lib, byte_stream):
+        if byte_lib[0] == byte_lib[1]:
+            largest_values = MiddleOutUtils.make_count(byte_stream)
+            largest_values[byte_lib[0]] = 0
+            largest = MiddleOutUtils.max_key(largest_values)
+            return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}
         return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}
 
     @staticmethod
@@ -129,13 +134,15 @@ class MiddleOut:
     def byte_compression_16(byte_stream, size=2, count_recursion=1, debug=False):
         if debug:
             print("recursion count", count_recursion, "remaining length", len(byte_stream))
+            # if count_recursion == 8:
+            #     return '', byte_stream
         count = 0
         compressed = ''
         uncompressed = []
         if len(byte_stream) == 0:
             return compressed
         compression_lib = MiddleOutUtils.build_library(byte_stream, debug=debug)
-        compression_dict = MiddleOutUtils.build_dict(compression_lib)
+        compression_dict = MiddleOutUtils.build_dict(compression_lib, byte_stream)
         compressed_lib = MiddleOutUtils.convertBin_list(compression_lib)
         while count < len(byte_stream) - size:
             compressor = 1
@@ -154,8 +161,9 @@ class MiddleOut:
             count += len(tup)
         if debug:
             print(uncompressed)
+            print(compressed)
         return compressed_lib + compressed + \
-                    MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+                MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
 
     @staticmethod
     def byte_compression_8(byte_stream, item_count, count_recursion=1, debug=False):
@@ -187,4 +195,5 @@ class MiddleOut:
             items = MiddleOutUtils.make_count(image_coefficients)
             return MiddleOut.byte_compression_8(image_coefficients, items, debug=False)
         elif b == 16:
+            print("number of different values:", len(Counter(image_coefficients)))
             return MiddleOut.byte_compression_16(image_coefficients, debug=False)

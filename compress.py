@@ -80,16 +80,6 @@ def compress_image(image, file_name):
 
     return orig_size, size, filename, len(middleout)
 
-    # compress_bitset_y = middleout(compressedY)
-    # compress_bitset_cb = middleout(compressedCb)
-    # compress_bitset_cr = middleout(compressedCr)
-
-    # bit_file = dimensions + padding + compress_bitset_y + compress_bitset_cb + compress_bitset_cr
-    # appended_bits = len(bit_file) - (len(bit_file) % 8)
-    # bit_file += MiddleOutUtils.convertBin(appended_bits, bits=3)
-    # size = len(bit_file)
-    # writeFile(bit_file)
-
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -108,8 +98,8 @@ if __name__ == '__main__':
     image = imageio.imread(root_path + "tests/" + image_name)
     file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
     print()
-    print("file size after (entropy) compression: ", size)
-    print("middle out reduced the file: ", abs(mo_filesize - size * 8), "bits")
+    print("file size after (entropy) compression: ", size, "bytes (" + str(size * 8) + " bits)")
+    print("middle out reduced the file: ", mo_filesize - size * 8, "bits")
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
