@@ -126,7 +126,7 @@ class MiddleOut:
         return decompressed
 
     @staticmethod
-    def byte_compression_16(byte_stream, size=2, count_recursion=1, debug=False):
+    def byte_compression(byte_stream, size=2, count_recursion=1, debug=False):
         if debug:
             print("recursion count", count_recursion, "remaining length", len(byte_stream))
         count = 0
@@ -155,36 +155,8 @@ class MiddleOut:
         if debug:
             print(uncompressed)
         return compressed_lib + compressed + \
-                    MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+                    MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
 
     @staticmethod
-    def byte_compression_8(byte_stream, item_count, count_recursion=1, debug=False):
-        if debug:
-            print("recursion count", count_recursion, "remaining length", len(byte_stream))
-        compressed = ''
-        uncompressed = []
-        length_bytes = len(byte_stream)
-        if length_bytes == 0:
-            return compressed
-        compressed_lib = MiddleOutUtils.max_key(item_count)
-        if debug:
-            print(compressed_lib)
-            print(item_count[compressed_lib])
-        for byte in byte_stream:
-            if byte == compressed_lib:
-                compressed += '0'
-            else:
-                compressed += '1'
-                uncompressed.append(byte)
-        item_count[compressed_lib] = 0
-        return MiddleOutUtils.convertBin(compressed_lib) + compressed + \
-                    MiddleOut.byte_compression_8(uncompressed, item_count, count_recursion=count_recursion+1)
-
-    @staticmethod
-    def middle_out(image_coefficients, b=8):
-        AssertionError(b == 8 and b == 16)
-        if b == 8:
-            items = MiddleOutUtils.make_count(image_coefficients)
-            return MiddleOut.byte_compression_8(image_coefficients, items, debug=False)
-        elif b == 16:
-            return MiddleOut.byte_compression_16(image_coefficients, debug=False)
+    def middle_out(image_coefficients):
+        return MiddleOut.byte_compression(image_coefficients, debug=False)
