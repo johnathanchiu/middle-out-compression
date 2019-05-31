@@ -111,6 +111,7 @@ class MiddleOut:
         count, other_counter = 0, 0
         if len(compressed) == 0:
             return decompressed
+        # TODO: fix decompression to encode whether or not the second largest value in list is added.
         partition = compressed[16:length+16]
         length_other = MiddleOutUtils.get_count(partition)
         bit_library = MiddleOutUtils.convertInt_list(compressed[:16], bits=8)
@@ -162,6 +163,8 @@ class MiddleOut:
         if debug:
             print(uncompressed)
             print(compressed)
+        # TODO: if keeping this method, need to ensure that we add the
+        #  other value to the compressed lib when value 1 equals value 2
         return compressed_lib + compressed + \
                 MiddleOut.byte_compression_16(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
 
