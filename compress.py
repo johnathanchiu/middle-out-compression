@@ -42,13 +42,13 @@ def compress_image(image, file_name):
         pbar.set_description("Converting image sample space RGB -> YCbCr")
         YCBCR = rgb2ycbcr(image)
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 1])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 2])[:o_length, :o_width]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
+                (YCBCR[:, :, 1])[:o_length, :o_width],\
+                (YCBCR[:, :, 2])[:o_length, :o_width]
 
-    Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], \
-                (YCBCR[:, :, 1])[:1000, :1000], \
-                (YCBCR[:, :, 2])[:1000, :1000]
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[:2000, :2000], \
+    #             (YCBCR[:, :, 1])[:2000, :2000], \
+    #             (YCBCR[:, :, 2])[:2000, :2000]
 
     c_length, c_width = Y.shape
     p_length, p_width = calc_matrix_eight_size(Y)
@@ -67,8 +67,8 @@ def compress_image(image, file_name):
     compressedCb = compress(Cb, debug=False, c_layer=True)
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
-    print(len(compressedY + compressedCb + compressedCr))
-    middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    print("length of coefficients", len(compressedY + compressedCb + compressedCr))
+    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
     print("size after middleout:", len(middleout))
     # if len(uncompressed) > 0:
     #     EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
@@ -81,16 +81,6 @@ def compress_image(image, file_name):
         orig_size, size, filename = EntropyReduction.bz2(compressed, file_name)
 
     return orig_size, size, filename, len(middleout)
-
-    # compress_bitset_y = middleout(compressedY)
-    # compress_bitset_cb = middleout(compressedCb)
-    # compress_bitset_cr = middleout(compressedCr)
-
-    # bit_file = dimensions + padding + compress_bitset_y + compress_bitset_cb + compress_bitset_cr
-    # appended_bits = len(bit_file) - (len(bit_file) % 8)
-    # bit_file += MiddleOutUtils.convertBin(appended_bits, bits=3)
-    # size = len(bit_file)
-    # writeFile(bit_file)
 
 
 if __name__ == '__main__':
@@ -111,7 +101,7 @@ if __name__ == '__main__':
     file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
     print()
     print("file size after (entropy) compression: ", size)
-    print("middle out reduced the file: ", abs(mo_filesize - size * 8), "bits")
+    print("middle out reduced the file: ", mo_filesize - size * 8, "bits")
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
