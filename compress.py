@@ -42,13 +42,13 @@ def compress_image(image, file_name):
         pbar.set_description("Converting image sample space RGB -> YCbCr")
         YCBCR = rgb2ycbcr(image)
 
-    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
-                (YCBCR[:, :, 1])[:o_length, :o_width],\
-                (YCBCR[:, :, 2])[:o_length, :o_width]
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
+    #             (YCBCR[:, :, 1])[:o_length, :o_width],\
+    #             (YCBCR[:, :, 2])[:o_length, :o_width]
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:2000, :2000], \
-    #             (YCBCR[:, :, 1])[:2000, :2000], \
-    #             (YCBCR[:, :, 2])[:2000, :2000]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], \
+                (YCBCR[:, :, 1])[:1000, :1000], \
+                (YCBCR[:, :, 2])[:1000, :1000]
 
     c_length, c_width = Y.shape
     p_length, p_width = calc_matrix_eight_size(Y)
@@ -68,10 +68,10 @@ def compress_image(image, file_name):
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
     print("length of coefficients", len(compressedY + compressedCb + compressedCr))
-    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
     print("size after middleout:", len(middleout))
-    # if len(uncompressed) > 0:
-    #     EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
+    if len(uncompressed) > 0:
+        EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
 
     dim = array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
     compressed = dim + compressedY + compressedCb + compressedCr
