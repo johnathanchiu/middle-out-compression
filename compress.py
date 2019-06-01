@@ -42,13 +42,13 @@ def compress_image(image, file_name):
         pbar.set_description("Converting image sample space RGB -> YCbCr")
         YCBCR = rgb2ycbcr(image)
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 1])[:o_length, :o_width],\
-    #             (YCBCR[:, :, 2])[:o_length, :o_width]
-
-    Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], \
-                (YCBCR[:, :, 1])[:1000, :1000], \
-                (YCBCR[:, :, 2])[:1000, :1000]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
+                (YCBCR[:, :, 1])[:o_length, :o_width],\
+                (YCBCR[:, :, 2])[:o_length, :o_width]
+    #
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], \
+    #             (YCBCR[:, :, 1])[:1000, :1000], \
+    #             (YCBCR[:, :, 2])[:1000, :1000]
 
     c_length, c_width = Y.shape
     p_length, p_width = calc_matrix_eight_size(Y)
@@ -67,11 +67,11 @@ def compress_image(image, file_name):
     compressedCb = compress(Cb, debug=False, c_layer=True)
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
-    print("length of coefficients", len(compressedY + compressedCb + compressedCr))
-    middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
-    print("size after middleout:", len(middleout))
-    if len(uncompressed) > 0:
-        EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
+    # print("length of coefficients", len(compressedY + compressedCb + compressedCr))
+    # middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    # print("size after middleout:", len(middleout))
+    # if len(uncompressed) > 0:
+    #     EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
 
     dim = array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
     compressed = dim + compressedY + compressedCb + compressedCr
@@ -80,7 +80,8 @@ def compress_image(image, file_name):
         pbar.set_description("writing file with entropy compressor")
         orig_size, size, filename = EntropyReduction.bz2(compressed, file_name)
 
-    return orig_size, size, filename, len(middleout)
+    return orig_size, size, filename\
+        # , len(middleout)
 
 
 if __name__ == '__main__':
@@ -98,10 +99,11 @@ if __name__ == '__main__':
     # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
     compressed_file_name = root_path + 'compressed/' + 'fileSizes/' + compressed_file
     image = imageio.imread(root_path + "tests/" + image_name)
-    file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
+    # file_size, size, filename, mo_filesize = compress_image(image, compressed_file_name)
+    file_size, size, filename = compress_image(image, compressed_file_name)
     print()
     print("file size after (entropy) compression: ", size)
-    print("middle out reduced the file: ", mo_filesize - size * 8, "bits")
+    # print("middle out reduced the file: ", mo_filesize - size * 8, "bits")
     print("file reduction percentage: ", (1 - (size / file_size)) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))

@@ -42,9 +42,9 @@ def decompress_image(file_name):
         if debug: print("image: ", np.round(image + 128))
         return image + 128
 
-    def decompress_bitset(bitset):
-        decompressed = MiddleOut.decompressStream(bitset)
-        return MiddleOutUtils.convertInt_list(decompressed)
+    # def decompress_bitset(bitset):
+    #     decompressed = MiddleOut.decompress(bitset, 1)
+    #     return MiddleOutUtils.convertInt_list(decompressed)
 
     # compressed_bitset = readFile()
     pbar = tqdm(range(1))
