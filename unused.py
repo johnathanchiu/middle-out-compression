@@ -17,14 +17,6 @@ def rearrangeDC(compressed_values, layer=None):
     return compressed_valuesAC, compressed_valuesDC
 
 
-def unaryconverter(lis):
-    unary = []
-    for y in lis:
-        [unary.append('1') for _ in range(y)]
-        unary.append('0')
-    return ''.join(unary)
-
-
 @staticmethod
 def build_library2(uncompressed, size=8):
     dictionary = {}

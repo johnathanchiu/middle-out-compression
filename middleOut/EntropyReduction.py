@@ -1,6 +1,5 @@
 from middleOut.EntropyReduction import *
-from middleOut.MiddleOut import *
-from middleOut.utils import *
+from JPEG.utils import *
 
 import numpy as np
 

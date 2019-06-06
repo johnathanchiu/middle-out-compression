@@ -1,15 +1,13 @@
 from middleOut.EntropyReduction import *
 from middleOut.MiddleOut import *
 from middleOut.utils import *
+from JPEG.utils import *
 
 from tqdm import tqdm
-from tqdm import trange
 
-import collections
 import imageio
 import array
 
-import argparse
 import time
 
 
@@ -45,7 +43,7 @@ def compress_image(image, file_name):
     Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width],\
                 (YCBCR[:, :, 1])[:o_length, :o_width],\
                 (YCBCR[:, :, 2])[:o_length, :o_width]
-    #
+
     # Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], \
     #             (YCBCR[:, :, 1])[:1000, :1000], \
     #             (YCBCR[:, :, 2])[:1000, :1000]
@@ -53,23 +51,24 @@ def compress_image(image, file_name):
     c_length, c_width = Y.shape
     p_length, p_width = calc_matrix_eight_size(Y)
     # print("padded image dimensions: ", p_length, p_width); print()
-    dimensions = MiddleOutUtils.convertBin(p_length, bits=16) + MiddleOutUtils.convertBin(p_width, bits=16)
+    dimensions = convertBin(p_length, bits=16) + convertBin(p_width, bits=16)
     padding = [p_length - c_length, p_width - c_width]
-    p_length = [MiddleOutUtils.convertInt(dimensions[:8], bits=8),
-                MiddleOutUtils.convertInt(dimensions[8:16], bits=8)]
-    p_width = [MiddleOutUtils.convertInt(dimensions[16:24], bits=8),
-               MiddleOutUtils.convertInt(dimensions[24:32], bits=8)]
+    p_length = [convertInt(dimensions[:8], bits=8),
+                convertInt(dimensions[8:16], bits=8)]
+    p_width = [convertInt(dimensions[16:24], bits=8),
+               convertInt(dimensions[24:32], bits=8)]
 
-    # padding = MiddleOutUtils.convertBin(p_length - c_length, bits=8) + \
-    #           MiddleOutUtils.convertBin(p_length - c_width, bits=8)
+    # padding = convertBin(p_length - c_length, bits=8) + \
+    #           convertBin(p_length - c_width, bits=8)
 
     compressedY = compress(Y, debug=False)
     compressedCb = compress(Cb, debug=False, c_layer=True)
     compressedCr = compress(Cr, debug=False, c_layer=True)
 
-    # print("length of coefficients", len(compressedY + compressedCb + compressedCr))
+    print("length of coefficients", len(compressedY + compressedCb + compressedCr))
     # middleout, uncompressed = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
-    # print("size after middleout:", len(middleout))
+    middleout = MiddleOut.middle_out(compressedY + compressedCb + compressedCr)
+    print("size after middleout:", len(middleout))
     # if len(uncompressed) > 0:
     #     EntropyReduction.bz2(uncompressed, "/Users/johnathanchiu/Downloads/test")
 
