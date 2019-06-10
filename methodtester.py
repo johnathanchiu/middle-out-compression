@@ -10,7 +10,7 @@ import time
 class TestMiddleOut:
 
     @staticmethod
-    def check_differences(a, b):
+    def check_differences(a, b, array=True):
         counter = len(a)
         if len(a) != len(b):
             print("wrong lengths")
@@ -21,7 +21,10 @@ class TestMiddleOut:
                 print("error starts here: ", b[count:])
                 return
             count += 1
-        print("bitsets are the same")
+        if array:
+            print("arrays are the same")
+        else:
+            print("bitsets are the same")
 
     @staticmethod
     def generate_random_bitset(bitset_size, set_seed=False, seed=0):
@@ -46,17 +49,17 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes):
-        return MiddleOut.middle_out(bytes, b=16)
+        return MiddleOut.middle_out(bytes, debug=False)
+
+    @staticmethod
+    def run_middelout_decomp(bits):
+        return MiddleOut.middle_out_decompress(bits, debug=True)
 
 if __name__ == '__main__':
     start_time = time.time()
-    # _, test_list = TestMiddleOut.generate_random_bitset(1000, set_seed=True, seed=8)
-    # EntropyReduction.bz2(test_list, '/Users/johnathanchiu/Downloads/test')
-    # compressed = TestMiddleOut.test_middleout_compression(1000, set_seed=True, seed=8)
-    # uncompressed = TestMiddleOut.test_middleout_decompression(compressed)
-    # TestMiddleOut.check_differences(test_list, uncompressed)
-    l = [-28, -6, -4, -1, -2, -2, 0, 1, 0, 1, 0, -29, 0, -2, -1, 0, -1, 0, 1, 0, -27, 0, 3, -1, 0, 1, 0, 0, 0, 0, -4, 3, -1, -1, 1, 0, -1, 0]
-    c = TestMiddleOut.run_middleout(l)
-    # print("len of compressed", len(compressed))
+    test = [1, 2, 3, 1, 2, 3, 3, 2, 1, 3, 3, 4, 5, 1, 1, 3, 2, 6, 4]
+    c = TestMiddleOut.run_middleout(test)
+    de = TestMiddleOut.run_middelout_decomp(c)
+    TestMiddleOut.check_differences(test, de)
     print("--- %s seconds ---" % (time.time() - start_time))
 

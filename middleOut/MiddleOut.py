@@ -47,6 +47,26 @@ class MiddleOutUtils:
         return count
 
     @staticmethod
+    def get_bit_count(stream, length, unary='1'):
+        count, bit = 0, 0
+        while count < length:
+            if stream[bit] == '1':
+                if unary == '1':
+                    unary_count = unaryToInt(stream[bit:])
+                    bit += unary_count + 1
+                    values_to_grab = positive_int(stream[bit:bit+unary_count])
+                    bit += unary_count
+                    count += values_to_grab
+                else:
+                    count += 1; bit += 1
+            else:
+                bit += 2
+                if stream[bit - 1] == '1':
+                    bit += 1
+                count += 1
+        return bit
+
+    @staticmethod
     def build_library(byte_stream, size=2, debug=False):
         count = 0
         dictionary = {}
@@ -96,20 +116,26 @@ class MiddleOutUtils:
 class MiddleOut:
     # TODO: test decompress function
     @staticmethod
-    def decompress(compressed, length):
+    def decompress(compressed, length, debug=False):
         decompressed = []
         count, succeeding_count = 0, 0
         if len(compressed) == 0:
             return decompressed
         identifier, occiden, bit_library = compressed[0], compressed[1], compressed[2:18]
-        partition = compressed[18:length+18]
+        if debug: print("current size:", length)
+        if debug: print("iden:", identifier, ",", "occurence:", occiden, ",", "library:", bit_library)
+        partition_size = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden)
+        partition = compressed[18:partition_size+18]
+        if debug: print("size of stream:", partition_size, ",", "stream:", partition)
         if occiden == '0':
             length_other = MiddleOutUtils.get_count(partition, length)
         else:
             length_other = MiddleOutUtils.get_count_unary(partition, length)
+        print("length of next bitset:", length_other)
         bit_library = convertInt_list(bit_library, bits=8)
         decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
-        succeeding_values = MiddleOut.decompress(compressed[length+18:], length_other)
+        if debug: print("decomp library:", decompression_library)
+        succeeding_values = MiddleOut.decompress(compressed[length+18:], length_other+18)
         while count < length:
             if partition[count] == '0':
                 if partition[count + 1] == '1':
@@ -135,7 +161,8 @@ class MiddleOut:
     @staticmethod
     def byte_compression(byte_stream, size=2, count_recursion=1, debug=False):
         if debug:
-            print("recursion count", count_recursion, "remaining length", len(byte_stream))
+            print("recursion count", count_recursion, ",", "remaining length", len(byte_stream))
+            print("remaining values", byte_stream)
         compressed = ''
         if len(byte_stream) == 0:
             return compressed
@@ -152,25 +179,29 @@ class MiddleOut:
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, occ=False, size=2, debug=False):
-        if debug: print("current length: ", len(byte_stream))
+        if debug: print("current length:", len(byte_stream), ",", "unary:", occ)
         count, unc_count = 0, 0
         compressed = ''
         uncompressed = []
-        while count < len(byte_stream) - size:
+        while count < len(byte_stream):
             compressor = 1
-            tup = tuple(byte_stream[count:count + compressor])
-            while tup in compression_dict:
-                compressor += 1
-                tup = tuple(byte_stream[count:count + compressor])
-            if len(tup) > 1:
-                tup = tuple(byte_stream[count:count + compressor - 1])
+            tup = tuple(byte_stream[count:count+compressor])
+            if count < len(byte_stream) - 1:
+                while tup in compression_dict and count+compressor < len(byte_stream)+1:
+                    compressor += 1
+                    tup = tuple(byte_stream[count:count+compressor])
+                if len(tup) > 1:
+                    tup = tuple(byte_stream[count:count+compressor-1])
+            if debug: print("tuple values:", tup)
             if tup not in compression_dict:
+                if debug: print("tuple not in dict")
                 if occ:
-                    compressed += '1'
-                else:
                     unc_count += 1
+                else:
+                    compressed += '1'
                 uncompressed.append(byte_stream[count])
             else:
+                if debug: print("tuple in dict")
                 if occ:
                     if unc_count > 0:
                         minbits = minimum_bits(unc_count-1)
@@ -179,16 +210,24 @@ class MiddleOut:
                         unc_count = 0
                 compressed += compression_dict[tup]
             count += len(tup)
-        if debug: print("bitstream length: ", len(compressed))
+            if debug: print("compressed:", compressed)
+        if debug: print("bitstream length:", len(compressed))
         return compressed, uncompressed
 
     @staticmethod
-    def middle_out(image_coefficients):
-        return MiddleOut.byte_compression(image_coefficients, debug=False)
+    def middle_out(image_coefficients, debug=False):
+        length = len(image_coefficients)
+        minbits = minimum_bits(length)
+        unary = unaryconverter(minbits)
+        size = positive_binary(length, minbits)
+        if debug: print("header:", unary + size, ",", "size:", length)
+        return unary + size + MiddleOut.byte_compression(image_coefficients, debug=debug)
 
     @staticmethod
-    def middle_out_decompress(bitstream):
+    def middle_out_decompress(bitstream, debug=False):
         count, unary_count = 0, unaryToInt(bitstream)
         count += unary_count + 1
         length = positive_int(bitstream[count:count+unary_count])
-        return MiddleOut.decompress(bitstream[count+unary_count:], length)
+        bitstream = bitstream[count+unary_count:]
+        if debug: print("size:", length, ",", "compressed stream:", bitstream)
+        return MiddleOut.decompress(bitstream, length, debug=True)
