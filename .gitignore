@@ -1,5 +1,14 @@
+# IntelliJ files
 *.iml
 *.xml
+
+# python compiled files
 *.pyc
+
+# data files
 *.bz2
 *.bin
+
+# testing only python files
+unused.py
+smalltester.py

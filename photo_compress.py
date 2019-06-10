@@ -69,7 +69,8 @@ def compress_image(image, file_name):
     for _ in pbar_mo:
         pbar_mo.set_description("running middle out compresssion")
         mo_compressed = MiddleOut.byte_compression(compressed)
-    print("size of file after middleout", len(mo_compressed))
+
+    print(); print("size of file after middleout", len(mo_compressed))
 
     pbar = tqdm(range(1))
     for _ in pbar:
@@ -81,7 +82,7 @@ def compress_image(image, file_name):
 
 if __name__ == '__main__':
     # print(start_time); print()
-    root_path = None  # enter file path of image
+    root_path = '/Users/johnathanchiu/Documents/'  # enter file path of image
     # ap = argparse.ArgumentParser()
     # ap.add_argument("-i", "--image", required=True,
     #                 help="image name")
@@ -98,8 +99,9 @@ if __name__ == '__main__':
     else:
         image_name, compressed_file = input("Image path: "), \
                                       input("Compressed file name (whatever you want to name the bz2 compressed file): ")
-        compressed_file_name = root_path + compressed_file
-        image = imageio.imread(root_path + image_name)
+        compressed_file_name = root_path + 'middleout/bz2ref/' + compressed_file
+        image_name = root_path + 'CompressionPics/tests/' + image_name
+        image = imageio.imread(image_name)
     start_time = time.time()
     size, filename = compress_image(image, compressed_file_name)
     file_size = os.stat(image_name).st_size

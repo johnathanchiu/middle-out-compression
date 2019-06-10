@@ -56,8 +56,8 @@ def unaryconverter(num):
 
 
 def unaryToInt(unr):
-    count, num = 0, 0
-    while unr[count] != '0':
+    num = 0
+    while unr[num] != '0':
         num += 1
     return num
 
