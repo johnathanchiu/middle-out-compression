@@ -5,8 +5,8 @@ import numpy as np
 
 def split(array, nrows, ncols):
     """Split a matrix into sub-matrices."""
-    return [array[x:x + nrows, y:y + ncols] for x in range(0, array.shape[0], nrows) for y in range(0, array.shape[1],
-                                                                                                    ncols)]
+    return np.array([array[x:x + nrows, y:y + ncols] for x in range(0, array.shape[0], nrows)
+            for y in range(0, array.shape[1], ncols)], dtype=np.int8)
 
 
 # converts rgb to ycbcr colorspace
@@ -49,14 +49,15 @@ def calc_matrix_eight_size(image_layer):
 
 
 # grab top row of 8 by 8 and 0:4
-def capture(image_patch, c_layer=False):
+def capture(image_patch, values=64, c_layer=False):
+    image_patch = image_patch.flatten().astype(int)
     if c_layer:
-        return np.round(image_patch[0, :].astype(int))
-    return np.round(np.append(image_patch[0, :].astype(int), image_patch[1, :].astype(int)))
+        return image_patch[:int(values * 1 / 2)]
+    return image_patch[:int(values)]
 
 
 def rebuild(image):
-    return np.round(np.append(image, [0]*(64-len(image))).reshape((8, 8)))
+    return np.append(image, [0]*(64-len(image))).reshape((8, 8))
 
 
 def zig_zag(input_matrix, block_size=8, debug=False):
@@ -76,7 +77,7 @@ def zig_zag(input_matrix, block_size=8, debug=False):
                 z[index] = input_matrix[i - j, j]
     z = z.reshape((8, 8), order='C')
     if debug: print("zig zag: ", np.round(z)); print()
-    return np.round(z)
+    return z
 
 
 def zig_zag_reverse(input_matrix, block_size=8, debug=False):
@@ -95,7 +96,7 @@ def zig_zag_reverse(input_matrix, block_size=8, debug=False):
             else:
                 output_matrix[i - j, j] = input_matrix[index]
     if debug: print("zig zag reverse: ", output_matrix); print()
-    return output_matrix
+    return output_matrix.astype(np.int8)
 
 
 def dct_2d(image, debug=False):
@@ -124,49 +125,49 @@ def merge_blocks(input_list, rows, columns):
 
 def quantize(input, debug=False, c_layer=False):
     if debug: print(input); print()
-    q = np.array([[16, 13, 18, 15, 13, 21, 29, 31],
-                  [12, 11, 11, 19, 12, 58, 60, 55],
-                  [9, 14, 15, 14, 40, 57, 69, 56],
-                  [11, 13, 15, 29, 51, 87, 80, 62],
-                  [11, 13, 15, 56, 68, 109, 103, 77],
-                  [24, 35, 55, 64, 81, 104, 113, 92],
-                  [49, 64, 78, 87, 103, 121, 120, 101],
-                  [72, 92, 95, 98, 112, 100, 103, 99]])
-    q_c = np.array([[12, 14, 12, 11, 99, 99, 99, 99],
-                    [8, 13, 13, 66, 99, 99, 99, 99],
-                    [9, 14, 56, 99, 99, 99, 99, 99],
-                    [47, 66, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99]])
+    q = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
+                   [12, 12, 14, 19, 26, 58, 60, 55],
+                   [14, 13, 16, 24, 40, 57, 69, 56],
+                   [14, 17, 22, 29, 51, 87, 80, 62],
+                   [18, 22, 37, 56, 68, 109, 103, 77],
+                   [24, 35, 55, 64, 81, 104, 113, 92],
+                   [49, 64, 78, 87, 103, 121, 120, 101],
+                   [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.float16)
+    q_c = np.array([[14, 8, 9, 16, 24, 40, 51, 61],
+                    [10, 12, 14, 19, 26, 58, 60, 55],
+                    [14, 13, 16, 24, 40, 57, 69, 56],
+                    [14, 17, 22, 29, 51, 87, 80, 62],
+                    [18, 22, 37, 56, 68, 109, 103, 77],
+                    [24, 35, 55, 64, 81, 104, 113, 92],
+                    [49, 64, 78, 87, 103, 121, 120, 101],
+                    [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.float16)
     if debug: print("quantize: ", input/q); print()
     if c_layer:
-        return input / q_c
-    return input / q
+        return np.round(input.astype(np.float16) / q_c).astype(np.int8)
+    return np.round(input.astype(np.float16) / q).astype(np.int8)
 
 
 def undo_quantize(input, debug=False, c_layer=False):
     if debug: print(input); print()
-    q = np.array([[16, 13, 18, 15, 13, 21, 29, 31],
-                  [12, 11, 11, 19, 12, 58, 60, 55],
-                  [9, 14, 15, 14, 40, 57, 69, 56],
-                  [11, 13, 15, 29, 51, 87, 80, 62],
-                  [11, 13, 15, 56, 68, 109, 103, 77],
+    q = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
+                  [12, 12, 14, 19, 26, 58, 60, 55],
+                  [14, 13, 16, 24, 40, 57, 69, 56],
+                  [14, 17, 22, 29, 51, 87, 80, 62],
+                  [18, 22, 37, 56, 68, 109, 103, 77],
                   [24, 35, 55, 64, 81, 104, 113, 92],
                   [49, 64, 78, 87, 103, 121, 120, 101],
-                  [72, 92, 95, 98, 112, 100, 103, 99]])
-    q_c = np.array([[12, 14, 12, 11, 99, 99, 99, 99],
-                    [8, 13, 13, 66, 99, 99, 99, 99],
-                    [9, 14, 56, 99, 99, 99, 99, 99],
-                    [47, 66, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99],
-                    [99, 99, 99, 99, 99, 99, 99, 99]])
+                  [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.float16)
+    q_c = np.array([[14, 8, 9, 16, 24, 40, 51, 61],
+                    [10, 12, 14, 19, 26, 58, 60, 55],
+                    [14, 13, 16, 24, 40, 57, 69, 56],
+                    [14, 17, 22, 29, 51, 87, 80, 62],
+                    [18, 22, 37, 56, 68, 109, 103, 77],
+                    [24, 35, 55, 64, 81, 104, 113, 92],
+                    [49, 64, 78, 87, 103, 121, 120, 101],
+                    [72, 92, 95, 98, 112, 100, 103, 99]], dtype=np.float16)
     if debug: print("undo quantize: ", input*q); print()
     if c_layer:
-        return input * q_c
-    return input * q
+        return input.astype(np.float16) * q_c
+    return input.astype(np.float16) * q
 
 
