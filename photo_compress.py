@@ -74,7 +74,7 @@ def compress_image(image, file_name):
         pbar.set_description("writing file with entropy compressor")
         size, filename = EntropyReduction.bz2(compressed, file_name)
 
-    print(); print("size of array:", len(compressed) * 8); print("size of file after middleout",
+    print(); print("size of data:", len(compressed) * 8); print("size of file after middleout",
                                                                  int(np.round(len(mo_compressed) / 8)))
 
     return size, filename
