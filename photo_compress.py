@@ -68,13 +68,17 @@ def compress_image(image, file_name):
     for _ in pbar_mo:
         pbar_mo.set_description("running middle out compresssion")
         mo_compressed = MiddleOut.byte_compression(compressed)
+        # if len(uncompressed) > 0:
+        #     size_mo, _ = EntropyReduction.bz2(compressed, 'a')
 
     pbar = tqdm(range(1))
     for _ in pbar:
         pbar.set_description("writing file with entropy compressor")
         size, filename = EntropyReduction.bz2(compressed, file_name)
 
-    print(); print("size of array:", len(compressed) * 8); print("size of file after middleout", len(mo_compressed))
+    print(); print("size of array:", len(compressed) * 8); print("size of file after middleout",
+                                                                 int(np.round(len(mo_compressed) / 8)))
+    # if len(uncompressed) > 0: print("stacked compression size after:", size_mo)
 
     return size, filename
 

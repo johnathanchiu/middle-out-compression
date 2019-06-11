@@ -56,54 +56,34 @@ class EntropyReduction:
         return list(decompressed)
 
     @staticmethod
-    def __countzero(part_stream):
-        count = 0
-        for y in part_stream:
-            if y == 0:
-                count += 1
-            else:
+    def run_length_encode(arr):
+        # determine where the sequence is ending prematurely
+        last_nonzero = -1
+        for i, elem in enumerate(arr):
+            if elem != 0:
+                last_nonzero = i
+
+        # each symbol is a (RUNLENGTH, SIZE) tuple
+        symbols = []
+
+        # values are binary representations of array elements using SIZE bits
+        values = []
+
+        run_length = 0
+
+        for i, elem in enumerate(arr):
+            if i > last_nonzero:
+                symbols.append((0, 0))
+                values.append(int_to_binstr(0))
                 break
-        return count
-
-    @staticmethod
-    def __countone(part_stream):
-        count = 0
-        for y in part_stream:
-            if y == '1':
-                count += 1
+            elif elem == 0 and run_length < 15:
+                run_length += 1
             else:
-                break
-        return count
-
-    @staticmethod
-    def rle(stream):
-        run_length = []
-        x = 0
-        while x < len(stream):
-            if stream[x] == 0:
-                run_length.append(0)
-                count_zero = EntropyReduction.__countzero(stream[x:])
-                run_length.append(count_zero)
-                x += count_zero
-            else:
-                run_length.append(stream[x])
-                x += 1
-        return run_length
-
-    @staticmethod
-    def rld(stream):
-        decoded = []
-        count = 0
-        while count < len(stream):
-            if stream[count] == 0:
-                for x in range(stream[count + 1]):
-                    decoded.append(0)
-                count += 1
-            else:
-                decoded.append(stream[count])
-                count += 1
-            count += 1
-        return decoded
+                size = bits_required(elem)
+                symbols.append((run_length, size))
+                values.append(int_to_binstr(elem))
+                run_length = 0
+        return symbols, values
 
     @staticmethod
     def rle_bit(stream):
