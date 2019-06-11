@@ -49,15 +49,15 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes):
-        return MiddleOut.middle_out(bytes, debug=True)
+        return MiddleOut.middle_out(bytes, debug=False)
 
     @staticmethod
     def run_middelout_decomp(bits):
-        return MiddleOut.middle_out_decompress(bits, debug=True)
+        return MiddleOut.middle_out_decompress(bits, debug=False)
 
 if __name__ == '__main__':
     start_time = time.time()
-    test = [10, 12, 11, 17, 65, 33, 1, 17, 1, 17, 1, 17, 33, 44, 33, 33, 1, 17]
+    # test = [10, 12, 11, 17, 65, 33, 1, 17, 1, 17, 1, 17, 33, 44, 33, 33, 1, 17]
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
     c = TestMiddleOut.run_middleout(test)
     print("size of middleout", len(c))

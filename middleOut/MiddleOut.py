@@ -65,37 +65,8 @@ class MiddleOutUtils:
         return {'00': lib, '010': lib[0], '011': lib[1]}
 
     @staticmethod
-    def get_count(bitset, length, typing='1'):
-        count, bit = 0, 0
-        while bit < length:
-            if bitset[bit] == typing:
-                count += 1; bit += 1
-            else:
-                bit += 2
-                if bitset[bit - 1] == '1':
-                    bit += 1
-        return count
-
-    @staticmethod
-    def get_count_unary(bitset, length, typing='1'):
-        count, bit = 0, 0
-        while bit < length:
-            if bitset[bit] == typing:
-                unary_count = unaryToInt(bitset[bit:])
-                bit += unary_count + 1
-                values_to_grab = positive_int(bitset[bit:bit+unary_count]) + 1
-                bit += unary_count
-                count += values_to_grab
-            else:
-                bit += 2
-                if bitset[bit - 1] == '1':
-                    bit += 1
-        return count
-
-    @staticmethod
-    def get_bit_count(stream, length, unary='1', debug=False):
-        if debug: print("stream", stream)
-        count, bit = 0, 0
+    def get_bit_count(stream, length, unary='1'):
+        count, count_other, bit = 0, 0, 0
         while count < length:
             if stream[bit] == '1':
                 if unary == '0':
@@ -103,16 +74,16 @@ class MiddleOutUtils:
                     bit += unary_count + 1
                     values_to_grab = positive_int(stream[bit:bit+unary_count]) + 1
                     bit += unary_count
-                    count += values_to_grab
+                    count += values_to_grab; count_other += values_to_grab
                 else:
-                    count += 1; bit += 1
+                    count += 1; count_other += 1; bit += 1
             else:
                 bit += 2
                 count += 2
                 if stream[bit - 1] == '1':
                     bit += 1
                     count -= 1
-        return bit
+        return bit, count_other
 
 
 class MiddleOut:
@@ -124,17 +95,13 @@ class MiddleOut:
             return decompressed
         identifier, occiden, bit_library = compressed[0], compressed[1], compressed[2:18]
         if debug: print("iden:", identifier, ",", "occurence:", occiden, ",", "library:", bit_library)
-        partition_size = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden, debug=debug)
+        partition_size, length_other = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden)
         partition = compressed[18:partition_size+18]
-        if debug: print("size of stream:", partition_size)
-        if occiden == '1':
-            length_other = MiddleOutUtils.get_count(partition, partition_size)
-        else:
-            length_other = MiddleOutUtils.get_count_unary(partition, partition_size)
-        if debug: print("length of next bitset:", length_other)
         bit_library = convertInt_list(bit_library, bits=8)
         decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
-        if debug: print("decomp library:", decompression_library)
+        if debug:
+            print("size of stream:", partition_size, "length of next bitset:", length_other)
+            print("decomp library:", decompression_library)
         succeeding_values = MiddleOut.decompress(compressed[partition_size+18:], length_other, debug=debug)
         while count < partition_size:
             if partition[count] == '0':

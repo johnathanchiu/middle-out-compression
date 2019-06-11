@@ -51,7 +51,6 @@ def compress_image(image, file_name):
 
     values_to_keep = 16
 
-    # print("padded image dimensions: ", p_length, p_width); print()
     dimensions = convertBin(p_length, bits=16) + convertBin(p_width, bits=16)
     padding = [p_length - c_length, p_width - c_width]
     p_length = [convertInt(dimensions[:8], bits=8), convertInt(dimensions[8:16], bits=8)]
@@ -82,15 +81,7 @@ def compress_image(image, file_name):
 
 if __name__ == '__main__':
     # print(start_time); print()
-    root_path = '/Users/johnathanchiu/Documents/'  # enter file path of image
-    # ap = argparse.ArgumentParser()
-    # ap.add_argument("-i", "--image", required=True,
-    #                 help="image name")
-    # ap.add_argument("-c", "--compressed", required=True,
-    #                 help="compressed file name")
-    # args = vars(ap.parse_args())
-    # image_name, compressed_file = args["image"], args["compressed"]
-    # compressed_file_name = root_path + "compressed/fileSizes/" + compressed_file
+    root_path = '/Users/johnathanchiu/Documents/'
     if root_path is None:
         image_name, compressed_file = input("Image path (You can set a root directory in the code): "), \
                                       input("Compressed file name (whatever you want to name the bz2 compressed file): ")
