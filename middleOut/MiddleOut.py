@@ -19,54 +19,6 @@ class MiddleOutUtils:
         return k[v.index(max(v))]
 
     @staticmethod
-    def get_count(bitset, length, typing='1'):
-        count, bit = 0, 0
-        while bit < length:
-            if bitset[bit] == typing:
-                count += 1; bit += 1
-            else:
-                bit += 2
-                if bitset[bit - 1] == '1':
-                    bit += 1
-        return count
-
-    @staticmethod
-    def get_count_unary(bitset, length, typing='1'):
-        count, bit = 0, 0
-        while bit < length:
-            if bitset[bit] == typing:
-                unary_count = unaryToInt(bitset[bit:])
-                bit += unary_count + 1
-                values_to_grab = positive_int(bitset[bit:bit+unary_count])
-                bit += unary_count
-                count += values_to_grab
-            else:
-                bit += 2
-                if bitset[bit - 1] == '1':
-                    bit += 1
-        return count
-
-    @staticmethod
-    def get_bit_count(stream, length, unary='1'):
-        count, bit = 0, 0
-        while count < length:
-            if stream[bit] == '1':
-                if unary == '1':
-                    unary_count = unaryToInt(stream[bit:])
-                    bit += unary_count + 1
-                    values_to_grab = positive_int(stream[bit:bit+unary_count])
-                    bit += unary_count
-                    count += values_to_grab
-                else:
-                    count += 1; bit += 1
-            else:
-                bit += 2
-                if stream[bit - 1] == '1':
-                    bit += 1
-                count += 1
-        return bit
-
-    @staticmethod
     def build_library(byte_stream, size=2, debug=False):
         count = 0
         dictionary = {}
@@ -112,9 +64,58 @@ class MiddleOutUtils:
             return {'00': tup, '010': lib[0], '011': lib[1]}
         return {'00': lib, '010': lib[0], '011': lib[1]}
 
+    @staticmethod
+    def get_count(bitset, length, typing='1'):
+        count, bit = 0, 0
+        while bit < length:
+            if bitset[bit] == typing:
+                count += 1; bit += 1
+            else:
+                bit += 2
+                if bitset[bit - 1] == '1':
+                    bit += 1
+        return count
+
+    @staticmethod
+    def get_count_unary(bitset, length, typing='1'):
+        count, bit = 0, 0
+        while bit < length:
+            if bitset[bit] == typing:
+                unary_count = unaryToInt(bitset[bit:])
+                bit += unary_count + 1
+                values_to_grab = positive_int(bitset[bit:bit+unary_count]) + 1
+                bit += unary_count
+                count += values_to_grab
+            else:
+                bit += 2
+                if bitset[bit - 1] == '1':
+                    bit += 1
+        return count
+
+    @staticmethod
+    def get_bit_count(stream, length, unary='1', debug=False):
+        if debug: print("stream", stream)
+        count, bit = 0, 0
+        while count < length:
+            if stream[bit] == '1':
+                if unary == '0':
+                    unary_count = unaryToInt(stream[bit:])
+                    bit += unary_count + 1
+                    values_to_grab = positive_int(stream[bit:bit+unary_count]) + 1
+                    bit += unary_count
+                    count += values_to_grab
+                else:
+                    count += 1; bit += 1
+            else:
+                bit += 2
+                count += 2
+                if stream[bit - 1] == '1':
+                    bit += 1
+                    count -= 1
+        return bit
+
 
 class MiddleOut:
-    # TODO: test decompress function
     @staticmethod
     def decompress(compressed, length, debug=False):
         decompressed = []
@@ -122,39 +123,41 @@ class MiddleOut:
         if len(compressed) == 0:
             return decompressed
         identifier, occiden, bit_library = compressed[0], compressed[1], compressed[2:18]
-        if debug: print("current size:", length)
         if debug: print("iden:", identifier, ",", "occurence:", occiden, ",", "library:", bit_library)
-        partition_size = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden)
+        partition_size = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden, debug=debug)
         partition = compressed[18:partition_size+18]
-        if debug: print("size of stream:", partition_size, ",", "stream:", partition)
-        if occiden == '0':
-            length_other = MiddleOutUtils.get_count(partition, length)
+        if debug: print("size of stream:", partition_size)
+        if occiden == '1':
+            length_other = MiddleOutUtils.get_count(partition, partition_size)
         else:
-            length_other = MiddleOutUtils.get_count_unary(partition, length)
-        print("length of next bitset:", length_other)
+            length_other = MiddleOutUtils.get_count_unary(partition, partition_size)
+        if debug: print("length of next bitset:", length_other)
         bit_library = convertInt_list(bit_library, bits=8)
         decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
         if debug: print("decomp library:", decompression_library)
-        succeeding_values = MiddleOut.decompress(compressed[length+18:], length_other+18)
-        while count < length:
+        succeeding_values = MiddleOut.decompress(compressed[partition_size+18:], length_other, debug=debug)
+        while count < partition_size:
             if partition[count] == '0':
                 if partition[count + 1] == '1':
                     decompressed.append(decompression_library[partition[count:count+3]])
                     count += 3
                 else:
-                    decompressed.append(decompression_library[partition[count:count+2]])
+                    occur = decompression_library[partition[count:count+2]]
+                    decompressed.append(occur[0])
+                    decompressed.append(occur[1])
                     count += 2
             else:
-                if occiden == '0':
+                if occiden == '1':
                     decompressed.append(succeeding_values[succeeding_count])
                     succeeding_count += 1
                     count += 1
                 else:
                     unary_count = unaryToInt(partition[count:])
                     count += unary_count + 1
-                    values_to_grab = positive_int(partition[count:count+unary_count])
+                    values_to_grab = positive_int(partition[count:count+unary_count]) + 1
                     count += unary_count
-                    decompressed.append(succeeding_values[succeeding_count:succeeding_count+values_to_grab])
+                    occur = succeeding_values[succeeding_count:succeeding_count+values_to_grab]
+                    [decompressed.append(i) for i in occur]
                     succeeding_count += values_to_grab
         return decompressed
 
@@ -168,13 +171,14 @@ class MiddleOut:
             return compressed
         compression_lib, occprob = MiddleOutUtils.build_library(byte_stream, debug=debug)
         compression_dict, identifier, compressed_lib = MiddleOutUtils.build_dict(compression_lib, byte_stream, debug=debug)
-        if occprob / len(byte_stream) > 0.40:
+        if occprob / len(byte_stream) > 0.30:
             compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=True, debug=debug)
             occiden = '1'
         else:
             compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=False, debug=debug)
             occiden = '0'
         comp = MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+        if debug: print("binary library", compressed_lib)
         return identifier + occiden + compressed_lib + compressed + comp
 
     @staticmethod
@@ -186,23 +190,20 @@ class MiddleOut:
         while count < len(byte_stream):
             compressor = 1
             tup = tuple(byte_stream[count:count+compressor])
-            if count < len(byte_stream) - 1:
-                while tup in compression_dict and count+compressor < len(byte_stream)+1:
-                    compressor += 1
-                    tup = tuple(byte_stream[count:count+compressor])
-                if len(tup) > 1:
-                    tup = tuple(byte_stream[count:count+compressor-1])
+            while tup in compression_dict and count+compressor < len(byte_stream)+1:
+                compressor += 1
+                tup = tuple(byte_stream[count:count+compressor])
+            if len(tup) > 1:
+                tup = tuple(byte_stream[count:count+compressor-1])
             if debug: print("tuple values:", tup)
             if tup not in compression_dict:
-                if debug: print("tuple not in dict")
                 if occ:
-                    unc_count += 1
-                else:
                     compressed += '1'
+                else:
+                    unc_count += 1
                 uncompressed.append(byte_stream[count])
             else:
-                if debug: print("tuple in dict")
-                if occ:
+                if not occ:
                     if unc_count > 0:
                         minbits = minimum_bits(unc_count-1)
                         unary_count = unaryconverter(minbits)
@@ -210,8 +211,12 @@ class MiddleOut:
                         unc_count = 0
                 compressed += compression_dict[tup]
             count += len(tup)
-            if debug: print("compressed:", compressed)
-        if debug: print("bitstream length:", len(compressed))
+        if not occ:
+            if unc_count > 0:
+                minbits = minimum_bits(unc_count-1)
+                unary_count = unaryconverter(minbits)
+                compressed += unary_count + positive_binary(unc_count-1, bits=minbits)
+        if debug: print("bitstream length:", len(compressed), compressed)
         return compressed, uncompressed
 
     @staticmethod
@@ -230,4 +235,4 @@ class MiddleOut:
         length = positive_int(bitstream[count:count+unary_count])
         bitstream = bitstream[count+unary_count:]
         if debug: print("size:", length, ",", "compressed stream:", bitstream)
-        return MiddleOut.decompress(bitstream, length, debug=True)
+        return MiddleOut.decompress(bitstream, length, debug=debug)

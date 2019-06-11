@@ -70,12 +70,12 @@ def compress_image(image, file_name):
         pbar_mo.set_description("running middle out compresssion")
         mo_compressed = MiddleOut.byte_compression(compressed)
 
-    print(); print("size of file after middleout", len(mo_compressed))
-
     pbar = tqdm(range(1))
     for _ in pbar:
         pbar.set_description("writing file with entropy compressor")
         size, filename = EntropyReduction.bz2(compressed, file_name)
+
+    print(); print("size of array:", len(compressed) * 8); print("size of file after middleout", len(mo_compressed))
 
     return size, filename
 
