@@ -3,12 +3,10 @@ from JPEG.utils import *
 
 import numpy as np
 
-from operator import itemgetter
 import lz4.frame as lz
 import bz2
 
 import struct
-import sys
 import os
 
 

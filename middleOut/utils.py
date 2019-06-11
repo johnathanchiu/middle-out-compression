@@ -1,5 +1,4 @@
 from io import StringIO
-import math
 
 
 def positive_binary(num, bits=8):
