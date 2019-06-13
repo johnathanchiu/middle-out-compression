@@ -1,4 +1,5 @@
 from io import StringIO
+import os
 
 
 def positive_binary(num, bits=8):
@@ -67,21 +68,32 @@ def minimum_bits(num):
     return num.bit_length()
 
 
-# TODO: Write binary data to files
-# def writeFile(bitstring, fileName=None):
-#     writeable_string = StringIO(bitstring)
-#     f = open(fileName + '.bin', 'w')
-#     while 1:
-#         b = writeable_string.read(8)
-#         if not b:
-#             break
-#         if len(b) < 8:
-#             b = b + '0' * (8 - len(b))
-#
-#         c = chr(int(b, 2))
-#         f.write(c)
-#     f.close()
+def pad_stream(length):
+    padding = 4 - (length % 8)
+    if padding >= 0:
+        return padding
+    return 8 + padding
 
 
-# def readFile():
-#     return
+def remove_padding(stream):
+    num_pad_bits = stream[-4:]
+    stream = stream[:-4]
+    num_pad = -1 * convertInt(num_pad_bits, bits=4)
+    return stream[:num_pad]
+
+
+def writeFile(bitstring, fileName=None):
+    bit_strings = [bitstring[i:i + 8] for i in range(0, len(bitstring), 8)]
+    byte_list = [int(b, 2) for b in bit_strings]
+    filename = fileName + '.bin'
+    with open(filename, 'wb') as f:
+        f.write(bytearray(byte_list))
+
+
+def readFile(fileName):
+    size = os.stat(fileName).st_size
+    with open(fileName, 'rb') as f:
+        bytes = f.read(size)
+    bit_string = [convertBin(b, bits=8) for b in bytes]
+    bits = ''.join(bit_string)
+    return bits

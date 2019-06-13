@@ -6,8 +6,9 @@ from tqdm import tqdm
 import time
 
 from JPEG.utils import *
-from middleOut.utils import *
+from middleOut.utils import convertInt, convertBin, readFile, remove_padding
 from middleOut.EntropyReduction import EntropyReduction
+from middleOut.MiddleOut import MiddleOut
 
 
 def decompress_image(file_name):
@@ -40,10 +41,16 @@ def decompress_image(file_name):
         if debug: print("image: ", np.round(image + 128))
         return image + 128
 
+    # pbar_1 = tqdm(range(1))
+    # for _ in pbar_1:
+    #     pbar_1.set_description("Reading bits from file using entropy decompressor")
+    #     compressed_bitset = EntropyReduction.bz2_unc(file_name)
+
     pbar_1 = tqdm(range(1))
     for _ in pbar_1:
         pbar_1.set_description("Reading bits from file using entropy decompressor")
-        compressed_bitset = EntropyReduction.bz2_unc(file_name)
+        bit_string = remove_padding(readFile(file_name))
+        compressed_bitset = MiddleOut.middle_out_decompress(bit_string)
 
     quality_metric = compressed_bitset[0]
     p_length = convertInt(convertBin(compressed_bitset[1], bits=8) + convertBin(compressed_bitset[2], bits=8), bits=16)
@@ -76,7 +83,7 @@ def decompress_image(file_name):
 
 if __name__ == '__main__':
     # print(start_time); print()
-    root_path = None  # set root directory of project file
+    root_path = '/Users/johnathanchiu/Documents/'  # set root directory of project file
     # ap = argparse.ArgumentParser()
     # ap.add_argument("-c", "--compressed", required=True,
     #                 help="compressed file name")
@@ -87,13 +94,13 @@ if __name__ == '__main__':
     if root_path is None:
         compressed_file = input("Compressed file path without extension (You can set a root directory in the code): ")
         decompressed_image = input("Name of decompressed image without extension (You can set a root directory in the code): ")
-        image_save = decompressed_image + ".png"
+        image_save = decompressed_image + ".jpg"
         compressed_file_name = compressed_file
     else:
         compressed_file, decompressed_image = input("Compressed file path without extension: "), \
                                               input("Name of decompressed image without extension: ")
-        image_save = decompressed_image + ".png"
-        compressed_file_name = root_path + compressed_file
+        image_save = decompressed_image + ".jpg"
+        compressed_file_name = root_path + 'middleout/middleoutref/' + compressed_file + '.bin'
     print();
     start_time = time.time()
     decompress_image(compressed_file_name)

@@ -42,7 +42,6 @@ def compress_image(image, file_name):
 
     # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width], (YCBCR[:, :, 1])[:o_length, :o_width], \
     #             (YCBCR[:, :, 2])[:o_length, :o_width]
-
     Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], (YCBCR[:, :, 1])[:1000, :1000], \
                 (YCBCR[:, :, 2])[:1000, :1000]
 
@@ -68,16 +67,20 @@ def compress_image(image, file_name):
     for _ in pbar_mo:
         pbar_mo.set_description("running middle out compresssion")
         mo_compressed = MiddleOut.middle_out(compressed, debug=False)
+        pad = pad_stream(len(mo_compressed))
+        num_padded = convertBin(pad, bits=4)
+        mo_compressed = mo_compressed + ('0' * pad) + num_padded
 
-    pbar = tqdm(range(1))
-    for _ in pbar:
-        pbar.set_description("writing file with entropy compressor")
-        size, filename = EntropyReduction.bz2(compressed, file_name)
+    # pbar = tqdm(range(1))
+    # for _ in pbar:
+    #     pbar.set_description("writing file with entropy compressor")
+    #     size, filename = EntropyReduction.bz2(compressed, file_name)
 
-    print(); print("size of data:", len(compressed) * 8); print("size of file after middleout",
-                                                                 int(np.round(len(mo_compressed) / 8)))
+    # print(); print("size of data:", len(compressed) * 8); print("size of file after middleout",
+    #                                                              int(np.round(len(mo_compressed) / 8)))
 
-    return size, filename
+    return len(compressed), file_name + '.bin', mo_compressed, int(np.round(len(mo_compressed) / 8))
+    # return size, filename, None
 
 
 if __name__ == '__main__':
@@ -85,21 +88,21 @@ if __name__ == '__main__':
     root_path = '/Users/johnathanchiu/Documents/'
     if root_path is None:
         image_name, compressed_file = input("Image path (You can set a root directory in the code): "), \
-                                      input("Compressed file name (whatever you want to name the bz2 compressed file): ")
+                                      input("Compressed file name (whatever you want to name the compressed file): ")
         compressed_file_name = compressed_file
         image = imageio.imread(image_name)
     else:
         image_name, compressed_file = input("Image path: "), \
-                                      input("Compressed file name (whatever you want to name the bz2 compressed file): ")
-        compressed_file_name = root_path + 'middleout/bz2ref/' + compressed_file
+                                      input("Compressed file name (whatever you want to name the compressed file): ")
+        compressed_file_name = root_path + 'middleout/middleoutref/' + compressed_file
         image_name = root_path + 'CompressionPics/tests/' + image_name
         image = imageio.imread(image_name)
     start_time = time.time()
-    size, filename = compress_image(image, compressed_file_name)
-    file_size = os.stat(image_name).st_size
+    size, filename, midout, compressed_size = compress_image(image, compressed_file_name)
+    writeFile(midout, fileName=compressed_file_name)
     print()
-    print("file size after (entropy) compression: ", size)
-    print("file reduction percentage (new file size / old file size): ", (size / file_size) * 100, "%")
+    print("file size after (entropy) compression: ", compressed_size)
+    print("lossless reduction percentage (after entropy / before entropy): ", (compressed_size / size) * 100, "%")
     print("compression converges, new file name: ", filename)
     print("--- %s seconds ---" % (time.time() - start_time))
 

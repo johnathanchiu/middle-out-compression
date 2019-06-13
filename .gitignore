@@ -9,6 +9,11 @@
 *.bz2
 *.bin
 
+# images
+*.jpeg
+*.jpg
+*.png
+
 # testing only python files
 unused.py
 smalltester.py
