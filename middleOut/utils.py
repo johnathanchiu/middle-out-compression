@@ -1,4 +1,5 @@
 from io import StringIO
+import array
 import os
 
 
@@ -93,7 +94,22 @@ def writeFile(bitstring, fileName=None):
 def readFile(fileName):
     size = os.stat(fileName).st_size
     with open(fileName, 'rb') as f:
-        bytes = f.read(size)
+        bytes = f.read(int(size))
     bit_string = [convertBin(b, bits=8) for b in bytes]
     bits = ''.join(bit_string)
     return bits
+
+
+def readFileBytes(fileName, partial=0):
+    assert partial <= 1, "partial percentage greater than 100%"
+    size = os.stat(fileName).st_size
+    if partial:
+        size *= partial
+    with open(fileName, 'rb') as f:
+        bytes = f.read(int(size))
+    return array.array('B', list(bytes))
+
+
+def size_of_file(filename):
+    return os.stat(filename).st_size
+

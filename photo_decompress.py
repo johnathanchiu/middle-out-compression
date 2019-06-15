@@ -7,7 +7,6 @@ import time
 
 from JPEG.utils import *
 from middleOut.utils import convertInt, convertBin, readFile, remove_padding
-from middleOut.EntropyReduction import EntropyReduction
 from middleOut.MiddleOut import MiddleOut
 
 

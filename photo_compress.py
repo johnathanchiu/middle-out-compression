@@ -1,4 +1,3 @@
-from middleOut.EntropyReduction import EntropyReduction
 from JPEG.utils import *
 from middleOut.utils import *
 from middleOut.MiddleOut import MiddleOut
@@ -7,7 +6,6 @@ from tqdm import tqdm
 
 import imageio
 import array
-import os
 
 import time
 

@@ -192,13 +192,13 @@ class MiddleOut:
         return compressed, uncompressed
 
     @staticmethod
-    def middle_out(image_coefficients, debug=False):
-        length = len(image_coefficients)
+    def middle_out(coefficients, debug=False):
+        length = len(coefficients)
         minbits = minimum_bits(length)
         unary = unaryconverter(minbits)
         size = positive_binary(length, minbits)
         if debug: print("header:", unary + size, ",", "size:", length)
-        return unary + size + MiddleOut.byte_compression(image_coefficients, debug=debug)
+        return unary + size + MiddleOut.byte_compression(coefficients, debug=debug)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
