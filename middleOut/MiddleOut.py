@@ -39,7 +39,7 @@ class MiddleOutUtils:
         if debug:
             print("largest occurring:", large_occur, ", ", "occurrence:", prob, ", ",
                   "size of byte stream:", len(byte_stream))
-        return large_occur, prob
+        return large_occur
 
     @staticmethod
     def make_count(byte_stream):
@@ -49,16 +49,17 @@ class MiddleOutUtils:
     def build_dict(byte_lib, byte_stream, debug=False):
         if byte_lib[0] == byte_lib[1]:
             largest_values = MiddleOutUtils.make_count(byte_stream)
+            prob = largest_values[byte_lib[0]]
             largest_values[byte_lib[0]] = 0
             largest = MiddleOutUtils.max_key(largest_values)
             compression_lib = convertBin_list([byte_lib[0], largest])
-            addprob = largest_values[largest]
-            if debug: print("next largest value", largest, "occurrence", addprob)
-            return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', compression_lib, addprob
+            prob += largest_values[largest]
+            if debug: print("next largest value", largest, "occurrence", prob)
+            return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', compression_lib, prob
         values_count = MiddleOutUtils.make_count(byte_stream)
         compression_lib = convertBin_list(byte_lib)
-        addprob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
-        return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', compression_lib, addprob
+        prob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
+        return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', compression_lib, prob
 
     @staticmethod
     def build_decomp_library(iden, lib):
@@ -139,12 +140,11 @@ class MiddleOut:
         compressed = ''
         if len(byte_stream) == 0:
             return compressed
-        compression_lib, occprob = MiddleOutUtils.build_library(byte_stream, debug=debug)
-        compression_dict, identifier, compressed_lib, addprob = MiddleOutUtils.build_dict(compression_lib,
+        compression_lib = MiddleOutUtils.build_library(byte_stream, debug=debug)
+        compression_dict, identifier, compressed_lib, occprob = MiddleOutUtils.build_dict(compression_lib,
                                                                                           byte_stream, debug=debug)
-        occprob += addprob
         if debug: print("occurrence prob:", occprob / len(byte_stream), len(byte_stream))
-        if occprob / len(byte_stream) > 0.15:
+        if occprob / len(byte_stream) > 0.35:
             compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=True, debug=debug)
             occiden = '1'
         else:
