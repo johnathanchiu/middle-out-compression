@@ -10,7 +10,7 @@ from middleOut.utils import convertInt, convertBin, readFile, remove_padding
 from middleOut.MiddleOut import MiddleOut
 
 
-def decompress_image(file_name):
+def decompress_image(file_name, saved_image):
 
     def decompress(input, dimx=0, dimy=0, qual=64, c_layer=False, count=1, debug=False):
         if c_layer:
@@ -77,7 +77,7 @@ def decompress_image(file_name):
         rgbArray = rotate(rgbArray, 90)
 
     img = Image.fromarray(rgbArray)
-    img.save(image_save, "JPEG", optimize=True)
+    img.save(saved_image, "JPEG", optimize=True)
 
 
 if __name__ == '__main__':
@@ -102,6 +102,6 @@ if __name__ == '__main__':
         compressed_file_name = root_path + 'middleout/middleoutref/' + compressed_file + '.bin'
     print();
     start_time = time.time()
-    decompress_image(compressed_file_name)
+    decompress_image(compressed_file_name, image_save)
     print(); print("Decompression converged, your file is at: ", image_save)
     print("--- %s seconds ---" % (time.time() - start_time))
