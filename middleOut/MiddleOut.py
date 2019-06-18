@@ -55,12 +55,12 @@ class MiddleOutUtils:
             largest_values[largest] = 0
             if debug: print("next largest value", largest, "occurrence", prob)
             return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', \
-                   array.array('b', [byte_lib[0], largest]), largest_values, prob
+                   array.array('B', [byte_lib[0], largest]), largest_values, prob
         values_count = MiddleOutUtils.make_count(byte_stream)
         prob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
         values_count[byte_lib[0]], values_count[byte_lib[1]] = 0, 0
         return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', \
-               array.array('b', byte_lib), values_count, prob
+               array.array('B', byte_lib), values_count, prob
 
     @staticmethod
     def build_decomp_library(iden, lib):
@@ -91,16 +91,6 @@ class MiddleOutUtils:
         return left, right
 
     @staticmethod
-    def count_left(compressed, length, count=0):
-        if length == 0:
-            return count
-        if compressed[0] == '1':
-            left, right = MiddleOutUtils.right_left_count(compressed, length)
-            return MiddleOutUtils.count_left(compressed[length:], length, count=length) + \
-                   MiddleOutUtils.count_right(compressed[])
-        else:
-
-    @staticmethod
     def get_bit_count(stream, length):
         count, count_other, bit = 0, 0, 0
         while count < length:
@@ -117,30 +107,34 @@ class MiddleOutUtils:
 
 class MiddleOut:
     @staticmethod
-    def decompress(compressed, length, debug=False):
+    def decompress(compressed, length, end=100, debug=False):
         decompressed = []
-        count, succeeding_count = 0, 0
-        if compressed == '':
+        if compressed == '' or end == 0:
             return decompressed
         branching = compressed[0]
         if branching == '1':
             compressed = compressed[1:]
+            count, unary_count = 0, unaryToInt(compressed)
+            count += unary_count + 1
+            start_left = positive_int(compressed[count:count+unary_count]) + 1
+            compressed = compressed[count+unary_count:]
+            split = compressed[:length]
             left_total, right_total = MiddleOutUtils.right_left_count(compressed, length)
             compressed = compressed[length:]
             if debug: print("left:", left_total, ",", "right:", right_total)
-            start_left = MiddleOutUtils.count_left(compressed, left_total)
             left_values = MiddleOut.decompress(compressed, left_total, debug=debug)
-            right_values = MiddleOut.decompress(compressed[start_left:], right_total, debug=debug)
+            compressed = compressed[start_left:]
+            right_values = MiddleOut.decompress(compressed, right_total, debug=debug)
             if debug: print("left values:", left_values); print("right values:", right_values)
-            left_count, right_count = 0, 0
-            while count < length:
-                if compressed[count] == '1':
+            start, left_count, right_count = 0, 0, 0
+            while start < length:
+                if split[start] == '1':
                     decompressed.append(right_values[right_count])
                     right_count += 1
                 else:
                     decompressed.append(left_values[left_count])
                     left_count += 1
-                count += 1
+                start += 1
             return decompressed
         else:
             iden, bit_library, compressed = compressed[1], compressed[2:18], compressed[18:]
@@ -150,7 +144,7 @@ class MiddleOut:
             if debug:
                 print("size of stream:", partition_size, ",", "length produced by next bitset:", length_other)
                 print("decomp library:", decompression_library)
-            succeeding_values = MiddleOut.decompress(compressed[partition_size:], length_other, debug=debug)
+            succeeding_values = MiddleOut.decompress(compressed[partition_size:], length_other, end=length_other, debug=debug)
             return MiddleOut.decompress_helper(compressed, succeeding_values, decompression_library, partition_size)
 
     @staticmethod
@@ -192,14 +186,15 @@ class MiddleOut:
             split_stream, left, right = MiddleOut.branch_tree(byte_stream, left_dict)
             if debug: print("split:", split_stream); print("left:", left, ", ", "right:", right)
             comp_left, uncompressed = MiddleOut.middle_out_helper(left, compression_dict, debug=debug)
+            comp_left = '0' + identifier + compressed_lib + comp_left
             comp_left_right = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
             comp_right = MiddleOut.byte_compression(right, count_recursion=count_recursion+1, debug=debug)
-            left_size = len(comp_left) + len(comp_left_right)
-            minbits = minimum_bits(left_size - 1)
+            left_size = len(comp_left) + len(comp_left_right) - 1
+            minbits = minimum_bits(left_size)
             unary = unaryconverter(minbits)
             size = positive_binary(left_size, minbits)
-            return '1' + unary + size + split_stream + '0' + identifier + compressed_lib + \
-                   comp_left + comp_left_right + comp_right
+            if debug: print("left bits size:", left_size)
+            return '1' + unary + size + split_stream + comp_left + comp_left_right + comp_right
         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, debug=debug)
         comp = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
         if debug: print("binary library", compressed_lib)
@@ -221,6 +216,7 @@ class MiddleOut:
                 tup = tuple(byte_stream[count:count+compressor-1])
             if tup not in compression_dict:
                 compressed += '1'
+                uncompressed.append(byte_stream[count])
             else:
                 compressed += compression_dict[tup]
             count += len(tup)
@@ -230,7 +226,7 @@ class MiddleOut:
     @staticmethod
     def branch_tree(values, left_tree_values):
         split = ''
-        right, left = array.array('b', []), array.array('b', [])
+        right, left = array.array('B', []), array.array('B', [])
         left_tree_values = set(left_tree_values)
         for v in values:
             if v in left_tree_values:
