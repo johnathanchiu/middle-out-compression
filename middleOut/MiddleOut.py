@@ -51,18 +51,26 @@ class MiddleOutUtils:
             prob = largest_values[byte_lib[0]]
             largest_values[byte_lib[0]] = 0
             largest = MiddleOutUtils.max_key(largest_values)
-            compression_lib = convertBin_list([byte_lib[0], largest])
             prob += largest_values[largest]
+            largest_values[largest] = 0
             if debug: print("next largest value", largest, "occurrence", prob)
-            return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', compression_lib, prob
+            return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', \
+                   array.array('b', [byte_lib[0], largest]), largest_values, prob
         values_count = MiddleOutUtils.make_count(byte_stream)
-        compression_lib = convertBin_list(byte_lib)
         prob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
-        return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', compression_lib, prob
+        values_count[byte_lib[0]], values_count[byte_lib[1]] = 0, 0
+        return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', \
+               array.array('b', byte_lib), values_count, prob
 
     @staticmethod
-    def find_next_largest(byte_stream):
-        return
+    def increase_prob(size, occur, counter_lib, occur_lib):
+        if occur / size > 0.4:
+            return occur_lib
+        largest = MiddleOutUtils.max_key(counter_lib)
+        occur += counter_lib[largest]
+        counter_lib[largest] = 0
+        occur_lib.append(largest)
+        return MiddleOutUtils.increase_prob(size, occur, counter_lib, occur_lib)
 
     @staticmethod
     def build_decomp_library(iden, lib):
@@ -135,54 +143,34 @@ class MiddleOut:
                     succeeding_count += values_to_grab
         return decompressed
 
-    # @staticmethod
-    # def byte_compression(byte_stream, size=2, count_recursion=1, debug=False):
-    #     if debug:
-    #         print("recursion count", count_recursion, ",", "remaining length", len(byte_stream))
-    #         print("remaining values", byte_stream)
-    #     compressed = ''
-    #     if len(byte_stream) == 0:
-    #         return compressed
-    #     compression_lib, occprob = MiddleOutUtils.build_library(byte_stream, debug=debug)
-    #     compression_dict, identifier, compressed_lib, addprob = MiddleOutUtils.build_dict(compression_lib,
-    #                                                                                       byte_stream, debug=debug)
-    #     occprob += addprob
-    #     if debug: print("occurrence prob:", occprob / len(byte_stream), len(byte_stream))
-    #     if occprob / len(byte_stream) > 0.15:
-    #         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=True, debug=debug)
-    #         occiden = '1'
-    #     else:
-    #         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=False, debug=debug)
-    #         occiden = '0'
-    #     comp = MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
-    #     if debug: print("binary library", compressed_lib)
-    #     return identifier + occiden + compressed_lib + compressed + comp
-
     @staticmethod
-    def byte_compression(byte_stream, size=2, count_recursion=1, debug=False):
+    def byte_compression(byte_stream, count_recursion=1, debug=False):
         if debug:
             print("recursion count", count_recursion, ",", "remaining length", len(byte_stream))
             print("remaining values", byte_stream)
-        compressed = ''
         if len(byte_stream) == 0:
-            return compressed
+            return ''
         compression_lib = MiddleOutUtils.build_library(byte_stream, debug=debug)
-        compression_dict, identifier, compressed_lib, occprob = MiddleOutUtils.build_dict(compression_lib,
-                                                                                          byte_stream, debug=debug)
+        compression_dict, identifier, compressed_lib, count_lib, occprob = MiddleOutUtils.build_dict(compression_lib,
+                                                                                                     byte_stream,
+                                                                                                     debug=debug)
+        left_splitter, compressed_lib = compressed_lib, convertBin_list(compressed_lib)
+        if debug: print("left occurrences:", left_splitter)
         if debug: print("occurrence prob:", occprob / len(byte_stream), len(byte_stream))
-        if occprob / len(byte_stream) > 0.40:
-            split_stream, left, right = MiddleOut.branch_tree(byte_stream, )
-            compressed += split_stream
-            compressed
-        else:
-            compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=False, debug=debug)
-            occiden = '0'
-        comp = MiddleOut.byte_compression(uncompressed, size=size, count_recursion=count_recursion+1, debug=debug)
+        if occprob / len(byte_stream) < 0.4:
+            left_dict = MiddleOutUtils.increase_prob(len(byte_stream), occprob, count_lib, left_splitter)
+            split_stream, left, right = MiddleOut.branch_tree(byte_stream, left_dict)
+            comp_left, uncompressed = MiddleOut.middle_out_helper(left, compression_dict, occ=False, debug=debug)
+            comp_left_right = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
+            comp_right = MiddleOut.byte_compression(right, count_recursion=count_recursion+1, debug=debug)
+            return '1' + split_stream + '0' + identifier + compressed_lib + comp_left + comp_left_right + comp_right
+        compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, occ=False, debug=debug)
+        comp = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
         if debug: print("binary library", compressed_lib)
-        return identifier + occiden + compressed_lib + compressed + comp
+        return '0' + identifier + compressed_lib + compressed + comp
 
     @staticmethod
-    def middle_out_helper(byte_stream, compression_dict, occ=False, size=2, debug=False):
+    def middle_out_helper(byte_stream, compression_dict, occ=False, debug=False):
         if debug: print("current length:", len(byte_stream), ",", "unary:", occ)
         count, unc_count = 0, 0
         compressed = ''
@@ -220,17 +208,17 @@ class MiddleOut:
 
     @staticmethod
     def branch_tree(values, left_tree_values):
-        compressed = ''
+        split = ''
         right, left = array.array('b', []), array.array('b', [])
         left_tree_values = set(left_tree_values)
         for v in values:
             if v in left_tree_values:
-                compressed += '0'
+                split += '0'
                 left.append(v)
             else:
-                compressed += '1'
+                split += '1'
                 right.append(v)
-        return compressed, left, right
+        return split, left, right
 
     @staticmethod
     def middle_out(coefficients, debug=False):
