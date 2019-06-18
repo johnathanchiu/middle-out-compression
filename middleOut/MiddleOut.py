@@ -73,6 +73,17 @@ class MiddleOutUtils:
         return MiddleOutUtils.increase_prob(size, occur, counter_lib, occur_lib)
 
     @staticmethod
+    def right_left_count(compressed, length):
+        count, right, left = 0, 0, 0
+        while count < length:
+            if compressed[count] == '1':
+                right += 1
+            else:
+                left += 1
+            count += 1
+        return left, right
+
+    @staticmethod
     def build_decomp_library(iden, lib):
         if iden == '1':
             tup = tuple([lib[0], lib[0]])
@@ -102,46 +113,98 @@ class MiddleOutUtils:
 
 
 class MiddleOut:
+    # @staticmethod
+    # def decompress(compressed, length, debug=False):
+    #     decompressed = []
+    #     count, succeeding_count = 0, 0
+    #     if len(compressed) == 0:
+    #         return decompressed
+    #     identifier, occiden, bit_library = compressed[0], compressed[1], compressed[2:18]
+    #     if debug: print("iden:", identifier, ",", "occurrence:", occiden, ",", "library:", bit_library)
+    #     partition_size, length_other = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden)
+    #     partition = compressed[18:partition_size+18]
+    #     bit_library = convertInt_list(bit_library, bits=8)
+    #     decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
+    #     if debug:
+    #         print("size of stream:", partition_size, "length of next bitset:", length_other)
+    #         print("decomp library:", decompression_library)
+    #     succeeding_values = MiddleOut.decompress(compressed[partition_size+18:], length_other, debug=debug)
+    #     while count < partition_size:
+    #         if partition[count] == '0':
+    #             if partition[count + 1] == '1':
+    #                 decompressed.append(decompression_library[partition[count:count+3]])
+    #                 count += 3
+    #             else:
+    #                 occur = decompression_library[partition[count:count+2]]
+    #                 decompressed.append(occur[0])
+    #                 decompressed.append(occur[1])
+    #                 count += 2
+    #         else:
+    #             if occiden == '1':
+    #                 decompressed.append(succeeding_values[succeeding_count])
+    #                 succeeding_count += 1
+    #                 count += 1
+    #             else:
+    #                 unary_count = unaryToInt(partition[count:])
+    #                 count += unary_count + 1
+    #                 values_to_grab = positive_int(partition[count:count+unary_count]) + 1
+    #                 count += unary_count
+    #                 occur = succeeding_values[succeeding_count:succeeding_count+values_to_grab]
+    #                 [decompressed.append(i) for i in occur]
+    #                 succeeding_count += values_to_grab
+    #     return decompressed
+
     @staticmethod
     def decompress(compressed, length, debug=False):
         decompressed = []
         count, succeeding_count = 0, 0
         if len(compressed) == 0:
+            return decompressed, ''
+        if debug: print("iden", compressed[0])
+        if compressed[0] == '1':
+            partition = compressed[1:length+1]
+            start_left = length + 1
+            left_total, right_total = MiddleOutUtils.right_left_count(compressed[1:], length)
+            left_values, right_uncompressed = MiddleOut.decompress(compressed[start_left:], left_total)
+            right_values, _ = MiddleOut.decompress(right_uncompressed, right_total)
+            left_count, right_count = 0, 0
+            while count < length:
+                if partition[count] == '1':
+                    decompressed.append(right_values[right_count])
+                    right_count += 1
+                else:
+                    decompressed.append(left_values[left_count])
+                count += 1
             return decompressed
-        identifier, occiden, bit_library = compressed[0], compressed[1], compressed[2:18]
-        if debug: print("iden:", identifier, ",", "occurrence:", occiden, ",", "library:", bit_library)
-        partition_size, length_other = MiddleOutUtils.get_bit_count(compressed[18:], length=length, unary=occiden)
-        partition = compressed[18:partition_size+18]
+        iden, bit_library = compressed[1], compressed[2:18]
+        partition_size, length_other = MiddleOutUtils.get_bit_count(compressed[18:], length, unary='1')
         bit_library = convertInt_list(bit_library, bits=8)
-        decompression_library = MiddleOutUtils.build_decomp_library(identifier, bit_library)
+        decompression_library = MiddleOutUtils.build_decomp_library(iden, bit_library)
         if debug:
             print("size of stream:", partition_size, "length of next bitset:", length_other)
             print("decomp library:", decompression_library)
-        succeeding_values = MiddleOut.decompress(compressed[partition_size+18:], length_other, debug=debug)
-        while count < partition_size:
+        succeeding_values, _ = MiddleOut.decompress(compressed[partition_size+18:], length_other, debug=debug)
+        return MiddleOut.decompress_helper(compressed[2:],  succeeding_values, decompression_library, partition_size)
+
+    @staticmethod
+    def decompress_helper(partition, succeeding, decomp, part_size):
+        count, succeeding_count = 0, 0
+        decompressed = []
+        while count < part_size:
             if partition[count] == '0':
                 if partition[count + 1] == '1':
-                    decompressed.append(decompression_library[partition[count:count+3]])
+                    decompressed.append(decomp[partition[count:count+3]])
                     count += 3
                 else:
-                    occur = decompression_library[partition[count:count+2]]
+                    occur = decomp[partition[count:count+2]]
                     decompressed.append(occur[0])
                     decompressed.append(occur[1])
                     count += 2
             else:
-                if occiden == '1':
-                    decompressed.append(succeeding_values[succeeding_count])
-                    succeeding_count += 1
-                    count += 1
-                else:
-                    unary_count = unaryToInt(partition[count:])
-                    count += unary_count + 1
-                    values_to_grab = positive_int(partition[count:count+unary_count]) + 1
-                    count += unary_count
-                    occur = succeeding_values[succeeding_count:succeeding_count+values_to_grab]
-                    [decompressed.append(i) for i in occur]
-                    succeeding_count += values_to_grab
-        return decompressed
+                decompressed.append(succeeding[succeeding_count])
+                succeeding_count += 1
+                count += 1
+        return decompressed, partition[count:]
 
     @staticmethod
     def byte_compression(byte_stream, count_recursion=1, debug=False):

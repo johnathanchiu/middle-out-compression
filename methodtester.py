@@ -53,7 +53,7 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middelout_decomp(bits):
-        return MiddleOut.middle_out_decompress(bits, debug=False)
+        return MiddleOut.middle_out_decompress(bits, debug=True)
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
     c = TestMiddleOut.run_middleout(test)
     print("size of middleout", len(c))
-    # de = TestMiddleOut.run_middelout_decomp(c)
-    # TestMiddleOut.check_differences(test, de)
+    de, _ = TestMiddleOut.run_middelout_decomp(c)
+    TestMiddleOut.check_differences(test, de)
     print("--- %s seconds ---" % (time.time() - start_time))
 
