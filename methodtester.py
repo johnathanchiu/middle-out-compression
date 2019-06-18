@@ -57,12 +57,11 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    test = [10, 12, 11, 17, 65, 33, 1, 17, 1, 17, 1, 17, 33, 44, 33, 33, 1, 17, 23, 5, 62, 6, 1, 3, 6, 4, 3, 6, 3, 1, 1,
-            1, 1]
+    test = [1, 2, 1, 2, 4, 5, 6, 7, 8, 9, 10]
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
     c = TestMiddleOut.run_middleout(test)
     print("size of middleout", len(c))
-    de, _ = TestMiddleOut.run_middelout_decomp(c)
+    de = TestMiddleOut.run_middelout_decomp(c)
     TestMiddleOut.check_differences(test, de)
     print("--- %s seconds ---" % (time.time() - start_time))
 
