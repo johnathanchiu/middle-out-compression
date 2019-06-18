@@ -39,10 +39,10 @@ def compress_image(image, file_name):
         pbar.set_description("Converting image sample space RGB -> YCbCr")
         YCBCR = rgb2ycbcr(image)
 
-    # Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width], (YCBCR[:, :, 1])[:o_length, :o_width], \
-    #             (YCBCR[:, :, 2])[:o_length, :o_width]
-    Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], (YCBCR[:, :, 1])[:1000, :1000], \
-                (YCBCR[:, :, 2])[:1000, :1000]
+    Y, Cb, Cr = (YCBCR[:, :, 0])[:o_length, :o_width], (YCBCR[:, :, 1])[:o_length, :o_width], \
+                (YCBCR[:, :, 2])[:o_length, :o_width]
+    # Y, Cb, Cr = (YCBCR[:, :, 0])[:1000, :1000], (YCBCR[:, :, 1])[:1000, :1000], \
+    #             (YCBCR[:, :, 2])[:1000, :1000]
 
     c_length, c_width = Y.shape
     p_length, p_width = calc_matrix_eight_size(Y)

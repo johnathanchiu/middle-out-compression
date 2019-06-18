@@ -1,5 +1,7 @@
 from middleOut.MiddleOut import MiddleOut
-from middleOut.utils import readFile, writeFile, remove_padding
+from middleOut.utils import readFile, writeFileBytes, remove_padding
+
+import array
 
 from tqdm import tqdm
 import time
@@ -13,7 +15,8 @@ if __name__ == '__main__':
     for _ in pbar:
         pbar.set_description("running middle-out decompression scheme")
         bitstream = remove_padding(readFile(compressed_file))
-        writeFile(MiddleOut.middle_out_decompress(bitstream), decompressed_file_name)
+        decomp = array.array('B', [b+128 for b in array.array('b', MiddleOut.middle_out_decompress(bitstream))])
+        writeFileBytes(decomp, decompressed_file_name)
 
     print("decompression converges!")
     print("--- %s seconds ---" % (time.time() - start_time))

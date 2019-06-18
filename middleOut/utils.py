@@ -91,6 +91,11 @@ def writeFile(bitstring, fileName=None):
         f.write(bytearray(byte_list))
 
 
+def writeFileBytes(bytes_list, fileName=None):
+    with open(fileName, 'wb') as f:
+        f.write(bytearray(bytes_list))
+
+
 def readFile(fileName):
     size = os.stat(fileName).st_size
     with open(fileName, 'rb') as f:
@@ -107,7 +112,7 @@ def readFileBytes(fileName, partial=0):
         size *= partial
     with open(fileName, 'rb') as f:
         bytes = f.read(int(size))
-    return array.array('b', [b - 128 for b in list(bytes)])
+    return array.array('B', list(bytes))
 
 
 def size_of_file(filename):

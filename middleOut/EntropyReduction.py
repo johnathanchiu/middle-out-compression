@@ -17,14 +17,13 @@ class EntropyReduction:
             compressed = compressor.begin()
             compressed += compressor.compress(bytes(values))
             compressed += compressor.flush()
-        return list(compressed)
+        return compressed
 
     @staticmethod
     def lz4_decompress(values):
-        values = bytes(values)
         with lz.LZ4FrameDecompressor() as decompressor:
             decompressed = decompressor.decompress(values)
-        return list(decompressed)
+        return decompressed
 
     @staticmethod
     def bz2(compressed, output_file):

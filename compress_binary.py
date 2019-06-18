@@ -1,5 +1,8 @@
 from middleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin
 from middleOut.MiddleOut import MiddleOut
+from middleOut.EntropyReduction import EntropyReduction
+
+import array
 
 from tqdm import tqdm
 import time
@@ -8,6 +11,7 @@ if __name__ == '__main__':
     file_name = input("file name: ")
     compressed_file = input("name of compressed file: ")
     bytes_of_file = readFileBytes(file_name)
+    bytes_of_file = array.array('b', [b - 128 for b in bytes_of_file])
     start_time = time.time()
 
     pbar = tqdm(range(1))
