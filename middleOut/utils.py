@@ -91,6 +91,11 @@ def writeFile(bitstring, fileName=None):
         f.write(bytearray(byte_list))
 
 
+def writeFileBytes(bytes_list, fileName=None):
+    with open(fileName, 'wb') as f:
+        f.write(bytearray(bytes_list))
+
+
 def readFile(fileName):
     size = os.stat(fileName).st_size
     with open(fileName, 'rb') as f:
