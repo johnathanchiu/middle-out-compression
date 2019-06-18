@@ -52,6 +52,8 @@ class MiddleOutUtils:
             prob = largest_values[byte_lib[0]]
             largest_values[byte_lib[0]] = 0
             largest = MiddleOutUtils.max_key(largest_values)
+            largest_values[largest] = 0
+            largest = MiddleOutUtils.max_key(largest_values)
             compression_lib = convertBin_list([byte_lib[0], largest])
             prob += largest_values[largest]
             if debug: print("next largest value", largest, "occurrence", prob)
