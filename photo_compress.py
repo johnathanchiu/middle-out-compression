@@ -1,6 +1,7 @@
 from JPEG.utils import *
 from middleOut.utils import *
 from middleOut.MiddleOut import MiddleOut
+from  middleOut.EntropyReduction import EntropyReduction
 
 from tqdm import tqdm
 
