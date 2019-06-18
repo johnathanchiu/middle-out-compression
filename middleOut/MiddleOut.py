@@ -55,12 +55,12 @@ class MiddleOutUtils:
             largest_values[largest] = 0
             if debug: print("next largest value", largest, "occurrence", prob)
             return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', \
-                   array.array('B', [byte_lib[0], largest]), largest_values, prob
+                   array.array('b', [byte_lib[0], largest]), largest_values, prob
         values_count = MiddleOutUtils.make_count(byte_stream)
         prob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
         values_count[byte_lib[0]], values_count[byte_lib[1]] = 0, 0
         return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', \
-               array.array('B', byte_lib), values_count, prob
+               array.array('b', byte_lib), values_count, prob
 
     @staticmethod
     def build_decomp_library(iden, lib):
@@ -226,7 +226,7 @@ class MiddleOut:
     @staticmethod
     def branch_tree(values, left_tree_values):
         split = ''
-        right, left = array.array('B', []), array.array('B', [])
+        right, left = array.array('b', []), array.array('b', [])
         left_tree_values = set(left_tree_values)
         for v in values:
             if v in left_tree_values:

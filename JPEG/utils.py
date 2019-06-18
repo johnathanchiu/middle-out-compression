@@ -50,7 +50,7 @@ def calc_matrix_eight_size(image_layer):
 
 # grab top row of 8 by 8 and 0:4
 def capture(image_patch, values=64, c_layer=False):
-    image_patch = image_patch.flatten().astype(int) + 128
+    image_patch = image_patch.flatten().astype(int)
     if c_layer:
         return image_patch[:int(values * 1 / 2)]
     return image_patch[:int(values)]

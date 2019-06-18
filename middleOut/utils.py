@@ -107,7 +107,7 @@ def readFileBytes(fileName, partial=0):
         size *= partial
     with open(fileName, 'rb') as f:
         bytes = f.read(int(size))
-    return array.array('B', list(bytes))
+    return array.array('b', [b - 128 for b in list(bytes)])
 
 
 def size_of_file(filename):
