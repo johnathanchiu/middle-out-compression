@@ -24,9 +24,6 @@ if __name__ == '__main__':
         num_padded = convertBin(pad, bits=4)
         writeFile(mo_compressed + ('0' * pad) + num_padded, fileName=compressed_file)
 
-    testing = EntropyReduction.lz4_compress(bytes_of_file)
-    print(len(list(testing)))
-
     print("compression converges!")
     compressed_size = size_of_file(compressed_file + '.bin')
     print("size of resulting file:", compressed_size)
