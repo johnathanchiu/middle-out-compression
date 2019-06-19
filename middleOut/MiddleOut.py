@@ -70,14 +70,14 @@ class MiddleOutUtils:
         return {'00': lib, '010': lib[0], '011': lib[1]}
 
     @staticmethod
-    def increase_prob(size, occur, counter_lib, occur_lib):
-        if occur / size > 0.4:
+    def increase_prob(size, occur, counter_lib, occur_lib, prob=0.4):
+        if occur / size >= prob:
             return occur_lib
         largest = MiddleOutUtils.max_key(counter_lib)
         occur += counter_lib[largest]
         counter_lib[largest] = 0
         occur_lib.append(largest)
-        return MiddleOutUtils.increase_prob(size, occur, counter_lib, occur_lib)
+        return MiddleOutUtils.increase_prob(size, occur, counter_lib, occur_lib, prob=prob)
 
     @staticmethod
     def right_left_count(compressed, length):
@@ -106,6 +106,9 @@ class MiddleOutUtils:
 
 
 class MiddleOut:
+
+    split_prob = 0.4
+
     @staticmethod
     def decompress(compressed, length, end=100, debug=False):
         decompressed = []
@@ -181,8 +184,8 @@ class MiddleOut:
         left_splitter, compressed_lib = compressed_lib, convertBin_list(compressed_lib)
         if debug: print("left occurrences:", left_splitter)
         if debug: print("occurrence prob:", occprob / len(byte_stream), len(byte_stream))
-        if occprob / len(byte_stream) < 0.4:
-            left_dict = MiddleOutUtils.increase_prob(len(byte_stream), occprob, count_lib, left_splitter)
+        if occprob / len(byte_stream) < MiddleOut.split_prob:
+            left_dict = MiddleOutUtils.increase_prob(len(byte_stream), occprob, count_lib, left_splitter, prob=MiddleOut.split_prob)
             split_stream, left, right = MiddleOut.branch_tree(byte_stream, left_dict)
             if debug: print("split:", split_stream); print("left:", left, ", ", "right:", right)
             comp_left, uncompressed = MiddleOut.middle_out_helper(left, compression_dict, debug=debug)
