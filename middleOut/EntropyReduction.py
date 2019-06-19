@@ -44,8 +44,15 @@ class EntropyReduction:
                 f_content = f.read()
                 f_content = bz2.decompress(f_content)
             return f_content
-
         result_bytes = bz2_decomp(file_name + '.bz2')
         fmt = "%db" % len(result_bytes)
         result_bytes = np.asarray(list(struct.unpack(fmt, result_bytes)))
         return result_bytes
+
+    @staticmethod
+    def bz2compressor(values):
+        return bz2.compress(values, 9)
+
+    @staticmethod
+    def bz2decompressor(values):
+        return bz2.decompress(values)

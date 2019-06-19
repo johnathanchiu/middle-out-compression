@@ -17,10 +17,15 @@ if __name__ == '__main__':
     pbar = tqdm(range(1))
     for _ in pbar:
         pbar.set_description("running middle-out compression scheme")
-        mo_compressed = MiddleOut.middle_out(bytes_of_file)
+        # lz4comp = array.array('b', [b - 128 for b in list(EntropyReduction.lz4_compress(bytes_of_file))])
+        bz2comp = array.array('b', EntropyReduction.bz2compressor(bytes_of_file))
+        mo_compressed = MiddleOut.middle_out(bz2comp)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         writeFile(mo_compressed + ('0' * pad) + num_padded, fileName=compressed_file)
+
+    testing = EntropyReduction.lz4_compress(bytes_of_file)
+    print(len(list(testing)))
 
     print("compression converges!")
     compressed_size = size_of_file(compressed_file + '.bin')
