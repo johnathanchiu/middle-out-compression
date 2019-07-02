@@ -200,8 +200,10 @@ class MiddleOut:
             if debug: print("split:", split_stream); print("left:", left, ", ", "right:", right)
             comp_left, uncompressed = MiddleOut.middle_out_helper(left, compression_dict, debug=debug)
             comp_left = '0' + identifier + compressed_lib + comp_left
-            comp_left_right = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
-            comp_right = MiddleOut.byte_compression(right, count_recursion=count_recursion+1, debug=debug)
+            comp_left_right = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, size=size,
+                                                         debug=debug)
+            comp_right = MiddleOut.byte_compression(right, count_recursion=count_recursion+1, size=size,
+                                                    debug=debug)
             left_size = len(comp_left) + len(comp_left_right) - 1
             minbits = minimum_bits(left_size)
             unary = unaryconverter(minbits)
@@ -209,7 +211,7 @@ class MiddleOut:
             if debug: print("left bits size:", left_size)
             return '1' + unary + size + split_stream + comp_left + comp_left_right + comp_right
         compressed, uncompressed = MiddleOut.middle_out_helper(byte_stream, compression_dict, debug=debug)
-        comp = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, debug=debug)
+        comp = MiddleOut.byte_compression(uncompressed, count_recursion=count_recursion+1, size=size, debug=debug)
         if debug: print("binary library", compressed_lib)
         return '0' + identifier + compressed_lib + compressed + comp
 
@@ -257,7 +259,7 @@ class MiddleOut:
         unary = unaryconverter(minbits)
         size = positive_binary(length, minbits)
         if debug: print("header:", unary + size, ",", "size:", length)
-        return unary + size + MiddleOut.byte_compression(coefficients, debug=debug)
+        return unary + size + MiddleOut.byte_compression(coefficients, size=3, debug=debug)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
@@ -266,4 +268,4 @@ class MiddleOut:
         length = positive_int(bitstream[count:count+unary_count])
         bitstream = bitstream[count+unary_count:]
         if debug: print("size:", length, ",", "compressed stream:", bitstream)
-        return MiddleOut.decompress(bitstream, length, debug=debug)
+        return MiddleOut.decompress(bitstream, length, size=3, debug=debug)
