@@ -147,7 +147,7 @@ class MiddleOut:
                 start += 1
             return decompressed
         else:
-            iden, bit_library, compressed = compressed[1], compressed[2:size*8], compressed[size*8:]
+            iden, bit_library, compressed = compressed[1], compressed[2:size*8+2], compressed[size*8+2:]
             partition_size, length_other = MiddleOutUtils.get_bit_count(compressed, length)
             bit_library = convertInt_list(bit_library, bits=8)
             decompression_library = MiddleOutUtils.build_decomp_library(iden, bit_library, size=size)
