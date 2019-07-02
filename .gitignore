@@ -17,3 +17,5 @@
 # testing only python files
 unused.py
 smalltester.py
+BinaryMiddleOut.py
+EntropyReduction.py

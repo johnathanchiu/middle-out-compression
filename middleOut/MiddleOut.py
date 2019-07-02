@@ -253,19 +253,22 @@ class MiddleOut:
         return split, left, right
 
     @staticmethod
-    def middle_out(coefficients, debug=False):
+    def middle_out(coefficients, size=2, debug=False):
+        header = positive_binary(size)
         length = len(coefficients)
         minbits = minimum_bits(length)
         unary = unaryconverter(minbits)
-        size = positive_binary(length, minbits)
-        if debug: print("header:", unary + size, ",", "size:", length)
-        return unary + size + MiddleOut.byte_compression(coefficients, size=3, debug=debug)
+        count = positive_binary(length, minbits)
+        if debug: print("header:", header + unary + count, ",", "size:", length)
+        return header + unary + count + MiddleOut.byte_compression(coefficients, size=size, debug=debug)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
+        header = positive_int(bitstream[:8])
+        bitstream = bitstream[8:]
         count, unary_count = 0, unaryToInt(bitstream)
         count += unary_count + 1
         length = positive_int(bitstream[count:count+unary_count])
         bitstream = bitstream[count+unary_count:]
         if debug: print("size:", length, ",", "compressed stream:", bitstream)
-        return MiddleOut.decompress(bitstream, length, size=3, debug=debug)
+        return MiddleOut.decompress(bitstream, length, size=header, debug=debug)
