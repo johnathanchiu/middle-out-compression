@@ -45,7 +45,7 @@ class MiddleOutUtils:
         return Counter(byte_stream)
 
     @staticmethod
-    def build_dict(byte_lib, byte_stream, debug=False):
+    def build_dict(byte_lib, byte_stream, size=2, debug=False):
         if byte_lib[0] == byte_lib[1]:
             largest_values = MiddleOutUtils.make_count(byte_stream)
             prob = largest_values[byte_lib[0]]
@@ -53,19 +53,26 @@ class MiddleOutUtils:
             largest = MiddleOutUtils.max_key(largest_values)
             prob += largest_values[largest]
             largest_values[largest] = 0
+            full_lib = array.array('b', [])
+            [full_lib.append(byte_lib[a]) for a in range(size)]
+            full_lib[1] = largest
             if debug: print("next largest value", largest, "occurrence", prob)
             return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([largest]): '011'}, '1', \
-                   array.array('b', [byte_lib[0], largest]), largest_values, prob
+                    full_lib, largest_values, prob
         values_count = MiddleOutUtils.make_count(byte_stream)
         prob = values_count[byte_lib[0]] + values_count[byte_lib[1]]
         values_count[byte_lib[0]], values_count[byte_lib[1]] = 0, 0
         return {byte_lib: '00', tuple([byte_lib[0]]): '010', tuple([byte_lib[1]]): '011'}, '0', \
-               array.array('b', byte_lib), values_count, prob
+                array.array('b', byte_lib), values_count, prob
 
     @staticmethod
-    def build_decomp_library(iden, lib):
+    def build_decomp_library(iden, lib, size=2):
         if iden == '1':
-            tup = tuple([lib[0], lib[0]])
+            values = []
+            for a in range(size):
+                values.append(lib[a])
+            values[1] = values[0]
+            tup = tuple(values)
             return {'00': tup, '010': lib[0], '011': lib[1]}
         return {'00': lib, '010': lib[0], '011': lib[1]}
 
@@ -110,7 +117,7 @@ class MiddleOut:
     split_prob = 0.4
 
     @staticmethod
-    def decompress(compressed, length, end=100, debug=False):
+    def decompress(compressed, length, end=1, size=2, debug=False):
         decompressed = []
         if compressed == '' or end == 0:
             return decompressed
@@ -125,9 +132,9 @@ class MiddleOut:
             left_total, right_total = MiddleOutUtils.right_left_count(compressed, length)
             compressed = compressed[length:]
             if debug: print("left:", left_total, ",", "right:", right_total)
-            left_values = MiddleOut.decompress(compressed, left_total, debug=debug)
+            left_values = MiddleOut.decompress(compressed, left_total, size=size, debug=debug)
             compressed = compressed[start_left:]
-            right_values = MiddleOut.decompress(compressed, right_total, debug=debug)
+            right_values = MiddleOut.decompress(compressed, right_total, size=size, debug=debug)
             if debug: print("left values:", left_values); print("right values:", right_values)
             start, left_count, right_count = 0, 0, 0
             while start < length:
@@ -140,14 +147,15 @@ class MiddleOut:
                 start += 1
             return decompressed
         else:
-            iden, bit_library, compressed = compressed[1], compressed[2:18], compressed[18:]
+            iden, bit_library, compressed = compressed[1], compressed[2:size*8], compressed[size*8:]
             partition_size, length_other = MiddleOutUtils.get_bit_count(compressed, length)
             bit_library = convertInt_list(bit_library, bits=8)
-            decompression_library = MiddleOutUtils.build_decomp_library(iden, bit_library)
+            decompression_library = MiddleOutUtils.build_decomp_library(iden, bit_library, size=size)
             if debug:
                 print("size of stream:", partition_size, ",", "length produced by next bitset:", length_other)
                 print("decomp library:", decompression_library)
-            succeeding_values = MiddleOut.decompress(compressed[partition_size:], length_other, end=length_other, debug=debug)
+            succeeding_values = MiddleOut.decompress(compressed[partition_size:], length_other, end=length_other,
+                                                     size=size, debug=debug)
             return MiddleOut.decompress_helper(compressed, succeeding_values, decompression_library, partition_size)
 
     @staticmethod
@@ -171,21 +179,23 @@ class MiddleOut:
         return decompressed
 
     @staticmethod
-    def byte_compression(byte_stream, count_recursion=1, debug=False):
+    def byte_compression(byte_stream, count_recursion=1, size=2, debug=False):
         if debug:
             print("recursion count", count_recursion, ",", "remaining length", len(byte_stream))
             print("remaining values", byte_stream)
         if len(byte_stream) == 0:
             return ''
-        compression_lib = MiddleOutUtils.build_library(byte_stream, debug=debug)
+        compression_lib = MiddleOutUtils.build_library(byte_stream, size=size, debug=debug)
         compression_dict, identifier, compressed_lib, count_lib, occprob = MiddleOutUtils.build_dict(compression_lib,
                                                                                                      byte_stream,
+                                                                                                     size=size,
                                                                                                      debug=debug)
         left_splitter, compressed_lib = compressed_lib, convertBin_list(compressed_lib)
         if debug: print("left occurrences:", left_splitter)
         if debug: print("occurrence prob:", occprob / len(byte_stream), len(byte_stream))
         if occprob / len(byte_stream) < MiddleOut.split_prob:
-            left_dict = MiddleOutUtils.increase_prob(len(byte_stream), occprob, count_lib, left_splitter, prob=MiddleOut.split_prob)
+            left_dict = MiddleOutUtils.increase_prob(len(byte_stream), occprob, count_lib, left_splitter,
+                                                     prob=MiddleOut.split_prob)
             split_stream, left, right = MiddleOut.branch_tree(byte_stream, left_dict)
             if debug: print("split:", split_stream); print("left:", left, ", ", "right:", right)
             comp_left, uncompressed = MiddleOut.middle_out_helper(left, compression_dict, debug=debug)
