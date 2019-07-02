@@ -19,3 +19,5 @@ unused.py
 smalltester.py
 BinaryMiddleOut.py
 EntropyReduction.py
+photo_compress.py
+photo_decompress.py
