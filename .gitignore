@@ -17,6 +17,7 @@
 # testing only python files
 unused.py
 smalltester.py
+methodtester.py
 BinaryMiddleOut.py
 EntropyReduction.py
 photo_compress.py
