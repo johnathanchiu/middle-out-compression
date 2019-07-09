@@ -10,7 +10,7 @@ class MiddleOutUtils:
         return k[v.index(max(v))]
 
     @staticmethod
-    def build_library(byte_stream, size=2, debug=False):
+    def build_library(byte_stream, size=2):
         count = 0
         dictionary = {}
         if len(byte_stream) < size:
@@ -32,13 +32,26 @@ class MiddleOutUtils:
     def make_count(byte_stream):
         return Counter(byte_stream)
 
+    @staticmethod
+    def grab_count(values):
+        l_c, r_c, count = 0, 0, 0
+        for v in values:
+            if v == '1':
+                r_c += 1
+            else:
+                l_c += 1
+            count += 1
+        return l_c, r_c, values[count:]
+
 
 class MiddleOut:
 
     SPLIT = 0.5
 
     @staticmethod
-    def decompress(values):
+    def decompress(values, length, size=2):
+        if values[0] == '1':
+
         return
 
 
@@ -66,13 +79,15 @@ class MiddleOut:
             while len(values) % size != 0:
                 values.append(0)
             split, left, right = '', values, []
+            iden = '0'
         else:
             split, left, right = MiddleOut.splitter(values)
+            iden = '1'
         l_, r_ = MiddleOutUtils.build_library(left, size=size), MiddleOutUtils.build_library(right, size=size)
         left_lib, right_lib = convertBin_list(l_, bits=8), convertBin_list(r_, bits=8)
         comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_)
         comp_r, uncomp_r = MiddleOut.middle_out_helper(right, r_)
-        stream_l = split + left_lib + comp_l
+        stream_l = iden + split + left_lib + comp_l
         stream_r = right_lib + comp_r
         return stream_l + MiddleOut.byte_compression(uncomp_l) + stream_r + MiddleOut.byte_compression(uncomp_r)
 
@@ -103,6 +118,7 @@ class MiddleOut:
 
     @staticmethod
     def middle_out(coefficients, size=2):
+
         return MiddleOut.byte_compression(coefficients, size=size)
 
     @staticmethod
