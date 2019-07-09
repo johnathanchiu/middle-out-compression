@@ -4,5 +4,5 @@ Middleout Compression is a novel lossless entropy encoder. This algorithm has co
 
 # Stacking Compression Algorithms
 
-Middleout Compression can work in either binary state of byte state. There is more work to be done to test where middleout works best.
+Middleout Compression can work in either binary state or byte state. There is more work to be done to test where middleout works best.
 
