@@ -33,15 +33,15 @@ class MiddleOutUtils:
         return Counter(byte_stream)
 
     @staticmethod
-    def grab_count(values):
+    def grab_count(values, length):
         l_c, r_c, count = 0, 0, 0
-        for v in values:
-            if v == '1':
+        while count < length:
+            if values[count] == '1':
                 r_c += 1
             else:
                 l_c += 1
             count += 1
-        return l_c, r_c, values[count:]
+        return l_c, r_c
 
 
 class MiddleOut:
@@ -51,6 +51,7 @@ class MiddleOut:
     @staticmethod
     def decompress(values, length, size=2):
         if values[0] == '1':
+            left_size, right_size = MiddleOutUtils.grab_count(values, length)
 
         return
 
@@ -78,11 +79,9 @@ class MiddleOut:
         if len(values) < size:
             while len(values) % size != 0:
                 values.append(0)
-            split, left, right = '', values, []
-            iden = '0'
+            iden, split, left, right = '0', '', values, []
         else:
-            split, left, right = MiddleOut.splitter(values)
-            iden = '1'
+            split, left, right = MiddleOut.splitter(values); iden = '1';
         l_, r_ = MiddleOutUtils.build_library(left, size=size), MiddleOutUtils.build_library(right, size=size)
         left_lib, right_lib = convertBin_list(l_, bits=8), convertBin_list(r_, bits=8)
         comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_)
@@ -118,9 +117,24 @@ class MiddleOut:
 
     @staticmethod
     def middle_out(coefficients, size=2):
-
-        return MiddleOut.byte_compression(coefficients, size=size)
+        header = positive_binary(size)
+        length = len(coefficients); minbits = minimum_bits(length)
+        unary = unaryconverter(minbits)
+        count = positive_binary(length, minbits)
+        return header + unary + count + MiddleOut.byte_compression(coefficients, size=size)
 
     @staticmethod
     def middle_out_decompress(compressed, size=2):
         return
+#
+# @staticmethod
+# def middle_out_decompress(bitstream, debug=False):
+#     header = positive_int(bitstream[:8])
+#     bitstream = bitstream[8:]
+#     count, unary_count = 0, unaryToInt(bitstream)
+#     count += unary_count + 1
+#     length = positive_int(bitstream[count:count+unary_count])
+#     bitstream = bitstream[count+unary_count:]
+#     if debug: print("size:", length, ",", "compressed stream:", bitstream)
+#     return MiddleOut.decompress(bitstream, length, size=header, debug=debug)
+#
