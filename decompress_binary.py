@@ -10,9 +10,9 @@ import time
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('-c', "--compressed", required=True, help="path to compressed file")
-    ap.add_argument('-o', "--path", required=False, default='./', help="path to save the decompressed file")
-    ap.add_argument('-d', "--decompressed", required=True, help="extension of original file with preceding '.'")
+    ap.add_argument('-c', "--compressed", required=True, help="Path to compressed file")
+    ap.add_argument('-o', "--path", required=False, default='./', help="Path to save the decompressed file")
+    ap.add_argument('-d', "--decompressed", required=True, help="Extension of original file with preceding '.'")
     args = ap.parse_args()
     compressed_file, decompressed_ext = args.compressed, args.decompressed
     decompressed = os.path.splitext(os.path.basename(compressed_file))[0] + decompressed_ext
