@@ -19,7 +19,7 @@ if __name__ == '__main__':
     compressed_file = args.compressed + os.path.splitext(os.path.basename(file_name))[0]
     bytes_of_file = readFileBytes(file_name)
     bytes_of_file = array.array('b', [b - 128 for b in bytes_of_file])
-    partitions = split_file(bytes_of_file, chunksize=80000)
+    partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     start_time = time.time()
 
     pbar = tqdm(partitions)

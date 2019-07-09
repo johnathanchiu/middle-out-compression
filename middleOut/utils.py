@@ -1,4 +1,3 @@
-from io import StringIO
 import array
 import os
 
@@ -113,6 +112,10 @@ def readFileBytes(fileName, partial=0):
     with open(fileName, 'rb') as f:
         bytes = f.read(int(size))
     return array.array('B', list(bytes))
+
+
+def split_file(file_values, chunksize=32000):
+    return [array.array('b', file_values[x:x+chunksize]) for x in range(0, len(file_values), chunksize)]
 
 
 def size_of_file(filename):
