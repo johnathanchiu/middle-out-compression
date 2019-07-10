@@ -13,7 +13,3 @@
 *.jpeg
 *.jpg
 *.png
-
-# testing only python files
-photo_compress.py
-photo_decompress.py
