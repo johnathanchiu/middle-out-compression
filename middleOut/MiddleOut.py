@@ -71,7 +71,7 @@ class MiddleOutUtils:
         count, ent, remaining = size*8, 0, 0
         while ent < total:
             if values[count] == '0':
-                ent += 2; count += 1
+                ent += size; count += 1
             else:
                 ent += 1; count += 1
                 remaining += 1
@@ -108,7 +108,7 @@ class MiddleOutUtils:
 
 class MiddleOut:
 
-    SPLIT = 0.3
+    SPLIT = 0.5
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
