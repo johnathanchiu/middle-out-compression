@@ -1,9 +1,8 @@
 from middleOut.MiddleOut import *
 from middleOut.EntropyReduction import *
 
-import unittest
+import numpy as np
 
-import random
 import time
 
 
@@ -27,25 +26,10 @@ class TestMiddleOut:
             print("bitsets are the same")
 
     @staticmethod
-    def generate_random_bitset(bitset_size, set_seed=False, seed=0):
-        x, y = [], []
+    def generate_random(bitset_size, set_seed=False, seed=0):
         if (set_seed):
-            random.seed(seed)
-        for _ in range(bitset_size):
-            tem = random.randint(0, 50)
-            x.append(tem)
-            y.append(tem)
-        return MiddleOutUtils.convertBin_list(x), y
-
-    @staticmethod
-    def test_random_mo(bitset_size, set_seed=False, seed=0):
-        x = []
-        if (set_seed):
-            random.seed(seed)
-        for _ in range(bitset_size):
-            tem = random.randint(0, 30)
-            x.append(tem)
-        return MiddleOut.middle_out(x)
+            np.random.seed(seed)
+        return np.random.randint(100, size=bitset_size)
 
     @staticmethod
     def run_middleout(bytes):
