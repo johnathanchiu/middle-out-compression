@@ -1,9 +1,9 @@
 from middleOut.utils import *
 from middleOut.MiddleOut import MiddleOut
-# from middleOut.EntropyReduction import EntropyReduction
 
-from collections import Counter
-import imageio
+import time
+
+start_time = time.time()
 
 file = '/Users/johnathanchiu/Documents/CompressionPics/tests/IMG_0104.jpg'
 values = [b - 128 for b in readFileBytes(file)]
