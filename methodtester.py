@@ -1,7 +1,4 @@
 from middleOut.MiddleOut import *
-from middleOut.EntropyReduction import *
-
-import unittest
 
 import random
 import time
@@ -27,38 +24,25 @@ class TestMiddleOut:
             print("bitsets are the same")
 
     @staticmethod
-    def generate_random_bitset(bitset_size, set_seed=False, seed=0):
+    def generate_random_data(size, seeding=False, seed=10):
         x, y = [], []
-        if (set_seed):
+        if seeding:
             random.seed(seed)
-        for _ in range(bitset_size):
-            tem = random.randint(0, 50)
-            x.append(tem)
-            y.append(tem)
-        return MiddleOutUtils.convertBin_list(x), y
-
-    @staticmethod
-    def test_random_mo(bitset_size, set_seed=False, seed=0):
-        x = []
-        if (set_seed):
-            random.seed(seed)
-        for _ in range(bitset_size):
-            tem = random.randint(0, 30)
-            x.append(tem)
-        return MiddleOut.middle_out(x)
+        return random.randint(100, size=size)
 
     @staticmethod
     def run_middleout(bytes):
-        return MiddleOut.middle_out(bytes, size=3, debug=True)
+        return MiddleOut.middle_out(bytes, size=2, debug=True)
 
     @staticmethod
     def run_middelout_decomp(bits):
         return MiddleOut.middle_out_decompress(bits, debug=True)
 
+
 if __name__ == '__main__':
     start_time = time.time()
     # test = [1, 2, 1, 2, 4, 5, 6, 7, 8, 9, 10]
-    test = [1, 1, 1, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 2]
+    test = [1, 1, 1, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 2, 2, 5, 1, 2, 45, 6, 2, 1]
     # test = [255, 216, 255, 224, 0, 16, 74, 70, 73, 70]
     # test[:] = [b-128 for b in test]
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
