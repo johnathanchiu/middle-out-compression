@@ -29,11 +29,8 @@ class MiddleOutUtils:
         return large_occur
 
     @staticmethod
-    def make_count(byte_stream):
-        return Counter(byte_stream)
-
-    @staticmethod
-    def merge_split(splits, left, right):
+    def merge_split(splits, left, right, debug=False):
+        if debug: print("merging", splits, left, right)
         values = []
         left_count, right_count = 0, 0
         for i in splits:
@@ -67,8 +64,9 @@ class MiddleOutUtils:
         return tracer, right
 
     @staticmethod
-    def grab_count(values, total, size=2):
-        count, ent, remaining = size*8, 0, 0
+    def grab_count(values, total, size=2, start_z=False):
+        count = 0 if start_z else size*8
+        ent, remaining = 0, 0
         while ent < total:
             if values[count] == '0':
                 ent += size; count += 1
@@ -81,7 +79,9 @@ class MiddleOutUtils:
     def splitter(values, debug=False):
         occurence = 0
         split_set = set([])
-        occurence_dict = MiddleOutUtils.make_count(values)
+        occurence_dict = Counter(values)
+        if len(occurence_dict) == 1:
+            return '', values, [], '0', '1'
         while occurence / len(values) < MiddleOut.SPLIT:
             largest = MiddleOutUtils.max_key(occurence_dict)
             split_set.add(largest)
@@ -94,8 +94,8 @@ class MiddleOutUtils:
     def branch_tree(values, left_tree_values):
         split = ''
         right, left = array.array('b', []), array.array('b', [])
-        if len(left_tree_values) == 1:
-            return split, values, right, '0'
+        if len(values) <= 15:
+            return '', values, right, '0', '0'
         for v in values:
             if v in left_tree_values:
                 split += '0'
@@ -103,53 +103,56 @@ class MiddleOutUtils:
             else:
                 split += '1'
                 right.append(v)
-        return split, left, right, '1'
+        return split, left, right, '1', '0'
 
 
 class MiddleOut:
 
-    SPLIT = 0.5
+    SPLIT = 0.3
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
-        if debug: print("stream: ", stream, "expected length: ", length)
+        if debug: print("length: ", length, ", stream: ", stream)
         uncompressed = []
-        if length == 0:
+        if len(stream) == 0 or length == 0:
             return uncompressed, stream
-        iden, stream = stream[0], stream[1:]
-        if iden == '1':
-            split, stream = stream[:length], stream[length:]
-            if debug: print("split: ", split)
-            left_count, right_count = MiddleOutUtils.count_split(split)
-            if debug: print("left count: ", left_count, ", right count: ", right_count)
-            left_grab, remainder = MiddleOutUtils.grab_count(stream, left_count)
-            if debug: print("left grab: ", left_grab, "remainder: ", remainder)
-            left_partition, left_lib, stream = stream[size*8:left_grab], \
-                                               convertInt_list(stream[:size*8], bits=8), stream[left_grab:]
-            if debug: print("left library: ", left_lib, ", left partition: ", left_partition)
-            remaining, stream = MiddleOut.decompress(stream, remainder, size=size, debug=debug)
-            left = MiddleOut.decompress_helper(left_partition, left_lib, remaining)
-            if debug: print("remaining: ", remaining, ", right stream: ", stream); print("left: ", left)
-            right_grab, remainder = MiddleOutUtils.grab_count(stream, right_count)
-            if debug: print("right grab: ", right_grab, "remainder: ", remainder)
-            right_partition, right_lib, stream = stream[size*8:right_grab], \
-                                                 convertInt_list(stream[:size*8], bits=8), stream[right_grab:]
-            if debug: print("right library: ", right_lib, ", right partition: ", right_partition)
-            remaining, stream = MiddleOut.decompress(stream, remainder, size=size, debug=debug)
-            right = MiddleOut.decompress_helper(right_partition, right_lib, remaining)
+        split, entropy, stream = stream[0], stream[1], stream[2:]
+        if debug: print("split: ", split, "entropy: ", entropy)
+        if split == '1':
+            back_transform, stream = stream[:length], stream[length:]
+            if debug: print("shift: ", back_transform)
+            left_count, right_count = MiddleOutUtils.count_split(back_transform)
+            if debug: print("left_count: ", left_count, ", right_count: ", right_count)
+            left, stream = MiddleOut.decompress(stream, left_count, debug=debug)
+            if debug: print("left: ", left); print(stream)
+            right, stream = MiddleOut.decompress(stream, right_count, debug=debug)
             if debug: print("right: ", right)
-            uncompressed = MiddleOutUtils.merge_split(split, left, right)
-            return uncompressed, stream
+            return MiddleOutUtils.merge_split(back_transform, left, right), stream
         else:
-            lib, stream = convertInt_list(stream[:size*8], bits=8), stream[size*8:]
-            partition_length, remaining_count = MiddleOutUtils.single_split(stream, length, size=size)
-            split, stream = stream[:partition_length], stream[partition_length:]
-            if debug: print("library: ", lib, ", split: ", split)
-            remaining, stream = MiddleOut.decompress(stream, remaining_count, size=size, debug=debug)
-            return MiddleOut.decompress_helper(split, lib, remaining), stream
+            if entropy == '1':
+                library, stream = stream[:8], stream[8:]
+                if debug: print("library: ", library); print("remaining stream: ", stream)
+                minbits = unaryToInt(stream); stream = stream[minbits+1:]
+                if debug: print("minimum bits: ", minbits)
+                num = positive_int(stream[:minbits+1]) + 1; stream = stream[minbits:]
+                uncompressed = [convertInt(library, bits=8)] * num
+                print(uncompressed)
+            else:
+                library, stream = convertInt_list(stream[:8*size]), stream[8*size:]
+                if debug: print("library: ", library)
+                partition_size, remaining = MiddleOutUtils.grab_count(stream, length, start_z=True)
+                partition, stream = stream[:partition_size], stream[partition_size:]
+                if debug:
+                    print("partition size: ", partition_size, "remaining: ", remaining)
+                    print("partition: ", partition); print("stream: ", stream)
+                rg = length if length < size else size
+                remain, stream = MiddleOut.decompress(stream, remaining, size=size, debug=debug)
+                uncompressed = MiddleOut.decompress_helper(partition, library, remain, size=rg, debug=debug)
+            return uncompressed, stream
 
     @staticmethod
-    def decompress_helper(partition, lib, remaining, size=2):
+    def decompress_helper(partition, lib, remaining, size=2, debug=False):
+        if debug: print("part: ", partition, ", lib: ", lib, ", remaining: ", remaining, "size: ", size)
         uncompressed = []
         remaining_count = 0
         for i in partition:
@@ -159,6 +162,7 @@ class MiddleOut:
             else:
                 for x in range(size):
                     uncompressed.append(lib[x])
+        if debug: print("uncompressed: ", uncompressed)
         return uncompressed
 
     @staticmethod
@@ -169,34 +173,42 @@ class MiddleOut:
         if len(values) <= size:
             while len(values) % size != 0:
                 values.append(0)
-        split, left, right, iden = MiddleOutUtils.splitter(values, debug=debug)
-        if debug: print("identify: ", iden, ", split: ", split, ", split size: ", len(split))
-        l_, r_ = MiddleOutUtils.build_library(left, size=size), MiddleOutUtils.build_library(right, size=size)
-        left_lib = convertBin_list(l_, bits=8) if l_ is not None else ''
-        right_lib = convertBin_list(r_, bits=8) if r_ is not None else ''
-        comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, debug=debug)
-        comp_r, uncomp_r = MiddleOut.middle_out_helper(right, r_, debug=debug)
-        stream_l = left_lib + comp_l; stream_r = right_lib + comp_r
+        split, left, right, iden, entropy = MiddleOutUtils.splitter(values, debug=debug)
+        if debug: print("split size: ", len(split), ", entropy: ", entropy, ", iden: ", iden, ", split: ", split)
+        lib, comp_l, uncomp_l = '', '', left
+        if iden == '0':
+            if entropy == '1':
+                lib = convertBin_list([left[0]], bits=8)
+                if debug: print("library: ", lib)
+                minbits = minimum_bits(len(left) - 1)
+                comp_l, uncomp_l = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
+            else:
+                l_ = MiddleOutUtils.build_library(left, size=size)
+                lib = '' if l_ is None else convertBin_list(l_, bits=8)
+                comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, debug=debug)
         if debug:
-            print("left side library: ", left_lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
-            print("right side library: ", right_lib, ", right compressed: ", comp_r, ", right uncompressed", uncomp_r)
-        return iden + split + stream_l + MiddleOut.byte_compression(uncomp_l, debug=debug) + stream_r + \
-               MiddleOut.byte_compression(uncomp_r, debug=debug)
+            print("left side library: ", lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
+            print("right: ", right)
+            print("compressed: ", iden + entropy + split + lib + comp_l)
+        return iden + entropy + split + lib + comp_l + MiddleOut.byte_compression(uncomp_l, debug=debug) + \
+               MiddleOut.byte_compression(right, debug=debug)
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, size=2, debug=False):
         if debug: print("partitioned stream: ", byte_stream, ", ", "library: ", compression_dict)
         count, unc_count = 0, 0
         compressed = ''; uncompressed = []
+        if compression_dict is None:
+            return compressed, byte_stream
         while count < len(byte_stream):
             tup = tuple(byte_stream[count:count+size])
-            if tup != compression_dict:
+            if tup == compression_dict:
+                compressed += '0'
+                count += len(tup)
+            else:
                 compressed += '1'
                 uncompressed.append(byte_stream[count])
                 count += 1
-            else:
-                compressed += '0'
-                count += len(tup)
         if debug:
             print("compressed: ", compressed); print("uncompressed: ", uncompressed)
         return compressed, uncompressed

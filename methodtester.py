@@ -45,13 +45,13 @@ if __name__ == '__main__':
     # test = [12, 11, 10, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     # test = [1, 1, 1, 1, 2, 2, 2, 2, 0]
     # test = [255, 216, 255, 224, 0, 16, 74, 70, 73, 70]
-    test = TestMiddleOut.generate_random_data(100000, seeding=True, seed=8)
+    test = TestMiddleOut.generate_random_data(100000)
     # test[:] = [b-128 for b in test]
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
     c = TestMiddleOut.run_middleout(test)
     print("size of middleout", len(c))
     de = TestMiddleOut.run_middelout_decomp(c)
-    print("decompressed", de, "original", test)
+    print("decompressed", de); print("original", test)
     TestMiddleOut.check_differences(test, de)
     print("--- %s seconds ---" % (time.time() - start_time))
 

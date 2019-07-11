@@ -5,7 +5,7 @@ import time
 
 start_time = time.time()
 
-file = '/Users/johnathanchiu/Documents/CompressionPics/tests/IMG_0104.jpg'
+file = '/Users/johnathanchiu/Documents/CompressionPics/tests/IMG_1072.jpg'
 values = [b - 128 for b in readFileBytes(file)]
 # values = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 2, 1, 1, 2, 2, 2]
 result = MiddleOut.middle_out(values, size=2)
