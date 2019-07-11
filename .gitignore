@@ -16,3 +16,5 @@
 
 # testing only python files
 unused.py
+compresstester.py
+decompresstester.py

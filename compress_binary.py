@@ -1,6 +1,5 @@
 from middleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
 from middleOut.MiddleOut import MiddleOut
-from middleOut.EntropyReduction import EntropyReduction
 
 import array
 import os
@@ -27,8 +26,6 @@ if __name__ == '__main__':
     pbar = tqdm(partitions)
     for p in pbar:
         pbar.set_description("running middle-out compression scheme")
-        # p_temp = array.array('b', [b - 128 for b in list(EntropyReduction.lz4_compress(bytes_of_file))])
-        # p_temp = array.array('b', EntropyReduction.bz2compressor(p))
         mo_compressed = MiddleOut.middle_out(p, size=2)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
