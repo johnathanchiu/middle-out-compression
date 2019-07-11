@@ -188,8 +188,6 @@ class MiddleOut:
                 comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, debug=debug)
         if debug:
             print("left side library: ", lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
-            print("right: ", right)
-            print("compressed: ", iden + entropy + split + lib + comp_l)
         return iden + entropy + split + lib + comp_l + MiddleOut.byte_compression(uncomp_l, debug=debug) + \
                MiddleOut.byte_compression(right, debug=debug)
 

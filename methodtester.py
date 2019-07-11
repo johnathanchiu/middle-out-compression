@@ -46,7 +46,6 @@ if __name__ == '__main__':
     # test = [1, 1, 1, 1, 2, 2, 2, 2, 0]
     # test = [255, 216, 255, 224, 0, 16, 74, 70, 73, 70]
     test = TestMiddleOut.generate_random_data(100000)
-    # test[:] = [b-128 for b in test]
     print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
     c = TestMiddleOut.run_middleout(test)
     print("size of middleout", len(c))
