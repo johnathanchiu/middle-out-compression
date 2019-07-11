@@ -33,7 +33,7 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes):
-        return MiddleOut.middle_out(bytes, size=2, debug=False)
+        return MiddleOut.middle_out(bytes, size=3, debug=False)
 
     @staticmethod
     def run_middelout_decomp(bits):

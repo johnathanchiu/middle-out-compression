@@ -3,6 +3,9 @@ from middleOut.utils import *
 
 
 class MiddleOutUtils:
+
+    THRESHOLD = 20
+
     @staticmethod
     def max_key(d):
         v = list(d.values())
@@ -94,7 +97,7 @@ class MiddleOutUtils:
     def branch_tree(values, left_tree_values):
         split = ''
         right, left = array.array('b', []), array.array('b', [])
-        if len(values) <= 15:
+        if len(values) <= MiddleOutUtils.THRESHOLD:
             return '', values, right, '0', '0'
         for v in values:
             if v in left_tree_values:
@@ -108,7 +111,7 @@ class MiddleOutUtils:
 
 class MiddleOut:
 
-    SPLIT = 0.3
+    SPLIT = 0.5
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):

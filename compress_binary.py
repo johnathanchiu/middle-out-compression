@@ -26,7 +26,7 @@ if __name__ == '__main__':
     pbar = tqdm(partitions)
     for p in pbar:
         pbar.set_description("running middle-out compression scheme")
-        mo_compressed = MiddleOut.middle_out(p, size=2)
+        mo_compressed = MiddleOut.middle_out(p, size=3)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
