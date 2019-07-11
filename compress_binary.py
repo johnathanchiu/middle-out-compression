@@ -23,8 +23,8 @@ if __name__ == '__main__':
     partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     start_time = time.time()
 
+    total_size = 0
     pbar = tqdm(partitions)
-    count, total_size = 1, 0
     for p in pbar:
         pbar.set_description("running middle-out compression scheme")
         # p_temp = array.array('b', [b - 128 for b in list(EntropyReduction.lz4_compress(bytes_of_file))])
@@ -35,7 +35,6 @@ if __name__ == '__main__':
         mo_compressed += ('0' * pad) + num_padded
         writeFile(mo_compressed, fileName=compressed_file)
         total_size += len(mo_compressed)
-        count += 1
 
     print("compression converges!")
     compressed_size = total_size // 8
