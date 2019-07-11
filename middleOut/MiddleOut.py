@@ -136,7 +136,6 @@ class MiddleOut:
                 if debug: print("minimum bits: ", minbits)
                 num = positive_int(stream[:minbits+1]) + 1; stream = stream[minbits:]
                 uncompressed = [convertInt(library, bits=8)] * num
-                print(uncompressed)
             else:
                 library, stream = convertInt_list(stream[:8*size]), stream[8*size:]
                 if debug: print("library: ", library)
