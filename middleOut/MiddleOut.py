@@ -142,7 +142,7 @@ class MiddleOut:
             else:
                 library, stream = convertInt_list(stream[:8*size]), stream[8*size:]
                 if debug: print("library: ", library)
-                partition_size, remaining = MiddleOutUtils.grab_count(stream, length, start_z=True)
+                partition_size, remaining = MiddleOutUtils.grab_count(stream, length, size=size, start_z=True)
                 partition, stream = stream[:partition_size], stream[partition_size:]
                 if debug:
                     print("partition size: ", partition_size, "remaining: ", remaining)
@@ -180,18 +180,18 @@ class MiddleOut:
         lib, comp_l, uncomp_l = '', '', left
         if iden == '0':
             if entropy == '1':
-                lib = convertBin_list([left[0]], bits=8)
+                lib = convertBin(left[0], bits=8)
                 if debug: print("library: ", lib)
                 minbits = minimum_bits(len(left) - 1)
                 comp_l, uncomp_l = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
             else:
                 l_ = MiddleOutUtils.build_library(left, size=size)
                 lib = '' if l_ is None else convertBin_list(l_, bits=8)
-                comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, debug=debug)
+                comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, size=size, debug=debug)
         if debug:
             print("left side library: ", lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
-        return iden + entropy + split + lib + comp_l + MiddleOut.byte_compression(uncomp_l, debug=debug) + \
-               MiddleOut.byte_compression(right, debug=debug)
+        return iden + entropy + split + lib + comp_l + MiddleOut.byte_compression(uncomp_l, size=size, debug=debug) + \
+               MiddleOut.byte_compression(right, size=size, debug=debug)
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, size=2, debug=False):

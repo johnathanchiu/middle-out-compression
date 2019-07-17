@@ -32,21 +32,21 @@ class TestMiddleOut:
         return np.random.randint(-128, 127, size=size)
 
     @staticmethod
-    def run_middleout(bytes):
-        return MiddleOut.middle_out(bytes, size=3, debug=False)
+    def run_middleout(bytes, size=2, debug=False):
+        return MiddleOut.middle_out(bytes, size=size, debug=debug)
 
     @staticmethod
-    def run_middelout_decomp(bits):
-        return MiddleOut.middle_out_decompress(bits, debug=False)
+    def run_middelout_decomp(bits, debug=False):
+        return MiddleOut.middle_out_decompress(bits, debug=debug)
 
     @staticmethod
-    def test_middleout(bytes=None, size=10000, seeding=False, seed=1):
+    def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debug=False):
         if bytes is None:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
-        c = TestMiddleOut.run_middleout(bytes)
+        c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
         print("size of middleout", len(c))
-        de = TestMiddleOut.run_middelout_decomp(c)
+        de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
         print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
         print("compression: ", len(c) / (len(bytes) * 8))
@@ -62,6 +62,6 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TestMiddleOut.test_middleout()
+    TestMiddleOut.test_middleout(size=1000000, libsize=2, seeding=True, debug=False)
     print("--- %s seconds ---" % (time.time() - start_time))
 
