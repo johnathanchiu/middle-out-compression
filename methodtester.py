@@ -1,4 +1,5 @@
 from middleOut.MiddleOut import *
+from middleOut.rle import rle, rld
 
 import numpy as np
 
@@ -9,27 +10,26 @@ import time
 class TestMiddleOut:
 
     @staticmethod
-    def check_differences(a, b, array=True):
-        counter = len(a)
-        if len(a) != len(b):
+    def check_differences(checker, sample, arr=True):
+        def end_of_loop():
+            return StopIteration
+        size = len(checker); boolarr = []
+        if len(checker) != len(sample):
             print("wrong lengths")
-            counter = len(a) if len(a) > len(b) else len(b)
-        count = 0
-        while count < counter:
-            if a[count] != b[count]:
-                print("error starts here: ", b[count:])
-                return
-            count += 1
-        if array:
-            print("arrays are the same")
-        else:
-            print("bitsets are the same")
+            size = len(checker) if len(checker) > len(sample) else len(sample)
+        [boolarr.append(True) if checker[count] == sample[count] else end_of_loop() for count in range(size)]
+        if len(boolarr) == size:
+            if arr: print("arrays are the same")
+            else: print("bitsets are the same")
+            return
+        err = len(boolarr)
+        print("error in decompression at count " + str(err) + " (starts here): ",  sample[err-1:])
 
     @staticmethod
     def generate_random_data(size, seeding=False, seed=10):
         if seeding:
             np.random.seed(seed)
-        return np.random.randint(100, size=size)
+        return np.random.randint(-128, 127, size=size)
 
     @staticmethod
     def run_middleout(bytes):
@@ -39,19 +39,29 @@ class TestMiddleOut:
     def run_middelout_decomp(bits):
         return MiddleOut.middle_out_decompress(bits, debug=False)
 
+    @staticmethod
+    def test_middleout(bytes=None, size=10000, seeding=False, seed=1):
+        if bytes is None:
+            bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
+        print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
+        c = TestMiddleOut.run_middleout(bytes)
+        print("size of middleout", len(c))
+        de = TestMiddleOut.run_middelout_decomp(c)
+        print("decompressed", de); print("original", bytes)
+        TestMiddleOut.check_differences(bytes, de)
+        print("compression: ", len(c) / (len(bytes) * 8))
+
+    @staticmethod
+    def rletest(values):
+        return rle(values)
+
+    @staticmethod
+    def rldtest(comp):
+        return rld(comp)
+
 
 if __name__ == '__main__':
     start_time = time.time()
-    # test = [12, 11, 10, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-    # test = [1, 1, 1, 1, 2, 2, 2, 2, 0]
-    # test = [255, 216, 255, 224, 0, 16, 74, 70, 73, 70]
-    test = TestMiddleOut.generate_random_data(1000000)
-    print("size before middleout", len(test), "(bytes)", ", ", len(test) * 8, "(bits)")
-    c = TestMiddleOut.run_middleout(test)
-    print("size of middleout", len(c))
-    de = TestMiddleOut.run_middelout_decomp(c)
-    print("decompressed", de); print("original", test)
-    TestMiddleOut.check_differences(test, de)
-    print("compression: ", len(c) / (len(test) * 8))
+    TestMiddleOut.test_middleout()
     print("--- %s seconds ---" % (time.time() - start_time))
 
