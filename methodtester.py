@@ -16,20 +16,20 @@ class TestMiddleOut:
         size = len(checker); boolarr = []
         if len(checker) != len(sample):
             print("wrong lengths")
-            size = len(checker) if len(checker) > len(sample) else len(sample)
+            size = len(checker) if len(checker) < len(sample) else len(sample)
         [boolarr.append(True) if checker[count] == sample[count] else end_of_loop() for count in range(size)]
         if len(boolarr) == size:
             if arr: print("arrays are the same")
             else: print("bitsets are the same")
             return
         err = len(boolarr)
-        print("error in decompression at count " + str(err) + " (starts here): ",  sample[err-1:])
+        print("error in decompression at count " + str(err) + " (starts here): ",  sample[err:])
 
     @staticmethod
     def generate_random_data(size, seeding=False, seed=10):
         if seeding:
             np.random.seed(seed)
-        return np.random.randint(-128, 127, size=size)
+        return np.random.randint(0, 255, size=size).tolist()
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
@@ -62,6 +62,6 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TestMiddleOut.test_middleout(size=1000000, libsize=2, seeding=True, debug=False)
+    TestMiddleOut.test_middleout(size=10, libsize=2, seeding=False, debug=False)
     print("--- %s seconds ---" % (time.time() - start_time))
 

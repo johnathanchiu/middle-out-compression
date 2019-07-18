@@ -11,6 +11,15 @@ def positive_int(binary):
     return int(binary, 2)
 
 
+def positiveInt_list(binary, bits=8):
+    return [int(binary[i:i+bits], 2) for i in range(0, len(binary), bits)]
+
+
+def positiveBin_list(vals, bits=8):
+    length = '{0:0' + str(bits) + 'b}'
+    return ''.join([length.format(i) for i in vals])
+
+
 def convertBin(num, bits=8):
     s = bin(num & int("1" * bits, 2))[2:]
     return ("{0:0>%s}" % (bits)).format(s)
@@ -115,7 +124,7 @@ def readFileBytes(fileName, partial=0):
 
 
 def split_file(file_values, chunksize=32000):
-    return [array.array('b', file_values[x:x+chunksize]) for x in range(0, len(file_values), chunksize)]
+    return [array.array('B', file_values[x:x+chunksize]) for x in range(0, len(file_values), chunksize)]
 
 
 def size_of_file(filename):

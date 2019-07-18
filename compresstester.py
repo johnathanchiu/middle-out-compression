@@ -1,6 +1,6 @@
 from middleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
 from middleOut.MiddleOut import MiddleOut
-from middleOut.EntropyReduction import EntropyReduction
+from middleOut.EntropyEncoder import *
 
 import array
 import os
@@ -19,16 +19,16 @@ if __name__ == '__main__':
     compressed_file = args.compressed + os.path.splitext(os.path.basename(file_name))[0] + \
                       os.path.splitext(os.path.basename(file_name))[1]
     bytes_of_file = readFileBytes(file_name)
-    bytes_of_file = array.array('b', [b - 128 for b in bytes_of_file])
-    partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     start_time = time.time()
 
+    partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     total_size = 0
     pbar = tqdm(partitions)
     for p in pbar:
         pbar.set_description("running middle-out compression scheme")
-        p_temp = array.array('b', [b - 128 for b in list(EntropyReduction.lz4_compress(p))])
-        mo_compressed = MiddleOut.middle_out(p_temp, size=2)
+        # p_temp = array.array('B', list(lz4_compress(p)))
+        p_temp = array.array('B', bz2compressor(p))
+        mo_compressed = MiddleOut.middle_out(p_temp, size=4)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded

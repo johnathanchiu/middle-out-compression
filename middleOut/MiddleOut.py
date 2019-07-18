@@ -1,5 +1,6 @@
 from collections import Counter
 from middleOut.utils import *
+from middleOut.EntropyEncoder import *
 
 
 class MiddleOutUtils:
@@ -96,7 +97,7 @@ class MiddleOutUtils:
     @staticmethod
     def branch_tree(values, left_tree_values):
         split = ''
-        right, left = array.array('b', []), array.array('b', [])
+        right, left = array.array('B', []), array.array('B', [])
         if len(values) <= MiddleOutUtils.THRESHOLD:
             return '', values, right, '0', '0'
         for v in values:
@@ -111,7 +112,8 @@ class MiddleOutUtils:
 
 class MiddleOut:
 
-    SPLIT = 0.5
+    SPLIT = 0.5;    HI = None
+
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
@@ -138,9 +140,9 @@ class MiddleOut:
                 minbits = unaryToInt(stream); stream = stream[minbits+1:]
                 if debug: print("minimum bits: ", minbits)
                 num = positive_int(stream[:minbits+1]) + 1; stream = stream[minbits:]
-                uncompressed = [convertInt(library, bits=8)] * num
+                uncompressed = [positive_int(library)] * num
             else:
-                library, stream = convertInt_list(stream[:8*size]), stream[8*size:]
+                library, stream = positiveInt_list(stream[:8*size]), stream[8*size:]
                 if debug: print("library: ", library)
                 partition_size, remaining = MiddleOutUtils.grab_count(stream, length, size=size, start_z=True)
                 partition, stream = stream[:partition_size], stream[partition_size:]
@@ -180,13 +182,13 @@ class MiddleOut:
         lib, comp_l, uncomp_l = '', '', left
         if iden == '0':
             if entropy == '1':
-                lib = convertBin(left[0], bits=8)
+                lib = positive_binary(left[0], bits=8)
                 if debug: print("library: ", lib)
                 minbits = minimum_bits(len(left) - 1)
                 comp_l, uncomp_l = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
             else:
                 l_ = MiddleOutUtils.build_library(left, size=size)
-                lib = '' if l_ is None else convertBin_list(l_, bits=8)
+                lib = '' if l_ is None else positiveBin_list(l_, bits=8)
                 comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, size=size, debug=debug)
         if debug:
             print("left side library: ", lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
