@@ -1,5 +1,5 @@
-from middleOut.MiddleOut import *
-from middleOut.rle import rle, rld
+from MiddleOut.MiddleOut import *
+from MiddleOut.rle import rle, rld
 
 import numpy as np
 

@@ -1,6 +1,5 @@
 from collections import Counter
-from middleOut.utils import *
-from middleOut.EntropyEncoder import *
+from MiddleOut.utils import *
 
 
 class MiddleOutUtils:
