@@ -1,5 +1,5 @@
-from MiddleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
-from MiddleOut.MiddleOut import MiddleOut
+from middleout.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
+from middleout.MiddleOut import MiddleOut
 
 import array
 import os

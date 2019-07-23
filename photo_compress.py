@@ -1,7 +1,7 @@
-from MiddleOut.utils import convertInt, convertBin
-from MiddleOut.MiddleOut import MiddleOut
-from MiddleOut.utils import writeFile, pad_stream
-from Jpeg.utils import *
+from middleout.utils import convertInt, convertBin
+from middleout.MiddleOut import MiddleOut
+from middleout.utils import writeFile, pad_stream
+from jpeg.utils import *
 
 from skimage.measure._structural_similarity import compare_ssim as ssim
 

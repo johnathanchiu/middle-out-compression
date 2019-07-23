@@ -1,6 +1,6 @@
-from MiddleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file, convert_to_list
-from MiddleOut.MiddleOut import MiddleOut
-from MiddleOut.EntropyEncoder import *
+from middleout.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file, convert_to_list
+from middleout.MiddleOut import MiddleOut
+from middleout.EntropyEncoder import *
 
 import array
 import os

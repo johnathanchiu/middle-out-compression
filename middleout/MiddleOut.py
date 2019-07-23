@@ -1,5 +1,5 @@
 from collections import Counter
-from MiddleOut.utils import *
+from middleout.utils import *
 
 
 class MiddleOutUtils:

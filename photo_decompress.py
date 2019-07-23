@@ -1,6 +1,6 @@
-from MiddleOut.utils import convertInt, convertBin, readFile, remove_padding
-from MiddleOut.MiddleOut import MiddleOut
-from Jpeg.utils import *
+from middleout.utils import convertInt, convertBin, readFile, remove_padding
+from middleout.MiddleOut import MiddleOut
+from jpeg.utils import *
 
 from multiprocessing import Pool
 from scipy.ndimage import *

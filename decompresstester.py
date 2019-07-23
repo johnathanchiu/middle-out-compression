@@ -1,5 +1,5 @@
-from MiddleOut.MiddleOut import MiddleOut
-from MiddleOut.utils import readFile, writeFileBytes, remove_padding
+from middleout.MiddleOut import MiddleOut
+from middleout.utils import readFile, writeFileBytes, remove_padding
 
 import array
 import os

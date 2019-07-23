@@ -1,6 +1,6 @@
-from MiddleOut.utils import *
-from MiddleOut.MiddleOut import MiddleOut
-from MiddleOut.EntropyEncoder import *
+from middleout.utils import *
+from middleout.MiddleOut import MiddleOut
+from middleout.EntropyEncoder import *
 
 import random
 import time
