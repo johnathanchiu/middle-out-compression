@@ -1,4 +1,4 @@
-from middleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
+from middleOut.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file, convert_to_list
 from middleOut.MiddleOut import MiddleOut
 from middleOut.EntropyEncoder import *
 
@@ -27,13 +27,17 @@ if __name__ == '__main__':
     for p in pbar:
         pbar.set_description("running middle-out compression scheme")
         # p_temp = array.array('B', list(lz4_compress(p)))
-        p_temp = array.array('B', bz2compressor(p))
+        # p_temp = array.array('B', bz2compressor(p))
+        # p_temp = array.array('B', lzmacompressor(p))
+        p_temp = p
         mo_compressed = MiddleOut.middle_out(p_temp, size=4)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         writeFile(mo_compressed, fileName=compressed_file)
         total_size += len(mo_compressed)
+        mo_compressed = convert_to_list(mo_compressed)
+        bz2_c(mo_compressed, compressed_file)
 
     print("compression converges!")
     compressed_size = total_size // 8

@@ -15,6 +15,6 @@
 *.png
 
 # testing only python files
-# unused.py
-# compresstester.py
-# decompresstester.py
+compresstester.py
+decompresstester.py
+smalltester.py

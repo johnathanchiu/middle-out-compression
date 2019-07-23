@@ -3,7 +3,6 @@ from middleOut.rle import rle, rld
 
 import numpy as np
 
-import random
 import time
 
 
@@ -62,6 +61,6 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TestMiddleOut.test_middleout(size=10, libsize=2, seeding=False, debug=False)
+    TestMiddleOut.test_middleout(size=1000000, libsize=3, seeding=False, debug=False)
     print("--- %s seconds ---" % (time.time() - start_time))
 

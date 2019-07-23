@@ -1,13 +1,14 @@
 from middleOut.utils import *
 from middleOut.MiddleOut import MiddleOut
+from middleOut.EntropyEncoder import *
 
+import random
 import time
 
 start_time = time.time()
 
 file = '/Users/johnathanchiu/Documents/CompressionPics/tests/IMG_1072.jpg'
-values = [b - 128 for b in readFileBytes(file)]
-# values = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 2, 1, 1, 2, 2, 2]
+values = readFileBytes(file)
 result = MiddleOut.middle_out(values, size=2)
 
 size = len(result) // 8

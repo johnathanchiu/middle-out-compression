@@ -1,35 +1,21 @@
 import numpy as np
 
 import lz4.frame as lz
+import lzma
 import bz2
 
 import struct
-import array
 import os
 
 
-def lz4_compress(values):
-    with lz.LZ4FrameCompressor() as compressor:
-        compressed = compressor.begin()
-        compressed += compressor.compress(bytes(values))
-        compressed += compressor.flush()
-    return compressed
-
-
-def lz4_decompress(values):
-    with lz.LZ4FrameDecompressor() as decompressor:
-        decompressed = decompressor.decompress(values)
-    return decompressed
-
-
-def bz2_(compressed, output_file):
+def bz2_c(compressed, output_file):
     def bz2_comp(output, output_file):
         filename = output_file + ".bz2"
         with bz2.open(filename, "wb") as f:
             output = bz2.compress(output, 9)
             f.write(output)
         return os.path.getsize(filename), filename
-    compressed = (struct.pack('b' * len(compressed), *compressed))
+    compressed = (struct.pack('B' * len(compressed), *compressed))
     size, filename = bz2_comp(compressed, output_file)
     return size, filename
 
@@ -46,9 +32,31 @@ def bz2_unc(file_name):
     return result_bytes
 
 
+def lz4compressor(values):
+    with lz.LZ4FrameCompressor() as compressor:
+        compressed = compressor.begin()
+        compressed += compressor.compress(bytes(values))
+        compressed += compressor.flush()
+    return compressed
+
+
+def lz4decompressor(values):
+    with lz.LZ4FrameDecompressor() as decompressor:
+        decompressed = decompressor.decompress(values)
+    return decompressed
+
+
 def bz2compressor(values):
     return list(bz2.compress(bytes(values), 9))
 
 
 def bz2decompressor(values):
     return list(bz2.decompress(bytes(values)))
+
+
+def lzmacompressor(values):
+    return list(lzma.compress(bytes(values)))
+
+
+def lzmadecomressor(values):
+    return list(lzma.decompress(bytes(values)))

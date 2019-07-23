@@ -123,6 +123,11 @@ def readFileBytes(fileName, partial=0):
     return array.array('B', list(bytes))
 
 
+def convert_to_list(bitstring):
+    bit_strings = [bitstring[i:i + 8] for i in range(0, len(bitstring), 8)]
+    return [int(b, 2) for b in bit_strings]
+
+
 def split_file(file_values, chunksize=32000):
     return [array.array('B', file_values[x:x+chunksize]) for x in range(0, len(file_values), chunksize)]
 

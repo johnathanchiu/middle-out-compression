@@ -72,11 +72,8 @@ class MiddleOutUtils:
         count = 0 if start_z else size*8
         ent, remaining = 0, 0
         while ent < total:
-            if values[count] == '0':
-                ent += size; count += 1
-            else:
-                ent += 1; count += 1
-                remaining += 1
+            if values[count] == '0': ent += size; count += 1
+            else: ent += 1; count += 1; remaining += 1
         return count, remaining
 
     @staticmethod
@@ -84,8 +81,7 @@ class MiddleOutUtils:
         occurence = 0
         split_set = set([])
         occurence_dict = Counter(values)
-        if len(occurence_dict) == 1:
-            return '', values, [], '0', '1'
+        if len(occurence_dict) == 1: return '', values, [], '0', '1'
         while occurence / len(values) < MiddleOut.SPLIT:
             largest = MiddleOutUtils.max_key(occurence_dict)
             split_set.add(largest)
@@ -98,22 +94,16 @@ class MiddleOutUtils:
     def branch_tree(values, left_tree_values):
         split = ''
         right, left = array.array('B', []), array.array('B', [])
-        if len(values) <= MiddleOutUtils.THRESHOLD:
-            return '', values, right, '0', '0'
+        if len(values) <= MiddleOutUtils.THRESHOLD: return '', values, right, '0', '0'
         for v in values:
-            if v in left_tree_values:
-                split += '0'
-                left.append(v)
-            else:
-                split += '1'
-                right.append(v)
+            if v in left_tree_values: split += '0'; left.append(v)
+            else: split += '1'; right.append(v)
         return split, left, right, '1', '0'
 
 
 class MiddleOut:
 
-    SPLIT = 0.5;    HI = None
-
+    SPLIT = 0.5
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
@@ -128,9 +118,9 @@ class MiddleOut:
             if debug: print("shift: ", back_transform)
             left_count, right_count = MiddleOutUtils.count_split(back_transform)
             if debug: print("left_count: ", left_count, ", right_count: ", right_count)
-            left, stream = MiddleOut.decompress(stream, left_count, debug=debug)
+            left, stream = MiddleOut.decompress(stream, left_count, size=size, debug=debug)
             if debug: print("left: ", left); print(stream)
-            right, stream = MiddleOut.decompress(stream, right_count, debug=debug)
+            right, stream = MiddleOut.decompress(stream, right_count, size=size, debug=debug)
             if debug: print("right: ", right)
             return MiddleOutUtils.merge_split(back_transform, left, right), stream
         else:
