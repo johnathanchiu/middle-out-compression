@@ -28,7 +28,7 @@ class TestMiddleOut:
     def generate_random_data(size, seeding=False, seed=10):
         if seeding:
             np.random.seed(seed)
-        return np.random.randint(0, 255, size=size).tolist()
+        return np.random.randint(0, 5, size=size).tolist()
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
@@ -58,9 +58,20 @@ class TestMiddleOut:
     def rldtest(comp):
         return rld(comp)
 
+    @staticmethod
+    def test_runlength(arr=None, size=100, seeding=False, seed=1):
+        if arr is None:
+            arr = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
+        rl = TestMiddleOut.rletest(arr)
+        print("result of run length: ", rl)
+        rd = TestMiddleOut.rldtest(rl)
+        print("result of decode: ", rd)
+        TestMiddleOut.check_differences(arr, rd)
+
 
 if __name__ == '__main__':
     start_time = time.time()
     TestMiddleOut.test_middleout(size=1000000, libsize=3, seeding=False, debug=False)
+    TestMiddleOut.test_runlength(arr=[1, 1, 1, 2, 2, 2, 3, 3, 3])
     print("--- %s seconds ---" % (time.time() - start_time))
 
