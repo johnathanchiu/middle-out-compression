@@ -1,5 +1,8 @@
+# test cases for employed algorithms
+# © Johnathan Chiu, 2019
+
 from middleout.MiddleOut import *
-from middleout.rle import rle, rld
+from middleout.runlength import rle, rld
 
 import numpy as np
 
@@ -28,7 +31,7 @@ class TestMiddleOut:
     def generate_random_data(size, seeding=False, seed=10):
         if seeding:
             np.random.seed(seed)
-        return np.random.randint(0, 5, size=size).tolist()
+        return np.random.randint(0, 255, size=size).tolist()
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
@@ -44,7 +47,7 @@ class TestMiddleOut:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
         c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
-        print("size of middleout", len(c))
+        print("size of middleout", len(c) // 8, "bytes")
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
         print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
@@ -72,7 +75,12 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TestMiddleOut.test_middleout(size=5, libsize=3, seeding=False, debug=False)
-    TestMiddleOut.test_runlength(size=3000000, seeding=False, seed=1, debug=False)
+    # for i in range(100):
+        # print('seed value:', i)
+    TestMiddleOut.test_middleout(size=100, libsize=2, seeding=True, seed=0, debug=True)
+    # for i in range(100):
+    #     print('seed value:', i)
+    #     TestMiddleOut.test_runlength(size=1000, seeding=True, seed=i, debug=False)
+    print("\nfinished running all tests")
     print("--- %s seconds ---" % (time.time() - start_time))
 

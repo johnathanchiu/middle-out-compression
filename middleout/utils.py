@@ -1,3 +1,6 @@
+# Utils file for Middle-Out Compression
+# © Johnathan Chiu, 2019
+
 import array
 import os
 

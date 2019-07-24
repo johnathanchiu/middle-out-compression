@@ -1,15 +1,15 @@
+# This program produces the results of compression on a specific file
+# © Johnathan Chiu, 2019
+
 from middleout.utils import *
 from middleout.MiddleOut import MiddleOut
-from middleout.EntropyEncoder import *
+from middleout.entropy_encoders import *
 
-import matplotlib.pyplot as plt
-
-import array
+from tqdm import tqdm
+import argparse
+import time
 import os
 
-import argparse
-from tqdm import tqdm
-import time
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
