@@ -1,6 +1,8 @@
-from middleout.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file, convert_to_list
+from middleout.utils import *
 from middleout.MiddleOut import MiddleOut
 from middleout.EntropyEncoder import *
+
+import matplotlib.pyplot as plt
 
 import array
 import os
@@ -23,24 +25,24 @@ if __name__ == '__main__':
 
     partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     total_size = 0
-    pbar = tqdm(partitions)
+    pbar = tqdm(partitions, desc='running middle-out compression scheme')
+    bz2test, lz4test, lzmatest, motest = None, None, None, None
     for p in pbar:
-        pbar.set_description("running middle-out compression scheme")
-        # p_temp = array.array('B', list(lz4_compress(p)))
-        # p_temp = array.array('B', bz2compressor(p))
-        # p_temp = array.array('B', lzmacompressor(p))
-        p_temp = p
-        mo_compressed = MiddleOut.middle_out(p_temp, size=4)
+        bz2test = bz2compressor(p)
+        lz4test = lz4compressor(p)
+        lzmatest = lzmacompressor(p)
+
+        mo_compressed = MiddleOut.middle_out(p, size=4)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
-        writeFile(mo_compressed, fileName=compressed_file)
-        total_size += len(mo_compressed)
-        mo_compressed = convert_to_list(mo_compressed)
-        bz2_c(mo_compressed, compressed_file)
+        motest = positiveInt_list(mo_compressed)
 
-    print("compression converges!")
-    compressed_size = total_size // 8
-    print("size of resulting file:", compressed_size)
-    print("compression percentage (compressed / original): ", compressed_size / size_of_file(file_name) * 100, "%")
+    print('original file size:', len(bytes_of_file))
+    compressors = ('bz2', 'lz4', 'lzma', 'mo')
+    performance = (len(bz2test), len(lz4test), len(lzmatest), len(motest))
+
+    for i, v in zip(compressors, performance):
+        print(str(i + ':'), v, '------->', str(100 * v / len(bytes_of_file)), '%')
+
     print("--- %s seconds ---" % (time.time() - start_time))
