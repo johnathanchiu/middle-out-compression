@@ -7,7 +7,7 @@ import bz2
 import struct
 
 
-def bz2_c(compressed, output_file, write=False):
+def bz2_c(compressed, output_file, write=True):
     def bz2_comp(output, output_file):
         filename = output_file + ".bz2"
         with bz2.open(filename, "wb") as f:
