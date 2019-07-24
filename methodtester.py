@@ -51,27 +51,28 @@ class TestMiddleOut:
         print("compression: ", len(c) / (len(bytes) * 8))
 
     @staticmethod
-    def rletest(values):
-        return rle(values)
+    def rletest(values, debug=False):
+        return rle(values, debug=debug)
 
     @staticmethod
-    def rldtest(comp):
-        return rld(comp)
+    def rldtest(comp, debug=False):
+        return rld(comp, debug=debug)
 
     @staticmethod
-    def test_runlength(arr=None, size=100, seeding=False, seed=1):
+    def test_runlength(arr=None, size=100, seeding=False, seed=1, debug=False):
         if arr is None:
             arr = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
-        rl = TestMiddleOut.rletest(arr)
+        print("original values: ", arr)
+        rl = TestMiddleOut.rletest(arr, debug=debug)
         print("result of run length: ", rl)
-        rd = TestMiddleOut.rldtest(rl)
+        rd = TestMiddleOut.rldtest(rl, debug=debug)
         print("result of decode: ", rd)
         TestMiddleOut.check_differences(arr, rd)
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    TestMiddleOut.test_middleout(size=1000000, libsize=3, seeding=False, debug=False)
-    TestMiddleOut.test_runlength(arr=[1, 1, 1, 2, 2, 2, 3, 3, 3])
+    TestMiddleOut.test_middleout(size=5, libsize=3, seeding=False, debug=False)
+    TestMiddleOut.test_runlength(size=3000000, seeding=False, seed=1, debug=False)
     print("--- %s seconds ---" % (time.time() - start_time))
 
