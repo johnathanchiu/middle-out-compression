@@ -1,8 +1,6 @@
 from middleout.utils import *
 from middleout.MiddleOut import MiddleOut
-from middleout.EntropyEncoder import *
 
-import random
 import time
 
 start_time = time.time()
