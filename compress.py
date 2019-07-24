@@ -1,5 +1,5 @@
-from middleout.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
 from middleout.MiddleOut import MiddleOut
+from middleout.utils import *
 
 import os
 
@@ -24,8 +24,7 @@ if __name__ == '__main__':
     pbar = tqdm(partitions, desc='running middle-out compression scheme')
     for p in pbar:
         mo_compressed = MiddleOut.middle_out(p, size=4)
-        pad = pad_stream(len(mo_compressed))
-        num_padded = convertBin(pad, bits=4)
+        pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         writeFile(mo_compressed, fileName=compressed_file)
         total_size += len(mo_compressed)

@@ -1,10 +1,15 @@
+# Middle-Out Compression Algorithm
+# © Johnathan Chiu, 2019
+
 from collections import Counter
 from middleout.utils import *
+from middleout.runlength import rld, rle
 
 
 class MiddleOutUtils:
 
-    THRESHOLD = 20
+    LOWER_THRESH = 8
+    UPPER_THRESH = 40
 
     @staticmethod
     def max_key(d):
@@ -93,7 +98,7 @@ class MiddleOutUtils:
     def branch_tree(values, left_tree_values):
         split = ''
         right, left = array.array('B', []), array.array('B', [])
-        if len(values) <= MiddleOutUtils.THRESHOLD: return '', values, right, '0', '0'
+        if len(values) <= MiddleOutUtils.UPPER_THRESH: return '', values, right, '0', '0'
         for v in values:
             if v in left_tree_values: split += '0'; left.append(v)
             else: split += '1'; right.append(v)
@@ -103,6 +108,7 @@ class MiddleOutUtils:
 class MiddleOut:
 
     SPLIT = 0.5
+    LITERAL_CUTOFF = 40
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
@@ -110,6 +116,9 @@ class MiddleOut:
         uncompressed = []
         if len(stream) == 0 or length == 0:
             return uncompressed, stream
+        literal, stream = stream[0], stream[1:]
+        if literal == '1':
+            return positiveInt_list(stream[:length*8]), stream[length*8:]
         split, entropy, stream = stream[0], stream[1], stream[2:]
         if debug: print("split: ", split, "entropy: ", entropy)
         if split == '1':
@@ -118,7 +127,7 @@ class MiddleOut:
             left_count, right_count = MiddleOutUtils.count_split(back_transform)
             if debug: print("left_count: ", left_count, ", right_count: ", right_count)
             left, stream = MiddleOut.decompress(stream, left_count, size=size, debug=debug)
-            if debug: print("left: ", left); print(stream)
+            if debug: print("left: ", left); print("remaining stream: ", stream)
             right, stream = MiddleOut.decompress(stream, right_count, size=size, debug=debug)
             if debug: print("right: ", right)
             return MiddleOutUtils.merge_split(back_transform, left, right), stream
@@ -160,28 +169,27 @@ class MiddleOut:
 
     @staticmethod
     def byte_compression(values, size=2, debug=False):
-        if debug: print("original values: ", values)
-        if len(values) == 0:
-            return ''
+        if debug: print("original values: ", values); print("remaining length: ", len(values))
+        if len(values) == 0: return ''
         if len(values) <= size:
-            while len(values) % size != 0:
-                values.append(0)
-        split, left, right, iden, entropy = MiddleOutUtils.splitter(values, debug=debug)
+            while len(values) % size != 0: values.append(0)
+        literal = '0'; split, left, right, iden, entropy = MiddleOutUtils.splitter(values, debug=debug)
+        if len(values) <= MiddleOut.LITERAL_CUTOFF and entropy == '0': return '1' + positiveBin_list(values, bits=8)
         if debug: print("split size: ", len(split), ", entropy: ", entropy, ", iden: ", iden, ", split: ", split)
         lib, comp_l, uncomp_l = '', '', left
         if iden == '0':
             if entropy == '1':
-                lib = positive_binary(left[0], bits=8)
+                lib, minbits = positive_binary(left[0], bits=8), minimum_bits(len(left) - 1)
                 if debug: print("library: ", lib)
-                minbits = minimum_bits(len(left) - 1)
                 comp_l, uncomp_l = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
             else:
                 l_ = MiddleOutUtils.build_library(left, size=size)
                 lib = '' if l_ is None else positiveBin_list(l_, bits=8)
                 comp_l, uncomp_l = MiddleOut.middle_out_helper(left, l_, size=size, debug=debug)
-        if debug:
-            print("left side library: ", lib, ", left compressed: ", comp_l, ", left uncompressed", uncomp_l)
-        return iden + entropy + split + lib + comp_l + MiddleOut.byte_compression(uncomp_l, size=size, debug=debug) + \
+                if debug: print("left side library: ", l_)
+        if debug: print("left compressed: ", comp_l, ", left uncompressed", uncomp_l)
+        header = literal + iden + entropy + split + lib + comp_l
+        return header + MiddleOut.byte_compression(uncomp_l, size=size, debug=debug) + \
                MiddleOut.byte_compression(right, size=size, debug=debug)
 
     @staticmethod
@@ -189,34 +197,33 @@ class MiddleOut:
         if debug: print("partitioned stream: ", byte_stream, ", ", "library: ", compression_dict)
         count, unc_count = 0, 0
         compressed = ''; uncompressed = []
-        if compression_dict is None:
-            return compressed, byte_stream
+        if compression_dict is None: return compressed, byte_stream
         while count < len(byte_stream):
             tup = tuple(byte_stream[count:count+size])
-            if tup == compression_dict:
-                compressed += '0'
-                count += len(tup)
-            else:
-                compressed += '1'
-                uncompressed.append(byte_stream[count])
-                count += 1
-        if debug:
-            print("compressed: ", compressed); print("uncompressed: ", uncompressed)
+            if tup == compression_dict: compressed += '0'; count += len(tup)
+            else: compressed += '1'; uncompressed.append(byte_stream[count]); count += 1
+        if debug: print("compressed: ", compressed); print("uncompressed: ", uncompressed)
         return compressed, uncompressed
 
     @staticmethod
     def middle_out(coefficients, size=2, debug=False):
+        orgsize, org = len(coefficients), coefficients; rl = '1'
+        coefficients = rle(coefficients)
+        if orgsize < len(coefficients): rl = '0'; coefficients = org
         header = positive_binary(size)
         length = len(coefficients); minbits = minimum_bits(length)
         unary = unaryconverter(minbits)
         count = positive_binary(length, minbits)
-        return header + unary + count + MiddleOut.byte_compression(coefficients, size=size, debug=debug)
+        return rl + header + unary + count + MiddleOut.byte_compression(coefficients, size=size, debug=debug)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
+        rl, bitstream = bitstream[0], bitstream[1:]
         header = positive_int(bitstream[:8]); bitstream = bitstream[8:]
         count, unary_count = 0, unaryToInt(bitstream); count += unary_count + 1
         length = positive_int(bitstream[count:count+unary_count])
         bitstream = bitstream[count+unary_count:]
         if debug: print("size:", length, ",", "compressed stream:", bitstream)
+        if rl == '1':
+            return rld(MiddleOut.decompress(bitstream, length, size=header, debug=debug)[0])
         return MiddleOut.decompress(bitstream, length, size=header, debug=debug)[0]
