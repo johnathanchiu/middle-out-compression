@@ -1,5 +1,5 @@
-from middleout.utils import convertInt, convertBin
-from middleout.EntropyEncoder import bz2_c
+from middleout.utils import *
+from middleout.entropy_encoders import *
 from middleout.MiddleOut import MiddleOut
 from middleout.utils import writeFile, pad_stream
 from jpeg.utils import *
@@ -120,20 +120,18 @@ if __name__ == '__main__':
     compressed_data = quantization_tables + dim + compressed_y + compressed_cb + compressed_cr
     compressed_data = [i+128 for i in compressed_data]
 
-    print(len(compressed_data))
-
     pbar = tqdm(range(1), desc='Writing file with entropy compressor')
     for _ in pbar:
-        bz2_c(compressed_data, output_file=compressed+os.path.splitext(tail)[0])
-        # mo_compressed = MiddleOut.middle_out(compressed_data, size=4)
-        # pad = pad_stream(len(mo_compressed))
-        # num_padded = convertBin(pad, bits=4)
-        # mo_compressed += ('0' * pad) + num_padded
-        # writeFile(mo_compressed, fileName=compressed+os.path.splitext(tail)[0]+os.path.splitext(tail)[1])
+        mo_compressed = MiddleOut.middle_out(compressed_data, size=3)
+        pad = pad_stream(len(mo_compressed))
+        num_padded = convertBin(pad, bits=4)
+        mo_compressed += ('0' * pad) + num_padded
+        writeFile(mo_compressed, fileName=compressed+os.path.splitext(tail)[0])
+        compressed_data = positiveInt_list(mo_compressed)
 
-    # compressed_file = compressed+os.path.splitext(tail)[0]+os.path.splitext(tail)[1]+'.bin'
-    compressed_file = compressed+os.path.splitext(tail)[0] + '.bz2'
-    file_size = os.stat(image_path).st_size; compressed_size = os.stat(compressed_file).st_size
+    compressed_file = compressed+os.path.splitext(tail)[0]+'.bin'
+    compressed_size = os.stat(compressed_file).st_size
+    file_size = os.stat(image_path).st_size
     print()
     print("file size after (entropy) compression: ", compressed_size)
     print("file reduction percentage (new file size / old file size): ", (compressed_size / file_size) * 100, "%")
