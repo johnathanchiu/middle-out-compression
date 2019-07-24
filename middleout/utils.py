@@ -87,7 +87,7 @@ def pad_stream(length):
 def remove_padding(stream):
     num_pad_bits = stream[-4:]
     stream = stream[:-4]
-    num_pad = -1 * convertInt(num_pad_bits, bits=4)
+    num_pad = -1 * convertInt(num_pad_bits, bits=4) + len(stream)
     return stream[:num_pad]
 
 
@@ -120,7 +120,10 @@ def readFileBytes(fileName, partial=0):
         size *= partial
     with open(fileName, 'rb') as f:
         bytes = f.read(int(size))
-    return array.array('B', list(bytes))
+    bytes = list(bytes)
+    if not all(0 <= i <= 255 for i in bytes):
+        bytes = [i+128 for i in bytes]
+    return array.array('B', bytes)
 
 
 def convert_to_list(bitstring):
