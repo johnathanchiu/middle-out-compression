@@ -1,7 +1,6 @@
 from middleout.utils import readFileBytes, writeFile, size_of_file, pad_stream, convertBin, split_file
 from middleout.MiddleOut import MiddleOut
 
-import array
 import os
 
 import argparse
@@ -18,15 +17,13 @@ if __name__ == '__main__':
     compressed_file = args.compressed + os.path.splitext(os.path.basename(file_name))[0] + \
                       os.path.splitext(os.path.basename(file_name))[1]
     bytes_of_file = readFileBytes(file_name)
-    bytes_of_file = array.array('b', [b - 128 for b in bytes_of_file])
     partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     start_time = time.time()
 
     total_size = 0
-    pbar = tqdm(partitions)
+    pbar = tqdm(partitions, desc='running middle-out compression scheme')
     for p in pbar:
-        pbar.set_description("running middle-out compression scheme")
-        mo_compressed = MiddleOut.middle_out(p, size=3)
+        mo_compressed = MiddleOut.middle_out(p, size=4)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded

@@ -1,5 +1,5 @@
 from middleout.MiddleOut import MiddleOut
-from middleout.utils import readFile, writeFileBytes, remove_padding
+from middleout.utils import *
 
 import array
 import os
@@ -17,11 +17,10 @@ if __name__ == '__main__':
     decompressed = args.path + os.path.splitext(os.path.basename(compressed_file))[0]
     start_time = time.time()
 
-    pbar = tqdm(range(1))
+    pbar = tqdm(range(1), desc='running middle-out decompression scheme')
     for _ in pbar:
-        pbar.set_description("running middle-out decompression scheme")
         bitstream = remove_padding(readFile(compressed_file))
-        decomp = array.array('B', [b+128 for b in array.array('b', MiddleOut.middle_out_decompress(bitstream))])
+        decomp = array.array('B',  MiddleOut.middle_out_decompress(bitstream))
         writeFileBytes(decomp, decompressed)
 
     print("file saved to:", decompressed)
