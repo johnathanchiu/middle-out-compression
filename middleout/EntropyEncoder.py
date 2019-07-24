@@ -5,22 +5,22 @@ import lzma
 import bz2
 
 import struct
-import os
 
 
-def bz2_c(compressed, output_file):
+def bz2_c(compressed, output_file, write=False):
     def bz2_comp(output, output_file):
         filename = output_file + ".bz2"
         with bz2.open(filename, "wb") as f:
             output = bz2.compress(output, 9)
-            f.write(output)
-        return os.path.getsize(filename), filename
+            if write:
+                f.write(output)
+        return len(output)
     compressed = (struct.pack('B' * len(compressed), *compressed))
-    size, filename = bz2_comp(compressed, output_file)
-    return size, filename
+    size = bz2_comp(compressed, output_file)
+    return size
 
 
-def bz2_unc(file_name):
+def bz2_u(file_name):
     def bz2_decomp(file):
         with bz2.open(file, "rb") as f:
             f_content = f.read()
