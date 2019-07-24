@@ -36,19 +36,18 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('-c', "--compressed", required=True, help="Compressed file name with path & extension")
     ap.add_argument('-d', "--decompressed", default='./', help="Path to file for decompressed image")
-    ap.add_argument('-i', "--iden", default='y', help="Y/y for decompressed jpg")
     args = ap.parse_args()
     compressed_file, decompressed_image = args.compressed, args.decompressed
     _, tail = os.path.split(compressed_file)
-    if args.iden == 'Y' or args.iden == 'y': image_save = decompressed_image + os.path.splitext(tail)[0] + '.jpg'
-    else: image_save = decompressed_image + os.path.splitext(tail)[0] + '.png'
+    image_save = decompressed_image+os.path.splitext(tail)[0]
 
     start_time = time.time()
 
     pbar = tqdm(range(1), desc='Reading bits from file using entropy decompressor')
     for _ in pbar:
         bitstream = remove_padding(readFile(compressed_file))
-        comp = array.array('b', MiddleOut.middle_out_decompress(bitstream))
+        print('bitstream:', bitstream)
+        comp = array.array('b', [i-128 for i in array.array('B', MiddleOut.middle_out_decompress(bitstream))])
 
     data = comp[135:]
     tab, tabcr, p_length, p_width, length, width, val, val_cr = image_attributes(comp)

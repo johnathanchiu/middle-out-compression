@@ -1,4 +1,5 @@
 from middleout.utils import convertInt, convertBin
+from middleout.EntropyEncoder import bz2_c
 from middleout.MiddleOut import MiddleOut
 from middleout.utils import writeFile, pad_stream
 from jpeg.utils import *
@@ -52,14 +53,14 @@ def SSIM(photo, photo_x, photo_y, area=200, table=QUANTIZATIONTABLE, resample=Fa
             if i % 2 != 0: i += 1
             return i, metric, table
         if abs(last_metric - metric) < 0.0000000001:
-            if metric > 0.955:
+            if metric > 0.90:
                 if table[0][0] < 8: table[0][0] = 8
                 if i % 2 != 0: i += 1
                 return i - rep, metric, table
             return SSIM(photo, photo_x, photo_y, area=area, table=np.round(table/1.1), resample=True)
         rep += 1
         if rep == 4: last_metric = metric; rep = 0
-    if metric < 0.955:
+    if metric < 0.90:
         return SSIM(photo, photo_x, photo_y, area=area, table=np.round(table/1.2), resample=True)
     if table[0][0] < 8: table[0][0] = 8
     return 64, metric, table
@@ -89,7 +90,8 @@ if __name__ == '__main__':
     image = imageio.imread(image_path)
     length, width = image[:, :, 0].shape; c_l, c_w, p_l, p_w = precompression_factors(image)
     y, cb, cr = convert_sample(image, length, width)
-    values_to_keep, metric, quant = SSIM(y, p_l, p_w, area=SAMPLE_AREA, table=QUANTIZATIONTABLE)
+    # values_to_keep, metric, quant = SSIM(y, p_l, p_w, area=SAMPLE_AREA, table=QUANTIZATIONTABLE)
+    values_to_keep, metric, quant = 16, 0.90, QUANTIZATIONTABLE // 2
     print('Number of samples (out of 64) to keep at metric ' + str(metric) + ': ', values_to_keep)
 
     keep = [values_to_keep]; padding = [p_l - c_l, p_w - c_w]
@@ -116,16 +118,21 @@ if __name__ == '__main__':
     quantization_tables = array.array('b', q) + array.array('b', qc)
     dim = array.array('b', keep) + array.array('b', p_length) + array.array('b', p_width) + array.array('b', padding)
     compressed_data = quantization_tables + dim + compressed_y + compressed_cb + compressed_cr
+    compressed_data = [i+128 for i in compressed_data]
+
+    print(len(compressed_data))
 
     pbar = tqdm(range(1), desc='Writing file with entropy compressor')
     for _ in pbar:
-        mo_compressed = MiddleOut.middle_out(compressed_data, size=2)
-        pad = pad_stream(len(mo_compressed))
-        num_padded = convertBin(pad, bits=4)
-        mo_compressed += ('0' * pad) + num_padded
-        writeFile(mo_compressed, fileName=compressed+os.path.splitext(tail)[0])
+        bz2_c(compressed_data, output_file=compressed+os.path.splitext(tail)[0])
+        # mo_compressed = MiddleOut.middle_out(compressed_data, size=4)
+        # pad = pad_stream(len(mo_compressed))
+        # num_padded = convertBin(pad, bits=4)
+        # mo_compressed += ('0' * pad) + num_padded
+        # writeFile(mo_compressed, fileName=compressed+os.path.splitext(tail)[0]+os.path.splitext(tail)[1])
 
-    compressed_file = compressed+os.path.splitext(tail)[0] + '.bin'
+    # compressed_file = compressed+os.path.splitext(tail)[0]+os.path.splitext(tail)[1]+'.bin'
+    compressed_file = compressed+os.path.splitext(tail)[0] + '.bz2'
     file_size = os.stat(image_path).st_size; compressed_size = os.stat(compressed_file).st_size
     print()
     print("file size after (entropy) compression: ", compressed_size)
