@@ -137,6 +137,6 @@ if __name__ == '__main__':
     print()
     print("file size after (entropy) compression: ", compressed_size)
     print("file reduction percentage (new file size / old file size): ", (compressed_size / file_size) * 100, "%")
-    print("compression converges, new file name: ", compressed_size)
+    print("compression converges, new file name: ", compressed_file)
     print("--- %s seconds ---" % (time.time() - start_time))
 
