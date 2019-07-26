@@ -15,10 +15,12 @@ def rle(uncompressed, debug=False):
                 if debug: print("setcount: ", setcount)
                 if setcount > 255:
                     setcount -= 255; newarr.append(uncompressed[counter - 1]); newarr.append(255)
-                    for _ in range(setcount // 257):
+                    while setcount > 257:
                         newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(255)
-                    if setcount % 257 >= 2:
-                        newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257 - 2)
+                        setcount -= 257
+                    if setcount >= 2:
+                        if setcount == 1: newarr.append(uncompressed[counter - 1])
+                        else: newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount - 2)
                 else:
                     newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
             newarr.append(uncompressed[counter])
@@ -31,10 +33,12 @@ def rle(uncompressed, debug=False):
         if debug: print("setcount: ", setcount)
         if setcount > 255:
             setcount -= 255; newarr.append(uncompressed[counter - 1]); newarr.append(255)
-            for _ in range(setcount // 257):
+            while setcount >= 257:
                 newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(255)
-            if setcount % 257 >= 2:
-                newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257 - 2)
+                setcount -= 257
+            if setcount >= 1:
+                if setcount == 1: newarr.append(uncompressed[counter - 1])
+                else: newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount - 2)
         else:
             newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
     return newarr
@@ -57,7 +61,6 @@ def rld(stream, debug=False):
 
 
 def compressed_count(values, length):
-    print(length)
     trace = False
     count, counter, prev = 0, 0, None
     while count < length:
