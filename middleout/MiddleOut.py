@@ -90,8 +90,8 @@ class MiddleOutUtils:
 class MiddleOut:
 
     SPLIT = 0.5
-    LITERAL_CUTOFF = 25
-    RUNLENGTH_CUTOFF = 0.6
+    LITERAL_CUTOFF = 10
+    RUNLENGTH_CUTOFF = 0.3
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
