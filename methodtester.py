@@ -16,9 +16,13 @@ class TestMiddleOut:
         def end_of_loop():
             return StopIteration
         size = len(checker); boolarr = []
-        if len(checker) != len(sample):
+        try:
+            assert size == len(sample)
+        except AssertionError:
             print("wrong lengths")
-            size = len(checker) if len(checker) < len(sample) else len(sample)
+            print("expected length:", len(checker), ", returned length:", len(sample))
+            exit(0)
+        size = len(checker) if len(checker) < len(sample) else len(sample)
         [boolarr.append(True) if checker[count] == sample[count] else end_of_loop() for count in range(size)]
         try:
             assert len(boolarr) == size
@@ -67,34 +71,31 @@ class TestMiddleOut:
     def test_runlength(arr=None, size=100, seeding=False, seed=1, debug=False):
         if arr is None:
             arr = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
-        # print("original values: ", arr)
         rl = TestMiddleOut.rletest(arr, debug=debug)
-        # print("result of run length: ", rl)
         rd = TestMiddleOut.rldtest(rl, debug=debug)
-        # print("result of decode: ", rd)
         TestMiddleOut.check_differences(arr, rd)
 
 
 if __name__ == '__main__':
     start_time = time.time()
     TESTMO = True
-    TESTRL = True
+    TESTRL = False
     NUM_RUNS = 5
-    LARGEST_GENERATED_NUM = 30
+    LARGEST_GENERATED_NUM = 255
     if TESTMO:
-        seedstart = np.random.randint(100000000)
-        for i in range(seedstart, seedstart+NUM_RUNS):
+        for i in range(NUM_RUNS):
             size = np.random.randint(10000, 1000000)
+            seedstart = np.random.randint(1000000)
             print('size:', size)
-            print('seed value:', i)
-            TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=i, debug=False)
+            print('seed value:', seedstart)
+            TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=seedstart, debug=False)
     if TESTRL:
-        seedstart = np.random.randint(100000000)
-        for i in range(seedstart, seedstart+NUM_RUNS):
+        for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
+            seedstart = np.random.randint(1000000)
             print('size:', size)
-            print('seed value:', i)
-            TestMiddleOut.test_runlength(size=size, seeding=True, seed=i, debug=False)
+            print('seed value:', seedstart)
+            TestMiddleOut.test_runlength(size=size, seeding=True, seed=seedstart, debug=False)
     print("\nfinished running all tests, all test cases passed!")
     print("--- %s seconds ---" % (time.time() - start_time))
 
