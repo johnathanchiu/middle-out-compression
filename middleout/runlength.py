@@ -2,6 +2,7 @@
 # © Johnathan Chiu, 2019
 
 import array
+from middleout.utils import positive_int
 
 
 def rle(uncompressed, debug=False):
@@ -16,8 +17,10 @@ def rle(uncompressed, debug=False):
                     setcount -= 255; newarr.append(uncompressed[counter - 1]); newarr.append(255)
                     for _ in range(setcount // 257):
                         newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(255)
-                    newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257)
-                else: newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
+                    if setcount % 257 >= 2:
+                        newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257 - 2)
+                else:
+                    newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
             newarr.append(uncompressed[counter])
             setcount, sets = 0, False
         else:
@@ -30,8 +33,10 @@ def rle(uncompressed, debug=False):
             setcount -= 255; newarr.append(uncompressed[counter - 1]); newarr.append(255)
             for _ in range(setcount // 257):
                 newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(255)
-            newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257 - 2)
-        else: newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
+            if setcount % 257 >= 2:
+                newarr += array.array('B', [uncompressed[counter - 1]] * 2); newarr.append(setcount % 257 - 2)
+        else:
+            newarr.append(uncompressed[counter - 1]); newarr.append(setcount)
     return newarr
 
 
@@ -49,3 +54,19 @@ def rld(stream, debug=False):
             arr.append(stream[counter]); prev = stream[counter]; fore = True
         counter += 1
     return arr
+
+
+def compressed_count(values, length):
+    print(length)
+    trace = False
+    count, counter, prev = 0, 0, None
+    while count < length:
+        print(count); print(positive_int(values[counter:counter+8]))
+        if positive_int(values[counter:counter+8]) == prev and not trace:
+            print(positive_int(values[counter+8:counter+16]))
+            trace = True; count += 1 + positive_int(values[counter+8:counter+16]); counter += 8
+        else: trace = False; count += 1
+        counter += 8
+        prev = positive_int(values[counter:counter+8])
+    return counter // 8
+
