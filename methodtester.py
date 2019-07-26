@@ -20,12 +20,14 @@ class TestMiddleOut:
             print("wrong lengths")
             size = len(checker) if len(checker) < len(sample) else len(sample)
         [boolarr.append(True) if checker[count] == sample[count] else end_of_loop() for count in range(size)]
-        if len(boolarr) == size:
-            if arr: print("arrays are the same")
-            else: print("bitsets are the same")
-            return
-        err = len(boolarr)
-        print("error in decompression at count " + str(err) + " (starts here): ",  sample[err:])
+        try:
+            assert len(boolarr) == size
+        except AssertionError:
+            err = len(boolarr)
+            print("error in decompression at count " + str(err) + " (starts here): ",  sample[err:])
+            exit(0)
+        if arr: print("arrays are the same")
+        else: print("bitsets are the same")
 
     @staticmethod
     def generate_random_data(size, seeding=False, seed=10):
@@ -47,9 +49,9 @@ class TestMiddleOut:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
         c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
-        print("size of middleout", len(c) // 8, "bytes")
+        if len(bytes) < 100000: print("size of middleout", len(c) // 8, "bytes")
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
-        print("decompressed", de); print("original", bytes)
+        if len(bytes) < 100000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
         print("compression: ", len(c) / (len(bytes) * 8))
 
@@ -65,22 +67,25 @@ class TestMiddleOut:
     def test_runlength(arr=None, size=100, seeding=False, seed=1, debug=False):
         if arr is None:
             arr = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
-        print("original values: ", arr)
+        # print("original values: ", arr)
         rl = TestMiddleOut.rletest(arr, debug=debug)
-        print("result of run length: ", rl)
+        # print("result of run length: ", rl)
         rd = TestMiddleOut.rldtest(rl, debug=debug)
-        print("result of decode: ", rd)
+        # print("result of decode: ", rd)
         TestMiddleOut.check_differences(arr, rd)
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    # for i in range(100):
-        # print('seed value:', i)
-    TestMiddleOut.test_middleout(size=100, libsize=2, seeding=True, seed=0, debug=True)
-    # for i in range(100):
+    seedstart = np.random.randint(100000000)
+    for i in range(seedstart, seedstart+15):
+        size = np.random.randint(1000000)
+        print('size:', size)
+        print('seed value:', i)
+        TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=i, debug=False)
+    # for i in range(10000, 10011):
     #     print('seed value:', i)
-    #     TestMiddleOut.test_runlength(size=1000, seeding=True, seed=i, debug=False)
-    print("\nfinished running all tests")
+    #     TestMiddleOut.test_runlength(size=100000, seeding=True, seed=i, debug=False)
+    print("\nfinished running all tests, all test cases passed!")
     print("--- %s seconds ---" % (time.time() - start_time))
 
