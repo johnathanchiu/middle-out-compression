@@ -95,7 +95,6 @@ class MiddleOutUtils:
         split = ''
         right, left = array.array('B', []), array.array('B', [])
         if len(values) <= MiddleOut.THRESH and len(left_tree) <= 5:
-            print("using library")
             return '', values, right, '0', '0'
         for v in values:
             if v in left_tree: split += '0'; left.append(v)
