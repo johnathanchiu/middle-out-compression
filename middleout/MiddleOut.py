@@ -91,12 +91,14 @@ class MiddleOutUtils:
         return MiddleOutUtils.branch_tree(values, split_set)
 
     @staticmethod
-    def branch_tree(values, left_tree_values):
+    def branch_tree(values, left_tree):
         split = ''
         right, left = array.array('B', []), array.array('B', [])
-        if len(values) <= MiddleOut.UPPER_THRESH: return '', values, right, '0', '0'
+        if len(values) <= MiddleOut.THRESH and len(left_tree) <= 5:
+            print("using library")
+            return '', values, right, '0', '0'
         for v in values:
-            if v in left_tree_values: split += '0'; left.append(v)
+            if v in left_tree: split += '0'; left.append(v)
             else: split += '1'; right.append(v)
         return split, left, right, '1', '0'
 
@@ -104,9 +106,8 @@ class MiddleOutUtils:
 class MiddleOut:
 
     SPLIT = 0.5
-    LOWER_THRESH = 8
-    UPPER_THRESH = 40
-    LITERAL_CUTOFF = 40
+    THRESH = 80
+    LITERAL_CUTOFF = 20
 
     @staticmethod
     def decompress(stream, length, size=2, debug=False):
