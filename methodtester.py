@@ -33,7 +33,7 @@ class TestMiddleOut:
     def generate_random_data(size, seeding=False, seed=10):
         if seeding:
             np.random.seed(seed)
-        return np.random.randint(0, 255, size=size).tolist()
+        return np.random.randint(0, LARGEST_GENERATED_NUM, size=size).tolist()
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
@@ -77,15 +77,24 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    seedstart = np.random.randint(100000000)
-    for i in range(seedstart, seedstart+15):
-        size = np.random.randint(1000000)
-        print('size:', size)
-        print('seed value:', i)
-        TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=i, debug=False)
-    # for i in range(10000, 10011):
-    #     print('seed value:', i)
-    #     TestMiddleOut.test_runlength(size=100000, seeding=True, seed=i, debug=False)
+    TESTMO = True
+    TESTRL = True
+    NUM_RUNS = 5
+    LARGEST_GENERATED_NUM = 30
+    if TESTMO:
+        seedstart = np.random.randint(100000000)
+        for i in range(seedstart, seedstart+NUM_RUNS):
+            size = np.random.randint(10000, 1000000)
+            print('size:', size)
+            print('seed value:', i)
+            TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=i, debug=False)
+    if TESTRL:
+        seedstart = np.random.randint(100000000)
+        for i in range(seedstart, seedstart+NUM_RUNS):
+            size = np.random.randint(10000, 10000000)
+            print('size:', size)
+            print('seed value:', i)
+            TestMiddleOut.test_runlength(size=size, seeding=True, seed=i, debug=False)
     print("\nfinished running all tests, all test cases passed!")
     print("--- %s seconds ---" % (time.time() - start_time))
 
