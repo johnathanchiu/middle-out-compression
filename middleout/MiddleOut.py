@@ -71,8 +71,8 @@ class MiddleOutUtils:
             split_set.add(largest)
             occurence += occurence_dict[largest]
             occurence_dict[largest] = 0
-        if MiddleOut.LIBRARY_SIZE < len(occurence_dict) < MiddleOut.LIBRARY_SIZE*2 and \
-                0 < MiddleOut.LIBRARY_SIZE <= int(len(values) / 20):
+        if 0 < MiddleOut.LIBRARY_SIZE < len(occurence_dict) < MiddleOut.LIBRARY_SIZE*2 \
+                and MiddleOut.LIBRARY_SIZE*20 >= len(values):
             return '', values, [], '0', '0'
         return MiddleOutUtils.branch_tree(values, split_set)
 
