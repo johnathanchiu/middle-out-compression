@@ -4,6 +4,7 @@
 import lz4.frame as lz
 import lzma
 import bz2
+import gzip
 
 
 def lz4compressor(values):
@@ -34,3 +35,11 @@ def lzmacompressor(values):
 
 def lzmadecomressor(values):
     return list(lzma.decompress(bytes(values)))
+
+
+def gzipcompressor(values):
+    return list(gzip.compress(bytes(values), 9))
+
+
+def gzipdecompressor(values):
+    return list(gzip.decompress(bytes(values)))
