@@ -11,8 +11,7 @@ class MiddleOutUtils:
     @staticmethod
     def max_key(d):
         v = list(d.values())
-        k = list(d.keys())
-        return k[v.index(max(v))]
+        return list(d.keys())[v.index(max(v))]
 
     @staticmethod
     def build_library(byte_stream):
@@ -89,9 +88,9 @@ class MiddleOutUtils:
 class MiddleOut:
 
     SPLIT = 0.5
-    LITERAL_CUTOFF = 10
     RUNLENGTH_CUTOFF = 0.3
     LIBRARY_SIZE = 0
+    LITERAL_CUTOFF = LIBRARY_SIZE
 
     @staticmethod
     def decompress(stream, length, debug=False):
