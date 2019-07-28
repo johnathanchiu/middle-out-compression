@@ -209,23 +209,20 @@ class MiddleOut:
         coefficients = rle(coefficients)
         if orgsize < len(coefficients):
             coefficients = org; rl = '0'
-        header = positive_binary(size)
-        length = len(coefficients); minbits = minimum_bits(length)
-        unary = unaryconverter(minbits)
-        count = positive_binary(length, minbits)
+        header, length = positive_binary(size), len(coefficients)
+        minbits = minimum_bits(length)
+        unary, count = unaryconverter(minbits), positive_binary(length, bits=minbits)
         MiddleOut.LIBRARY_SIZE = size
         return rl + header + unary + count + MiddleOut.byte_compression(coefficients, debug=debug)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
         rl, bitstream = bitstream[0], bitstream[1:]
-        header = positive_int(bitstream[:8])
-        bitstream = bitstream[8:]
+        header, bitstream = positive_int(bitstream[:8]), bitstream[8:]
         count, unary_count = 0, unaryToInt(bitstream)
         count += unary_count + 1
         length = positive_int(bitstream[count:count+unary_count])
         bitstream = bitstream[count+unary_count:]
-        if debug: print("size:", length)
         MiddleOut.LIBRARY_SIZE = header
         if rl == '1':
             return rld(MiddleOut.decompress(bitstream, length, debug=debug)[0])
