@@ -23,7 +23,7 @@ if __name__ == '__main__':
     total_size = 0
     pbar = tqdm(partitions, desc='running middle-out compression scheme')
     for p in pbar:
-        mo_compressed = MiddleOut.middle_out(p, size=4)
+        mo_compressed = MiddleOut.middle_out(p, size=0)
         pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         writeFile(mo_compressed, fileName=compressed_file)
