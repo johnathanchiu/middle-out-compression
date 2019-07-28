@@ -169,7 +169,6 @@ class MiddleOut:
         if len(values) <= MiddleOut.LITERAL_CUTOFF and entrop == '0': return '1' + positiveBin_list(values, bits=8)
         if debug:
             print("split:", split == '1', ", entropy:", entrop == '1')
-            print("left length:", len(left), "right length:", len(right))
         lib, comp_l = '', ''
         if split == '0':
             if entrop == '1':
@@ -192,7 +191,7 @@ class MiddleOut:
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, debug=False):
-        if debug: print("partitioned stream: ", byte_stream, ", ", "library: ", compression_dict)
+        if debug: print("library: ", compression_dict)
         count, unc_count = 0, 0
         compressed = ''; uncompressed = []
         while count < len(byte_stream):
