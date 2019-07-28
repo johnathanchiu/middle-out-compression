@@ -26,15 +26,15 @@ if __name__ == '__main__':
 
     partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
     total_size = 0
-    pbar = tqdm(partitions, desc='running middle-out compression scheme')
-    bz2test, lz4test, lzmatest, motest = None, None, None, None
+    pbar = tqdm(partitions, desc='running compression scheme(s)')
+    bz2test, gziptest, lz4test, lzmatest, motest = None, None, None, None, None
     for p in pbar:
         bz2test = bz2compressor(p)
         lz4test = lz4compressor(p)
         lzmatest = lzmacompressor(p)
         gziptest = gzipcompressor(p)
 
-        mo_compressed = MiddleOut.middle_out(gziptest, size=0)
+        mo_compressed = MiddleOut.middle_out(p, size=0)
         pad = pad_stream(len(mo_compressed))
         num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
