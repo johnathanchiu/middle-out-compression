@@ -216,6 +216,7 @@ class MiddleOut:
     @staticmethod
     def middle_out(coefficients, size=2, greater_compression=True, debug=False):
         MiddleOutCompressor.HIGHER_COMPRESSION = greater_compression
+        MiddleOutCompressor.LIBRARY_SIZE = size
         orgsize, rl_size, rl = len(coefficients), rlepredict(coefficients), '1'
         if orgsize <= rl_size:
             rl = '0'
@@ -224,7 +225,6 @@ class MiddleOut:
         header, length = positive_binary(size), len(coefficients)
         minbits = minimum_bits(length)
         unary, count = unaryconverter(minbits), positive_binary(length, bits=minbits)
-        MiddleOutCompressor.LIBRARY_SIZE = size
         bitset = rl + header + unary + count + MiddleOutCompressor.byte_compression(coefficients, debug=debug)
         pad = pad_stream(len(bitset))
         num_padded = convertBin(pad, bits=4)
