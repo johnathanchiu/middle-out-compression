@@ -179,9 +179,11 @@ class MiddleOutCompressor:
     HIGHER_COMPRESSION = True
 
     @staticmethod
-    def byte_compression(values, debug=False):
+    def byte_compression(values, run=False, debug=False):
         if len(values) == 0: return ''
         if debug: print("original values: ", values); print("remaining length: ", len(values))
+        if run:
+            return '1' + positiveBin_list(values, bits=8)
         back_transform, left, right, split, entrop, lit = MiddleOutUtils.splitter(values)
         if lit == '1':
             return '1' + positiveBin_list(values, bits=8)
@@ -197,13 +199,15 @@ class MiddleOutCompressor:
                 lib = positiveBin_list(l_, bits=8)
                 comp_l, left = MiddleOutCompressor.middle_out_helper(left, l_, debug=debug)
         right_size, rl, r_encode = rlepredict(right), '0', ''
+        rlpred = False
         if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
             right, rl, minbits = rle(right), '1', minimum_bits(right_size - 1)
             r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
+            rlpred = True
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
         if debug: print("header:", header)
         return header + MiddleOutCompressor.byte_compression(left, debug=debug) + \
-               MiddleOutCompressor.byte_compression(right, debug=debug)
+               MiddleOutCompressor.byte_compression(right, run=rlpred, debug=debug)
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, debug=False):
