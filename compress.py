@@ -29,7 +29,6 @@ if __name__ == '__main__':
         total_size += len(mo_compressed)
 
     print("compression converges!")
-    compressed_size = total_size // 8
-    print("size of resulting file:", compressed_size)
-    print("compression percentage (compressed / original): ", compressed_size / size_of_file(file_name) * 100, "%")
+    print("size of resulting file:", total_size)
+    print("compression percentage (compressed / original): ", total_size / size_of_file(file_name) * 100, "%")
     print("--- %s seconds ---" % (time.time() - start_time))
