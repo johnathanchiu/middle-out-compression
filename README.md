@@ -1,12 +1,22 @@
 # Middle-Out-Compression
 
-Middleout Compression is a novel lossless entropy encoder. This algorithm is still undergoing testing.
+Middleout Compression is a novel lossless entropy encoder.
+
+This algorithm uses top-down and left-right compression simultaneously.
 
 # Stacking Compression Algorithms
 
-Middleout Compression can work in either binary state (not yet implemented) or byte state. There is more work to be done to test where middleout works best.
+Middleout is stacked upon lz4 to give higher compression ratios.
 
-Middleout works best with run length encoding which is yet to be implemented.
+# Usage
+
+*__For compress.py example usage:__*
+
+*python compress.py* [*-o* | File path to file that needs to be compressed] [*-c* | Path to folder for compressed file/default=working directory]
+
+*__For decompress.py example usage:__*
+
+*python decompress.py* [*-c* | File path to the compressed .bin file] [*-p* | Path to folder for decompressed file/default=working directory]
 
 # Compression Explained
 
