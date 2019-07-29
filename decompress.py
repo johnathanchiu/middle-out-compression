@@ -1,4 +1,5 @@
 from middleout.MiddleOut import MiddleOut
+from middleout.entropy_encoders import *
 from middleout.utils import *
 
 import array
@@ -19,8 +20,8 @@ if __name__ == '__main__':
 
     pbar = tqdm(range(1), desc='running middle-out decompression scheme')
     for _ in pbar:
-        bitstream = remove_padding(readFile(compressed_file))
-        decomp = array.array('B',  MiddleOut.middle_out_decompress(bitstream))
+        bitstream = readFile(compressed_file)
+        decomp = lz4decompressor(array.array('B',  MiddleOut.middle_out_decompress(bitstream)))
         writeFileBytes(decomp, decompressed)
 
     print("file saved to:", decompressed)

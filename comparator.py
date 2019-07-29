@@ -33,12 +33,7 @@ if __name__ == '__main__':
         lz4test = lz4compressor(p)
         lzmatest = lzmacompressor(p)
         gziptest = gzipcompressor(p)
-
-        mo_compressed = MiddleOut.middle_out(p, size=0)
-        pad = pad_stream(len(mo_compressed))
-        num_padded = convertBin(pad, bits=4)
-        mo_compressed += ('0' * pad) + num_padded
-        motest = positiveInt_list(mo_compressed)
+        motest = MiddleOut.middle_out(lz4test, size=0)
 
     print('original file size:', len(bytes_of_file))
     compressors = ('bz2', 'gzip', 'lz4', 'lzma', 'mo')

@@ -1,4 +1,5 @@
 from middleout.MiddleOut import MiddleOut
+from middleout.entropy_encoders import *
 from middleout.utils import *
 
 import os
@@ -23,10 +24,8 @@ if __name__ == '__main__':
     total_size = 0
     pbar = tqdm(partitions, desc='running middle-out compression scheme')
     for p in pbar:
-        mo_compressed = MiddleOut.middle_out(p)
-        pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
-        mo_compressed += ('0' * pad) + num_padded
-        writeFile(mo_compressed, fileName=compressed_file)
+        mo_compressed = MiddleOut.middle_out(lz4compressor(p))
+        writeFileBytes(mo_compressed, fileName=compressed_file+'.bin')
         total_size += len(mo_compressed)
 
     print("compression converges!")

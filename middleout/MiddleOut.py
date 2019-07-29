@@ -4,6 +4,7 @@
 from collections import Counter
 from middleout.utils import *
 from middleout.runlength import rld, rle, rlepredict
+import math as m
 
 
 class MiddleOutUtils:
@@ -64,15 +65,18 @@ class MiddleOutUtils:
         split_set = set([])
         occurence_dict = Counter(values)
         if len(occurence_dict) == 1:
-            return '', values, [], '0', '1'
+            return '', values, [], '0', '1', '0'
+        largest = MiddleOutUtils.max_key(occurence_dict)
+        if len(occurence_dict) / len(values) >= MiddleOutCompressor.LITERAL_CUTOFF \
+                and occurence_dict[largest] / len(values) >= MiddleOutCompressor.MINIMUM_LARGEST_RATIO:
+            return None, None, None, None, None, '1'
         while occurence / len(values) < MiddleOutCompressor.SPLIT:
             largest = MiddleOutUtils.max_key(occurence_dict)
             split_set.add(largest)
             occurence += occurence_dict[largest]
             occurence_dict[largest] = 0
-        if 0 < MiddleOutCompressor.LIBRARY_SIZE < len(occurence_dict) < int(MiddleOutCompressor.LIBRARY_SIZE * 1.5) \
-                and MiddleOutCompressor.LITERAL_CUTOFF < len(values) <= MiddleOutCompressor.LITERAL_CUTOFF * 2:
-            return '', values, [], '0', '0'
+        if 0 < MiddleOutCompressor.LIBRARY_SIZE < len(occurence_dict) < m.ceil(MiddleOutCompressor.LIBRARY_SIZE * 1.3):
+            return '', values, [], '0', '0', '0'
         return MiddleOutUtils.branch_tree(values, split_set)
 
     @staticmethod
@@ -82,7 +86,7 @@ class MiddleOutUtils:
         for v in values:
             if v in left_tree: split += '0'; left.append(v)
             else: split += '1'; right.append(v)
-        return split, left, right, '1', '0'
+        return split, left, right, '1', '0', '0'
 
 
 class MiddleOutDecompressor:
@@ -157,17 +161,18 @@ class MiddleOutDecompressor:
 
 class MiddleOutCompressor:
 
-    SPLIT = 0.50
-    RUNLENGTH_CUTOFF = 0.3
     LIBRARY_SIZE = 0
-    LITERAL_CUTOFF = 0
+    SPLIT = 0.50
+    RUNLENGTH_CUTOFF = 0.4
+    LITERAL_CUTOFF = 0.5
+    MINIMUM_LARGEST_RATIO = 0.3
 
     @staticmethod
     def byte_compression(values, debug=False):
         if len(values) == 0: return ''
         if debug: print("original values: ", values); print("remaining length: ", len(values))
-        literal = '0'; back_transform, left, right, split, entrop = MiddleOutUtils.splitter(values)
-        if len(left) <= MiddleOutCompressor.LITERAL_CUTOFF and entrop == '0':
+        literal = '0'; back_transform, left, right, split, entrop, lit = MiddleOutUtils.splitter(values)
+        if lit == '1':
             return '1' + positiveBin_list(values, bits=8)
         if debug: print("split:", split == '1', ", entropy:", entrop == '1')
         lib, comp_l = '', ''
@@ -209,19 +214,24 @@ class MiddleOutCompressor:
 class MiddleOut:
     @staticmethod
     def middle_out(coefficients, size=2, debug=False):
-        orgsize, org, rl = len(coefficients), coefficients, '1'
-        coefficients = rle(coefficients)
-        if orgsize < len(coefficients):
-            coefficients = org; rl = '0'
+        orgsize, rl_size, rl = len(coefficients), rlepredict(coefficients), '1'
+        if orgsize <= rl_size:
+            rl = '0'
+        else:
+            coefficients = rle(coefficients)
         header, length = positive_binary(size), len(coefficients)
         minbits = minimum_bits(length)
         unary, count = unaryconverter(minbits), positive_binary(length, bits=minbits)
         MiddleOutCompressor.LIBRARY_SIZE = size
-        MiddleOutCompressor.LITERAL_CUTOFF = int(len(coefficients) * .0001)
-        return rl + header + unary + count + MiddleOutCompressor.byte_compression(coefficients, debug=debug)
+        bitset = rl + header + unary + count + MiddleOutCompressor.byte_compression(coefficients, debug=debug)
+        pad = pad_stream(len(bitset))
+        num_padded = convertBin(pad, bits=4)
+        bitset += ('0' * pad) + num_padded
+        return convert_to_list(bitset)
 
     @staticmethod
     def middle_out_decompress(bitstream, debug=False):
+        bitstream = remove_padding(bitstream)
         rl, bitstream = bitstream[0], bitstream[1:]
         header, bitstream = positive_int(bitstream[:8]), bitstream[8:]
         count, unary_count = 0, unaryToInt(bitstream)
