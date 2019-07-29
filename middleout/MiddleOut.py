@@ -199,9 +199,7 @@ class MiddleOutCompressor:
         right_size, rl, r_encode = rlepredict(right), '0', ''
         runlength = False
         if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
-            print(len(right))
             right, rl, minbits = list(rle(right)), '1', minimum_bits(right_size - 1)
-            print(len(right))
             r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
             runlength = True
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
