@@ -1,6 +1,6 @@
 # Middle-Out-Compression
 
-*DISCLAIMER: All rights and Intellectual Property to and for the algorithm belongs to the original creator of the algorithm (Johnathan Chiu). Any attempts to use this algorithm in a for-profit manner is strictly prohibited*
+__*DISCLAIMER: All rights and Intellectual Property to and for the algorithm belongs to the original creator of the algorithm (Johnathan Chiu). Any attempts to use this algorithm in a for-profit manner is strictly prohibited*__
 
 Middleout Compression is a novel lossless entropy encoder.
 
