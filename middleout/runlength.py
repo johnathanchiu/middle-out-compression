@@ -60,6 +60,51 @@ def rld(stream, debug=False):
     return arr
 
 
+def rlepredict(uncompressed, debug=False):
+    counter, prev = 0, None
+    sets, setcount = False, 0
+    c_count = 0
+    while counter < len(uncompressed):
+        if uncompressed[counter] != prev:
+            if sets:
+                if debug: print("setcount: ", setcount)
+                if setcount > 255:
+                    setcount -= 255
+                    c_count += 2
+                    while setcount > 257:
+                        c_count += 3
+                        setcount -= 257
+                    if setcount >= 2:
+                        if setcount == 1:
+                            c_count += 1
+                        else:
+                            c_count += 3
+                else:
+                    c_count += 2
+            c_count += 1
+            setcount, sets = 0, False
+        else:
+            if sets:
+                setcount += 1
+            sets = True
+        prev = uncompressed[counter]; counter += 1
+    if sets:
+        if setcount > 255:
+            c_count += 2
+            setcount -= 255
+            while setcount >= 257:
+                c_count += 3
+                setcount -= 257
+            if setcount >= 1:
+                if setcount == 1:
+                    c_count += 1
+                else:
+                    c_count += 3
+        else:
+            c_count += 2
+    return c_count
+
+
 def compressed_count(values, length):
     trace = False
     count, counter, prev = 0, 0, None
