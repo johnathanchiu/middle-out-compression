@@ -66,9 +66,10 @@ class MiddleOutUtils:
         occurence, largest = len(occurence_dict), MiddleOutUtils.max_key(occurence_dict)
         if occurence == 1:
             return '', values, [], '0', '1', '0'
-        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or occurence_dict[largest] > len(values) / occurence:
+        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
+            occurence_dict[largest] < len(values) / occurence:
             return None, None, None, None, None, '1'
-        if MiddleOutCompressor.LIBRARY_SIZE < 0 and MiddleOutCompressor.HIGHER_COMPRESSION:
+        if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
             _, ratio = MiddleOutUtils.build_library(values)
             if ratio > MiddleOutCompressor.MINIMUM_LIB_RATIO:
                 return '', values, [], '0', '0', '0'
@@ -167,7 +168,7 @@ class MiddleOutCompressor:
     LIBRARY_SIZE = 0
     SPLIT = 0.50
     RUNLENGTH_CUTOFF = 0.4
-    MINIMUM_LIB_RATIO = 0.35
+    MINIMUM_LIB_RATIO = 0.30
     LIBRARY = None
     HIGHER_COMPRESSION = True
 
