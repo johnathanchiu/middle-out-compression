@@ -66,13 +66,12 @@ class MiddleOutUtils:
         occurence, largest = len(occurence_dict), MiddleOutUtils.max_key(occurence_dict)
         if occurence == 1:
             return '', values, [], '0', '1', '0'
-        if occurence_dict[largest] < MiddleOutCompressor.LITERAL_CUTOFF or \
-                len(values) < MiddleOutCompressor.LIBRARY_SIZE:
+        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or occurence_dict[largest] > len(values) / occurence:
             return None, None, None, None, None, '1'
-        _, ratio = MiddleOutUtils.build_library(values)
-        if ratio > MiddleOutCompressor.MINIMUM_LIB_RATIO:
-            print("using lib")
-            return '', values, [], '0', '0', '0'
+        if MiddleOutCompressor.LIBRARY_SIZE < 0 and MiddleOutCompressor.HIGHER_COMPRESSION:
+            _, ratio = MiddleOutUtils.build_library(values)
+            if ratio > MiddleOutCompressor.MINIMUM_LIB_RATIO:
+                return '', values, [], '0', '0', '0'
         while counter / len(values) < MiddleOutCompressor.SPLIT:
             largest = MiddleOutUtils.max_key(occurence_dict)
             split_set.add(largest)
@@ -119,7 +118,6 @@ class MiddleOutDecompressor:
                 partition, stream = stream[:partition_size], stream[partition_size:]
                 if debug:
                     print("partition size: ", partition_size, "remaining: ", remaining)
-                    print("partition: ", partition)
                     print("library:", library)
                 remain, stream = MiddleOutDecompressor.decompress(stream, remaining, debug=debug)
                 return MiddleOutDecompressor.decompress_helper(partition, library, remain, debug=debug), stream
@@ -169,9 +167,9 @@ class MiddleOutCompressor:
     LIBRARY_SIZE = 0
     SPLIT = 0.50
     RUNLENGTH_CUTOFF = 0.4
-    LITERAL_CUTOFF = 0
-    MINIMUM_LIB_RATIO = 0.3
+    MINIMUM_LIB_RATIO = 0.35
     LIBRARY = None
+    HIGHER_COMPRESSION = True
 
     @staticmethod
     def byte_compression(values, debug=False):
@@ -216,7 +214,8 @@ class MiddleOutCompressor:
 
 class MiddleOut:
     @staticmethod
-    def middle_out(coefficients, size=2, debug=False):
+    def middle_out(coefficients, size=2, greater_compression=True, debug=False):
+        MiddleOutCompressor.HIGHER_COMPRESSION = greater_compression
         orgsize, rl_size, rl = len(coefficients), rlepredict(coefficients), '1'
         if orgsize <= rl_size:
             rl = '0'
