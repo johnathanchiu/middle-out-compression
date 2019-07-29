@@ -16,9 +16,10 @@ def lz4compressor(values):
 
 
 def lz4decompressor(values):
+    values = bytes(values)
     with lz.LZ4FrameDecompressor() as decompressor:
         decompressed = decompressor.decompress(values)
-    return decompressed
+    return list(decompressed)
 
 
 def bz2compressor(values):

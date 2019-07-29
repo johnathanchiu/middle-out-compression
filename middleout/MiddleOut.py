@@ -66,24 +66,20 @@ class MiddleOutUtils:
         counter, split_set, occurrence_count = 0, set([]), Counter(values)
         occurrence, large = len(occurrence_count), MiddleOutUtils.max_key(occurrence_count)
         occ_copy, largest = occurrence_count.copy(), large
-        split = False
         if occurrence == 1:
             return '', values, [], '0', '1', '0'
+        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
+                occ_copy[largest] < len(values) / occurrence:
+            return None, None, None, None, None, '1'
+        if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
+            _, ratio = MiddleOutUtils.build_library(values)
+            if ratio >= MiddleOutCompressor.MINIMUM_LIB_RATIO:
+                return '', values, [], '0', '0', '0'
         while counter / len(values) < MiddleOutCompressor.SPLIT:
             large = MiddleOutUtils.max_key(occurrence_count)
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        if occ_copy[largest] / len(values) >= MiddleOutCompressor.FORCE_SPLIT or len(split_set) <= 3:
-            split = True
-        if not split:
-            if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
-                    occ_copy[largest] < len(values) / occurrence:
-                return None, None, None, None, None, '1'
-            if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
-                _, ratio = MiddleOutUtils.build_library(values)
-                if ratio >= MiddleOutCompressor.MINIMUM_LIB_RATIO:
-                    return '', values, [], '0', '0', '0'
         return MiddleOutUtils.branch_tree(values, split_set)
 
     @staticmethod
@@ -173,16 +169,19 @@ class MiddleOutCompressor:
 
     LIBRARY_SIZE = 0
     SPLIT = 0.50
-    RUNLENGTH_CUTOFF = 0.4
+    RUNLENGTH_CUTOFF = 0.1
     MINIMUM_LIB_RATIO = 0.10
+    LITERAL_CUTOFF = 20
     FORCE_SPLIT = 0.3
     LIBRARY = None
     HIGHER_COMPRESSION = True
 
     @staticmethod
-    def byte_compression(values, debug=False):
+    def byte_compression(values, run=False, debug=False):
         if len(values) == 0: return ''
         if debug: print("original values: ", values); print("remaining length: ", len(values))
+        if run and len(values) < MiddleOutCompressor.LITERAL_CUTOFF:
+            return '1' + positiveBin_list(values, bits=8)
         back_transform, left, right, split, entrop, lit = MiddleOutUtils.splitter(values)
         if lit == '1':
             return '1' + positiveBin_list(values, bits=8)
@@ -197,14 +196,18 @@ class MiddleOutCompressor:
                 l_ = MiddleOutCompressor.LIBRARY
                 lib = positiveBin_list(l_, bits=8)
                 comp_l, left = MiddleOutCompressor.middle_out_helper(left, l_, debug=debug)
-        right_size, rl, r_encode = len(lz4compressor(right)), '0', ''
+        right_size, rl, r_encode = rlepredict(right), '0', ''
+        runlength = False
         if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
-            right, rl, minbits = lz4compressor(right), '1', minimum_bits(right_size - 1)
+            print(len(right))
+            right, rl, minbits = list(rle(right)), '1', minimum_bits(right_size - 1)
+            print(len(right))
             r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
+            runlength = True
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
         if debug: print("header:", header)
         return header + MiddleOutCompressor.byte_compression(left, debug=debug) + \
-               MiddleOutCompressor.byte_compression(right, debug=debug)
+               MiddleOutCompressor.byte_compression(right, run=runlength, debug=debug)
 
     @staticmethod
     def middle_out_helper(byte_stream, compression_dict, debug=False):

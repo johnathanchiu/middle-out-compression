@@ -79,7 +79,7 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO = True
+    TESTMO = False
     TESTRL = False
     NUM_RUNS = 5
     LARGEST_GENERATED_NUM = 255
@@ -90,6 +90,7 @@ if __name__ == '__main__':
             print('size:', size)
             print('seed value:', seedstart)
             TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=seedstart, debug=False)
+    TestMiddleOut.test_middleout([240, 240, 255, 240, 240, 255, 240, 240, 22], size=0, libsize=2, seeding=True, seed=0, debug=False)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
