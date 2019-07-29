@@ -53,9 +53,9 @@ class TestMiddleOut:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
         c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
-        if len(bytes) < 100000: print("size of middleout", len(c) // 8, "bytes")
+        if len(bytes) < 1000: print("size of middleout", len(c) // 8, "bytes")
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
-        if len(bytes) < 100000: print("decompressed", de); print("original", bytes)
+        if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
         print("compression: ", len(c) / (len(bytes) * 8))
 
