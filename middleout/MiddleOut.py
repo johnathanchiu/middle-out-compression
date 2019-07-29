@@ -4,6 +4,7 @@
 from collections import Counter
 from middleout.utils import *
 from middleout.runlength import rld, rle, rlepredict
+from middleout.entropy_encoders import *
 
 
 class MiddleOutUtils:
@@ -137,7 +138,7 @@ class MiddleOutDecompressor:
         left, stream = MiddleOutDecompressor.decompress(stream, left_count, debug=debug)
         if rl_iden == '1':
             right, stream = MiddleOutDecompressor.decompress(stream, rl_c, debug=debug)
-            right = rld(right)
+            right = lz4decompressor(right)
         else:
             right, stream = MiddleOutDecompressor.decompress(stream, right_count, debug=debug)
         if debug: print("left: ", left); print("right: ", right)
@@ -196,9 +197,9 @@ class MiddleOutCompressor:
                 l_ = MiddleOutCompressor.LIBRARY
                 lib = positiveBin_list(l_, bits=8)
                 comp_l, left = MiddleOutCompressor.middle_out_helper(left, l_, debug=debug)
-        right_size, rl, r_encode = rlepredict(right), '0', ''
+        right_size, rl, r_encode = len(lz4compressor(right)), '0', ''
         if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
-            right, rl, minbits = rle(right), '1', minimum_bits(right_size - 1)
+            right, rl, minbits = lz4compressor(right), '1', minimum_bits(right_size - 1)
             r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
         if debug: print("header:", header)
