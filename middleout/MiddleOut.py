@@ -62,22 +62,27 @@ class MiddleOutUtils:
 
     @staticmethod
     def splitter(values):
-        counter, split_set, occurence_dict = 0, set([]), Counter(values)
-        occurence, largest = len(occurence_dict), MiddleOutUtils.max_key(occurence_dict)
-        if occurence == 1:
+        counter, split_set, occurrence_count = 0, set([]), Counter(values)
+        occurrence, large = len(occurrence_count), MiddleOutUtils.max_key(occurrence_count)
+        occ_copy, largest = occurrence_count.copy(), large
+        split = False
+        if occurrence == 1:
             return '', values, [], '0', '1', '0'
-        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
-            occurence_dict[largest] < len(values) / occurence:
-            return None, None, None, None, None, '1'
-        if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
-            _, ratio = MiddleOutUtils.build_library(values)
-            if ratio > MiddleOutCompressor.MINIMUM_LIB_RATIO:
-                return '', values, [], '0', '0', '0'
         while counter / len(values) < MiddleOutCompressor.SPLIT:
-            largest = MiddleOutUtils.max_key(occurence_dict)
-            split_set.add(largest)
-            counter += occurence_dict[largest]
-            occurence_dict[largest] = 0
+            large = MiddleOutUtils.max_key(occurrence_count)
+            split_set.add(large)
+            counter += occurrence_count[large]
+            occurrence_count[large] = 0
+        if occ_copy[largest] / len(values) >= MiddleOutCompressor.FORCE_SPLIT or len(split_set) <= 3:
+            split = True
+        if not split:
+            if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
+                    occ_copy[largest] < len(values) / occurrence:
+                return None, None, None, None, None, '1'
+            if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
+                _, ratio = MiddleOutUtils.build_library(values)
+                if ratio >= MiddleOutCompressor.MINIMUM_LIB_RATIO:
+                    return '', values, [], '0', '0', '0'
         return MiddleOutUtils.branch_tree(values, split_set)
 
     @staticmethod
@@ -168,7 +173,8 @@ class MiddleOutCompressor:
     LIBRARY_SIZE = 0
     SPLIT = 0.50
     RUNLENGTH_CUTOFF = 0.4
-    MINIMUM_LIB_RATIO = 0.30
+    MINIMUM_LIB_RATIO = 0.10
+    FORCE_SPLIT = 0.3
     LIBRARY = None
     HIGHER_COMPRESSION = True
 
