@@ -45,6 +45,7 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middelout_decomp(bits, debug=False):
+        bits = positiveBin_list(bits)
         return MiddleOut.middle_out_decompress(bits, debug=debug)
 
     @staticmethod
@@ -57,7 +58,7 @@ class TestMiddleOut:
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
         if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
-        print("compression: ", len(c) / (len(bytes) * 8))
+        print("compression: ", (len(c) * 8) / (len(bytes) * 8))
 
     @staticmethod
     def rletest(values, debug=False):
