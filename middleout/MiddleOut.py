@@ -65,21 +65,24 @@ class MiddleOutUtils:
     def splitter(values):
         counter, split_set, occurrence_count = 0, set([]), Counter(values)
         occurrence, large = len(occurrence_count), MiddleOutUtils.max_key(occurrence_count)
+        print(occurrence); print(occurrence_count)
         occ_copy, largest = occurrence_count.copy(), large
         if occurrence == 1:
             return '', values, [], '0', '1', '0'
-        if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
-                occ_copy[largest] < len(values) / occurrence:
+        if len(values) < MiddleOutCompressor.LIBRARY_SIZE * 1.2:
             return None, None, None, None, None, '1'
         if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
             _, ratio = MiddleOutUtils.build_library(values)
+            print(ratio, MiddleOutCompressor.LIBRARY)
             if ratio >= MiddleOutCompressor.MINIMUM_LIB_RATIO:
+                print("lib")
                 return '', values, [], '0', '0', '0'
         while counter / len(values) < MiddleOutCompressor.SPLIT:
             large = MiddleOutUtils.max_key(occurrence_count)
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
+        print(len(split_set)); exit(0)
         return MiddleOutUtils.branch_tree(values, split_set)
 
     @staticmethod
@@ -170,8 +173,8 @@ class MiddleOutCompressor:
     LIBRARY_SIZE = 0
     SPLIT = 0.50
     RUNLENGTH_CUTOFF = 0.1
-    MINIMUM_LIB_RATIO = 0.10
-    LITERAL_CUTOFF = 20
+    MINIMUM_LIB_RATIO = 0.22
+    LITERAL_CUTOFF = 10
     FORCE_SPLIT = 0.3
     LIBRARY = None
     HIGHER_COMPRESSION = True
@@ -199,7 +202,9 @@ class MiddleOutCompressor:
         right_size, rl, r_encode = rlepredict(right), '0', ''
         runlength = False
         if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
+            print(len(right))
             right, rl, minbits = list(rle(right)), '1', minimum_bits(right_size - 1)
+            print(len(right))
             r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
             runlength = True
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
