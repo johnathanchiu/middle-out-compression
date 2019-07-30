@@ -198,12 +198,16 @@ class MiddleOutCompressor:
                 l_ = MiddleOutCompressor.LIBRARY
                 lib = positiveBin_list(l_, bits=8)
                 comp_l, left = MiddleOutCompressor.middle_out_helper(left, l_, debug=debug)
-        right_size, rl, r_encode = rlepredict(right), '0', ''
-        rlpred = False
-        if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
-            right, rl, minbits = rle(right), '1', minimum_bits(right_size - 1)
-            r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
-            rlpred = True
+        difference, rlpred, rl, r_encode = True, False, '0', ''
+        if len(right) > 0:
+            if right.count(right[0]) == len(right):
+                difference = False
+        if difference:
+            right_size = rlepredict(right)
+            if len(right) > 0 and right_size < int(len(right) * MiddleOutCompressor.RUNLENGTH_CUTOFF):
+                right, rl, minbits = rle(right), '1', minimum_bits(right_size - 1)
+                r_encode = unaryconverter(minbits) + positive_binary(right_size - 1, bits=minbits)
+                rlpred = True
         header = lit + rl + r_encode + split + entrop + back_transform + lib + comp_l
         if debug: print("header:", header)
         return header + MiddleOutCompressor.byte_compression(left, debug=debug) + \
