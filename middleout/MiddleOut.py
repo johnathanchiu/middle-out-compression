@@ -76,8 +76,7 @@ class MiddleOutUtils:
         if occ_copy[largest] / len(values) >= MiddleOutCompressor.FORCE_SPLIT or len(split_set) <= 3:
             split = True
         if not split:
-            if len(values) < MiddleOutCompressor.LIBRARY_SIZE or \
-                    occ_copy[largest] < len(values) / occurrence:
+            if len(values) < MiddleOutCompressor.LIBRARY_SIZE * 1.2:
                 return None, None, None, None, None, '1'
             if 0 < MiddleOutCompressor.LIBRARY_SIZE and MiddleOutCompressor.HIGHER_COMPRESSION:
                 _, ratio = MiddleOutUtils.build_library(values)
@@ -173,7 +172,8 @@ class MiddleOutCompressor:
     LIBRARY_SIZE = 0
     SPLIT = 0.50
     RUNLENGTH_CUTOFF = 0.4
-    MINIMUM_LIB_RATIO = 0.10
+    MINIMUM_LIB_RATIO = 0.22
+    LITERAL_CUTOFF = 6
     FORCE_SPLIT = 0.3
     LIBRARY = None
     HIGHER_COMPRESSION = True
@@ -182,7 +182,7 @@ class MiddleOutCompressor:
     def byte_compression(values, run=False, debug=False):
         if len(values) == 0: return ''
         if debug: print("original values: ", values); print("remaining length: ", len(values))
-        if run:
+        if run and len(values) <= MiddleOutCompressor.LITERAL_CUTOFF:
             return '1' + positiveBin_list(values, bits=8)
         back_transform, left, right, split, entrop, lit = MiddleOutUtils.splitter(values)
         if lit == '1':
