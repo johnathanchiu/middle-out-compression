@@ -41,12 +41,11 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
-        return MiddleOut.middle_out(bytes, size=size, debug=debug)
+        return MiddleOut.middle_out(bytes, size=size)
 
     @staticmethod
     def run_middelout_decomp(bits, debug=False):
-        bits = positiveBin_list(bits)
-        return MiddleOut.middle_out_decompress(bits, debug=debug)
+        return MiddleOut.middle_out_decomp(bits)
 
     @staticmethod
     def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debug=False):
@@ -54,11 +53,11 @@ class TestMiddleOut:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
         c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
-        if len(bytes) < 1000: print("size of middleout", len(c), "bytes")
+        if len(bytes) < 1000: print("size of middleout", len(c) // 8, "bytes")
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
         if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
-        print("compression: ", (len(c) * 8) / (len(bytes) * 8))
+        print("compression: ", (len(c) // 8) / len(bytes))
 
     @staticmethod
     def rletest(values, debug=False):
@@ -79,7 +78,7 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO = False
+    TESTMO = True
     TESTRL = False
     NUM_RUNS = 5
     LARGEST_GENERATED_NUM = 255
@@ -90,7 +89,7 @@ if __name__ == '__main__':
             print('size:', size)
             print('seed value:', seedstart)
             TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=seedstart, debug=False)
-    TestMiddleOut.test_middleout([240, 240, 255, 240, 240, 255, 240, 240, 22], size=0, libsize=2, seeding=True, seed=0, debug=False)
+    # TestMiddleOut.test_middleout([240, 240, 255, 240], size=0, libsize=2, seeding=True, seed=0, debug=False)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
