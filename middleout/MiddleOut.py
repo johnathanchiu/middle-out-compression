@@ -24,7 +24,7 @@ class MiddleOutUtils:
         count = 0
         dictionary = {}
         if size == len(byte_stream):
-            return tuple(byte_stream[count:count + size]), size * 1
+            return tuple(byte_stream[count:count + size]), size * len(byte_stream)
         if size > len(byte_stream):
             return tuple(byte_stream), -10
         while count <= len(byte_stream) - size:
@@ -35,7 +35,8 @@ class MiddleOutUtils:
                 dictionary[partition] += 1
             count += 1
         large_occur = MiddleOutUtils.max_key(dictionary)
-        ratio = dictionary[large_occur] * size / len(byte_stream)
+        ratio = dictionary[large_occur] * size / len(byte_stream) / 1.1
+        # print(dictionary[large_occur], ratio, large_occur)
         return large_occur, ratio
 
     @staticmethod
@@ -62,12 +63,15 @@ class MiddleOutUtils:
         counter, split_set, occurrence_count = 0, set([]), Counter(byte_array)
         if len(occurrence_count) == 1:
             return '', byte_array, [], '0', '1'
+        # print(occurrence_count)
         while counter / len(byte_array) < MiddleOutCompressor.SPLIT:
             large = MiddleOutUtils.max_key(occurrence_count)
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        if len(split_set) / len(occurrence_count) >= 0.10:
+        # print(len(split_set), len(occurrence_count), len(split_set) / len(occurrence_count))
+        if len(split_set) / len(occurrence_count) <= 0.40 or len(occurrence_count) == 2:
+            # print("split")
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
 
@@ -101,11 +105,13 @@ class MiddleOutCompressor:
     SPLIT = 0.50
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
+    LIBRARY_LIST = None
     LIBRARY = None
     DEBUG = False
 
     @staticmethod
     def byte_compress(values):
+        print(len(values))
         if len(values) == 0:
             return ''
         back_transform, left, right, split, diff = MiddleOutUtils.split_definer(values)
@@ -117,6 +123,7 @@ class MiddleOutCompressor:
                 left_c, left_u = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
             else:
                 size = MiddleOutCompressor.best_library(values)
+                # print("best", size, MiddleOutCompressor.LIBRARY)
                 left_c, left_u = MiddleOutCompressor.library_compressor(values, size=size)
                 size_bits = positive_binary(size - 1, bits=MiddleOutCompressor.LIBRARY_BIT_SIZE)
                 lib = positiveBin_list(MiddleOutCompressor.LIBRARY, bits=8)
@@ -130,9 +137,11 @@ class MiddleOutCompressor:
         with Pool(8) as p:
             iterable = range(1, MiddleOutCompressor.MAX_LIBRARY_SIZE)
             results = p.map(func, iterable)
-        best = max(enumerate(results), key=itemgetter(1))
-        MiddleOutCompressor.LIBRARY = best[1][0]
-        return best[0] + 1
+            MiddleOutCompressor.LIBRARY_LIST = list(map(itemgetter(0), results))
+            values = list(map(itemgetter(1), results))
+        best = max(enumerate(values), key=itemgetter(1))[0]
+        MiddleOutCompressor.LIBRARY = MiddleOutCompressor.LIBRARY_LIST[best]
+        return best + 1
 
     @staticmethod
     def library_compressor(byte_values, size=0):
