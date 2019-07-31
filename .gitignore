@@ -17,4 +17,3 @@
 # testing only python files
 photo_compress.py
 photo_decompress.py
-file_reader.py
