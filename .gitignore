@@ -17,3 +17,6 @@
 # testing only python files
 photo_compress.py
 photo_decompress.py
+bit_shift_visualizer.py
+file_reader.py
+test_file.py
