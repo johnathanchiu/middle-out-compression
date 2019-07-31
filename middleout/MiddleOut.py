@@ -11,6 +11,7 @@ from operator import itemgetter
 
 
 class MiddleOutUtils:
+    """ Utilities class used for middle out compression """
 
     DEBUG = True
 
@@ -67,7 +68,9 @@ class MiddleOutUtils:
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        if len(split_set) / len(occurrence_count) <= 0.40 or len(occurrence_count) == 2:
+        if MiddleOutUtils.DEBUG: print(len(split_set), len(occurrence_count), len(split_set) / len(occurrence_count))
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.50 or \
+                len(occurrence_count) <= 2:
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
 
@@ -97,6 +100,7 @@ class MiddleOutUtils:
 
 
 class MiddleOutCompressor:
+    """ Compressor Class """
 
     SPLIT = 0.50
     MAX_LIBRARY_SIZE = 8
@@ -107,8 +111,7 @@ class MiddleOutCompressor:
 
     @staticmethod
     def byte_compress(values):
-        if len(values) == 0:
-            return ''
+        if len(values) == 0: return ''
         back_transform, left, right, split, diff = MiddleOutUtils.split_definer(values)
         if MiddleOutCompressor.DEBUG: print("split:", split == '1', "singular:", diff == '1')
         left_c, left_u = '', left; size_bits, lib = '', ''
@@ -135,8 +138,7 @@ class MiddleOutCompressor:
             results = p.map(func, iterable)
             MiddleOutCompressor.LIBRARY_LIST = list(map(itemgetter(0), results))
             values = list(map(itemgetter(1), results))
-        best = max(enumerate(values), key=itemgetter(1))
-        best = best[0]
+        best, ratio = max(enumerate(values), key=itemgetter(1))
         MiddleOutCompressor.LIBRARY = MiddleOutCompressor.LIBRARY_LIST[best]
         return best + 1
 
@@ -155,6 +157,7 @@ class MiddleOutCompressor:
 
 
 class MiddleOutDecompressor:
+    """ Decompressor Class """
 
     DEBUG = False
 
@@ -203,8 +206,11 @@ class MiddleOutDecompressor:
 
 
 class MiddleOut:
+    """ Passes values into the compressor and decompressor, pads streams"""
+
     @staticmethod
     def middle_out(stream, size=4, debug=False):
+        assert len(stream) > 0, print('no values to compress')
         MiddleOutCompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
         bit_length = minimum_bits(len(stream) - 1)
         header = unaryconverter(bit_length) + positive_binary(len(stream) - 1, bits=bit_length)
