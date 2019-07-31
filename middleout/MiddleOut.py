@@ -11,6 +11,9 @@ from operator import itemgetter
 
 
 class MiddleOutUtils:
+
+    DEBUG = False
+
     @staticmethod
     def max_key(d):
         v = list(d.values())
@@ -81,6 +84,8 @@ class MiddleOutUtils:
 
     @staticmethod
     def merge_split(back_transform, left, right):
+        if MiddleOutUtils.DEBUG:
+            print('back:', len(back_transform), 'left:', len(left), 'right:', len(right))
         values = []
         left_count, right_count = 0, 0
         for i in back_transform:
@@ -97,10 +102,10 @@ class MiddleOutCompressor:
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
     LIBRARY = None
+    DEBUG = False
 
     @staticmethod
     def byte_compress(values):
-        # print(len(values))
         if len(values) == 0:
             return ''
         back_transform, left, right, split, diff = MiddleOutUtils.split_definer(values)
@@ -143,6 +148,9 @@ class MiddleOutCompressor:
 
 
 class MiddleOutDecompressor:
+
+    DEBUG = False
+
     @staticmethod
     def bit_decompression(bitstream, length):
         if len(bitstream) == 0 or length == 0:
@@ -195,16 +203,20 @@ class MiddleOut:
         lib_header = unaryconverter(bit_length) + positive_binary(size - 1, bits=bit_length)
         MiddleOutCompressor.LIBRARY_BIT_SIZE = bit_length
         MiddleOutCompressor.MAX_LIBRARY_SIZE = size + 1
-        return header + lib_header + MiddleOutCompressor.byte_compress(stream)
+        mo_compressed = header + lib_header + MiddleOutCompressor.byte_compress(stream)
+        pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
+        mo_compressed += ('0' * pad) + num_padded
+        return convert_to_list(mo_compressed)
 
     @staticmethod
     def middle_out_decomp(bitstream):
+        bitstream = remove_padding(bitstream)
         length_unary = unaryToInt(bitstream)
         eof = length_unary + 1
         length = positive_int(bitstream[eof:eof+length_unary]) + 1
         bitstream = bitstream[eof+length_unary:]
         length_unary = unaryToInt(bitstream)
         eoh = length_unary + 1
-        MiddleOutCompressor.LIBRARY_BIT_SIZE = positive_int(bitstream[eoh:eoh+length_unary]) + 1
+        MiddleOutCompressor.LIBRARY_BIT_SIZE = minimum_bits(positive_int(bitstream[eoh:eoh+length_unary]))
         bitstream = bitstream[eoh+length_unary:]
         return MiddleOutDecompressor.bit_decompression(bitstream, length)[0]

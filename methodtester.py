@@ -3,6 +3,7 @@
 
 from middleout.MiddleOut import *
 from middleout.runlength import rle, rld
+from middleout.entropy_encoders import *
 
 import numpy as np
 
@@ -44,7 +45,8 @@ class TestMiddleOut:
         return MiddleOut.middle_out(bytes, size=size)
 
     @staticmethod
-    def run_middelout_decomp(bits, debug=False):
+    def run_middelout_decomp(compressed_bytes, debug=False):
+        bits = positiveBin_list(compressed_bytes)
         return MiddleOut.middle_out_decomp(bits)
 
     @staticmethod
@@ -57,7 +59,7 @@ class TestMiddleOut:
         de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
         if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
-        print("compression: ", (len(c) // 8) / len(bytes))
+        print("compression: ", len(c) / len(bytes))
 
     @staticmethod
     def rletest(values, debug=False):
@@ -78,18 +80,19 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO = True
+    TESTMO = False
     TESTRL = False
     NUM_RUNS = 5
-    LARGEST_GENERATED_NUM = 255
+    LARGEST_GENERATED_NUM = 100
     if TESTMO:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 1000000)
             seedstart = np.random.randint(1000000)
             print('size:', size)
             print('seed value:', seedstart)
-            TestMiddleOut.test_middleout(size=size, libsize=2, seeding=True, seed=seedstart, debug=False)
-    # TestMiddleOut.test_middleout([240, 240, 255, 240], size=0, libsize=2, seeding=True, seed=0, debug=False)
+            # TestMiddleOut.test_middleout(size=size, libsize=8, seeding=True, seed=seedstart, debug=False)
+    # TestMiddleOut.test_middleout(size=329967, libsize=8, seeding=True, seed=934522, debug=False)
+    TestMiddleOut.test_middleout(size=329967, libsize=8, seeding=True, seed=934522)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
