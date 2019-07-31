@@ -42,21 +42,21 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
-        return MiddleOut.middle_out(bytes, size=size)
+        return MiddleOut.middle_out(bytes, size=size, debug=debug)
 
     @staticmethod
     def run_middelout_decomp(compressed_bytes, debug=False):
         bits = positiveBin_list(compressed_bytes)
-        return MiddleOut.middle_out_decomp(bits)
+        return MiddleOut.middle_out_decomp(bits, debug=debug)
 
     @staticmethod
-    def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debug=False):
+    def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debugc=False, debugd=False):
         if bytes is None:
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
-        c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debug)
-        if len(bytes) < 1000: print("size of middleout", len(c) // 8, "bytes")
-        de = TestMiddleOut.run_middelout_decomp(c, debug=debug)
+        c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debugc)
+        print("size of middleout", len(c), "bytes")
+        de = TestMiddleOut.run_middelout_decomp(c, debug=debugd)
         if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
         print("compression: ", len(c) / len(bytes))
@@ -80,19 +80,18 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO = False
+    TESTMO = True
     TESTRL = False
     NUM_RUNS = 5
-    LARGEST_GENERATED_NUM = 100
+    LARGEST_GENERATED_NUM = 255
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(10000, 1000000)
+            size = np.random.randint(100, 10000)
             seedstart = np.random.randint(1000000)
             print('size:', size)
             print('seed value:', seedstart)
-            # TestMiddleOut.test_middleout(size=size, libsize=8, seeding=True, seed=seedstart, debug=False)
-    # TestMiddleOut.test_middleout(size=329967, libsize=8, seeding=True, seed=934522, debug=False)
-    TestMiddleOut.test_middleout(size=329967, libsize=8, seeding=True, seed=934522)
+            TestMiddleOut.test_middleout(size=size, libsize=8, seeding=True, seed=seedstart, debugc=False, debugd=False)
+    # TestMiddleOut.test_middleout(size=9, libsize=8, seeding=True, seed=457691)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
