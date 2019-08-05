@@ -2,6 +2,8 @@
 # all rights to the following algorithms belong to respective owners
 
 import lz4.frame as lz
+import brotli
+import zstd
 import lzma
 import bz2
 import gzip
@@ -12,7 +14,7 @@ def lz4compressor(values):
         compressed = compressor.begin()
         compressed += compressor.compress(bytes(values))
         compressed += compressor.flush()
-    return compressed
+    return list(compressed)
 
 
 def lz4decompressor(values):
@@ -44,3 +46,20 @@ def gzipcompressor(values):
 
 def gzipdecompressor(values):
     return list(gzip.decompress(bytes(values)))
+
+
+def brotlicompressor(values):
+    return list(brotli.compress(bytes(values)))
+
+
+def brotlidecompressor(values):
+    return list(brotli.decompress(bytes(values)))
+
+
+def zstdcompressor(values):
+    return list(zstd.compress(bytes(values), 22))
+
+
+def zstddecompressor(values):
+    return list(zstd.decompress(bytes(values)))
+

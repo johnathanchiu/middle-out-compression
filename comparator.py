@@ -33,11 +33,14 @@ if __name__ == '__main__':
         lz4test = lz4compressor(p)
         lzmatest = lzmacompressor(p)
         gziptest = gzipcompressor(p)
-        motest = MiddleOut.middle_out(lz4test, size=2)
+        brotlitest = brotlicompressor(p)
+        zstdtest = zstdcompressor(p)
+        motest = MiddleOut.middle_out(lz4test, size=4)
 
     print('original file size:', len(bytes_of_file))
-    compressors = ('bz2', 'gzip', 'lz4', 'lzma', 'mo')
-    performance = (len(bz2test), len(gziptest), len(lz4test), len(lzmatest), len(motest))
+    compressors = ('bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo')
+    performance = (len(bz2test), len(gziptest), len(lz4test), len(lzmatest),
+                   len(brotlitest), len(zstdtest), len(motest))
 
     for i, v in zip(compressors, performance):
         print(str(i + ':'), v, '------->', str(100 * v / len(bytes_of_file)), '%')
