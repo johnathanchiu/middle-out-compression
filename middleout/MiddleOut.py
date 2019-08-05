@@ -75,7 +75,7 @@ class MiddleOutUtils:
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.35 or \
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.50 or \
                 len(occurrence_count) <= 2:
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
@@ -108,7 +108,7 @@ class MiddleOutUtils:
 class MiddleOutCompressor:
     """ Compressor Class """
 
-    SPLIT = 0.50
+    SPLIT = 0.40
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
     BIT_DEPTH = 8
