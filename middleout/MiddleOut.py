@@ -15,20 +15,6 @@ import random
 class MiddleOutUtils:
     """ Utilities class used for middle out compression """
 
-    class Node:
-        """ Huffman tree building helper """
-
-        def __init__(self, size):
-            self.size = size
-            self.symbols = []
-
-        def add_values(self, symbol):
-            """ add symbols to node """
-            self.symbols.append(symbol)
-
-        def __eq__(self, other):
-            return self.symbols == other.symbols
-
     DEBUG = True
 
     @staticmethod
@@ -84,36 +70,15 @@ class MiddleOutUtils:
         counter, split_set, occurrence_count = 0, set([]), Counter(byte_array)
         if len(occurrence_count) == 1:
             return '', byte_array, [], '0', '1'
-        # print("occurences", occurrence_count)
         while counter / len(byte_array) < MiddleOutCompressor.SPLIT:
             large = MiddleOutUtils.max_key(occurrence_count)
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        # print(MiddleOutCompressor.best_library(byte_array))
-        # r = random.randint(0, len(byte_array))
-        # print("bytes", byte_array[len(byte_array)-r:len(byte_array)-r+100])
-        # print(len(split_set), len(occurrence_count), len(split_set) / len(occurrence_count))
-        # print("left set", split_set)
-        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.5 or \
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.35 or \
                 len(occurrence_count) <= 2:
-            # print("split")
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
-
-    # @staticmethod
-    # def huffman_division(counter):
-    #     i = 0
-    #     huffman_dictionary = {}
-    #     while i < len(counter):
-    #         smallest = MiddleOutUtils.min_key(counter)
-    #         smallest_node = MiddleOutUtils.Node(smallest)
-    #         del counter[smallest]; del counter[]
-    #
-    #         huffman_dictionary[smallest_node] =
-    #
-    #
-    #
 
     @staticmethod
     def branch(byte_array, left_tree):
@@ -143,7 +108,7 @@ class MiddleOutUtils:
 class MiddleOutCompressor:
     """ Compressor Class """
 
-    SPLIT = 0.40
+    SPLIT = 0.50
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
     BIT_DEPTH = 8
