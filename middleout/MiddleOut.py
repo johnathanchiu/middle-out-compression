@@ -9,9 +9,25 @@ from functools import partial
 from multiprocessing import Pool
 from operator import itemgetter
 
+import random
+
 
 class MiddleOutUtils:
     """ Utilities class used for middle out compression """
+
+    class Node:
+        """ Huffman tree building helper """
+
+        def __init__(self, size):
+            self.size = size
+            self.symbols = []
+
+        def add_values(self, symbol):
+            """ add symbols to node """
+            self.symbols.append(symbol)
+
+        def __eq__(self, other):
+            return self.symbols == other.symbols
 
     DEBUG = True
 
@@ -19,6 +35,11 @@ class MiddleOutUtils:
     def max_key(d):
         v = list(d.values())
         return list(d.keys())[v.index(max(v))]
+
+    @staticmethod
+    def min_key(d):
+        v = list(d.values())
+        return list(d.keys())[v.index(min(v))]
 
     @staticmethod
     def build_library(size, byte_stream=None):
@@ -63,16 +84,36 @@ class MiddleOutUtils:
         counter, split_set, occurrence_count = 0, set([]), Counter(byte_array)
         if len(occurrence_count) == 1:
             return '', byte_array, [], '0', '1'
+        # print("occurences", occurrence_count)
         while counter / len(byte_array) < MiddleOutCompressor.SPLIT:
             large = MiddleOutUtils.max_key(occurrence_count)
             split_set.add(large)
             counter += occurrence_count[large]
             occurrence_count[large] = 0
-        if MiddleOutUtils.DEBUG: print(len(split_set), len(occurrence_count), len(split_set) / len(occurrence_count))
-        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.50 or \
+        # print(MiddleOutCompressor.best_library(byte_array))
+        # r = random.randint(0, len(byte_array))
+        # print("bytes", byte_array[len(byte_array)-r:len(byte_array)-r+100])
+        # print(len(split_set), len(occurrence_count), len(split_set) / len(occurrence_count))
+        # print("left set", split_set)
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.5 or \
                 len(occurrence_count) <= 2:
+            # print("split")
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
+
+    # @staticmethod
+    # def huffman_division(counter):
+    #     i = 0
+    #     huffman_dictionary = {}
+    #     while i < len(counter):
+    #         smallest = MiddleOutUtils.min_key(counter)
+    #         smallest_node = MiddleOutUtils.Node(smallest)
+    #         del counter[smallest]; del counter[]
+    #
+    #         huffman_dictionary[smallest_node] =
+    #
+    #
+    #
 
     @staticmethod
     def branch(byte_array, left_tree):
@@ -102,9 +143,10 @@ class MiddleOutUtils:
 class MiddleOutCompressor:
     """ Compressor Class """
 
-    SPLIT = 0.50
+    SPLIT = 0.40
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
+    BIT_DEPTH = 8
     LIBRARY_LIST = None
     LIBRARY = None
     DEBUG = False
@@ -117,15 +159,13 @@ class MiddleOutCompressor:
         left_c, left_u = '', left; size_bits, lib = '', ''
         if split == '0':
             if diff == '1':
-                lib = positive_binary(left[0])
-                minbits = minimum_bits(len(left) - 1)
-                left_c, left_u = unaryconverter(minbits) + positive_binary(len(left) - 1, bits=minbits), []
+                left_c, left_u = positive_binary(left[0], bits=MiddleOutCompressor.BIT_DEPTH), []
             else:
                 size = MiddleOutCompressor.best_library(values)
                 if MiddleOutCompressor.DEBUG: print("size:", size, "library:", MiddleOutCompressor.LIBRARY)
                 left_c, left_u = MiddleOutCompressor.library_compressor(values, size=size)
                 size_bits = positive_binary(size - 1, bits=MiddleOutCompressor.LIBRARY_BIT_SIZE)
-                lib = positiveBin_list(MiddleOutCompressor.LIBRARY, bits=8)
+                lib = positiveBin_list(MiddleOutCompressor.LIBRARY, bits=MiddleOutCompressor.BIT_DEPTH)
         header = split + diff + back_transform + size_bits + lib
         left, right = MiddleOutCompressor.byte_compress(left_u), MiddleOutCompressor.byte_compress(right)
         return header + left_c + left + right
@@ -175,7 +215,7 @@ class MiddleOutDecompressor:
             return MiddleOutUtils.merge_split(back_trans, left, right), bitstream
         else:
             if diff == '1':
-                return MiddleOutDecompressor.single_values(bitstream)
+                return [positive_int(bitstream[:8])] * length, bitstream[8:]
             size_bits = positive_int(bitstream[:MiddleOutCompressor.LIBRARY_BIT_SIZE]) + 1
             bitstream = bitstream[MiddleOutCompressor.LIBRARY_BIT_SIZE:]
             part_size, remainder = MiddleOutUtils.grab_count(bitstream, length, size_bits)
@@ -185,16 +225,9 @@ class MiddleOutDecompressor:
             return MiddleOutDecompressor.library_values(partition, right, size_bits), bitstream
 
     @staticmethod
-    def single_values(stream):
-        library, stream = stream[:8], stream[8:]
-        minbits = unaryToInt(stream); stream = stream[minbits+1:]
-        num = positive_int(stream[:minbits]) + 1; stream = stream[minbits:]
-        return [positive_int(library)] * num, stream
-
-    @staticmethod
     def library_values(stream, remaining, lib_size):
         bin_lib, stream = stream[:lib_size*8], stream[lib_size*8:]
-        lib = tuple(positiveInt_list(bin_lib, bits=8))
+        lib = tuple(positiveInt_list(bin_lib, bits=MiddleOutCompressor.BIT_DEPTH))
         r_count, uncompressed = 0, []
         for i in stream:
             if i == '1':
@@ -208,9 +241,16 @@ class MiddleOutDecompressor:
 class MiddleOut:
     """ Passes values into the compressor and decompressor, pads streams"""
 
+    PRINTER = True
+
     @staticmethod
-    def middle_out(stream, size=4, debug=False):
+    def middle_out(stream, size=1, debug=False):
         assert len(stream) > 0, print('no values to compress')
+        rl_size, rl = rlepredict(stream), '0'
+        if rl_size < len(stream):
+            stream, rl = rle(stream), '1'
+        if MiddleOut.PRINTER:
+            print("run length:", rl == '1')
         MiddleOutCompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
         bit_length = minimum_bits(len(stream) - 1)
         header = unaryconverter(bit_length) + positive_binary(len(stream) - 1, bits=bit_length)
@@ -218,7 +258,7 @@ class MiddleOut:
         lib_header = unaryconverter(bit_length) + positive_binary(size - 1, bits=bit_length)
         MiddleOutCompressor.LIBRARY_BIT_SIZE = bit_length
         MiddleOutCompressor.MAX_LIBRARY_SIZE = size + 1
-        mo_compressed = header + lib_header + MiddleOutCompressor.byte_compress(stream)
+        mo_compressed = rl + header + lib_header + MiddleOutCompressor.byte_compress(stream)
         pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         return convert_to_list(mo_compressed)
@@ -226,6 +266,7 @@ class MiddleOut:
     @staticmethod
     def middle_out_decomp(bitstream, debug=False):
         MiddleOutDecompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
+        rl, bitstream = bitstream[0], bitstream[1:]
         bitstream = remove_padding(bitstream)
         length_unary = unaryToInt(bitstream)
         eof = length_unary + 1
@@ -235,4 +276,6 @@ class MiddleOut:
         eoh = length_unary + 1
         MiddleOutCompressor.LIBRARY_BIT_SIZE = minimum_bits(positive_int(bitstream[eoh:eoh+length_unary]))
         bitstream = bitstream[eoh+length_unary:]
+        if rl == '1':
+            return rld(MiddleOutDecompressor.bit_decompression(bitstream, length)[0])
         return MiddleOutDecompressor.bit_decompression(bitstream, length)[0]
