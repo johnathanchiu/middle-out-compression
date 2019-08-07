@@ -216,14 +216,11 @@ class MiddleOut:
     PRINTER = False
 
     @staticmethod
-    def middle_out(stream, size=1, debug=False):
-        assert len(stream) > 0, print('no values to compress')
+    def middle_out(stream, size):
         rl_size, rl = rlepredict(stream), '0'
         if rl_size < len(stream):
             stream, rl = rle(stream), '1'
-        if MiddleOut.PRINTER:
-            print("run length:", rl == '1')
-        MiddleOutCompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
+        if MiddleOut.PRINTER: print("run length:", rl == '1')
         bit_length = minimum_bits(len(stream) - 1)
         header = unaryconverter(bit_length) + positive_binary(len(stream) - 1, bits=bit_length)
         bit_length = minimum_bits(size - 1)
@@ -231,23 +228,34 @@ class MiddleOut:
         MiddleOutCompressor.LIBRARY_BIT_SIZE = bit_length
         MiddleOutCompressor.MAX_LIBRARY_SIZE = size + 1
         mo_compressed = rl + header + lib_header + MiddleOutCompressor.byte_compress(stream)
+        return mo_compressed
+
+    @staticmethod
+    def middle_out_decomp(bit_stream):
+        rl, bit_stream = bit_stream[0], bit_stream[1:]
+        length_unary = unaryToInt(bit_stream)
+        eof = length_unary + 1
+        length = positive_int(bit_stream[eof:eof+length_unary]) + 1
+        bit_stream = bit_stream[eof+length_unary:]
+        length_unary = unaryToInt(bit_stream)
+        eoh = length_unary + 1
+        MiddleOutCompressor.LIBRARY_BIT_SIZE = minimum_bits(positive_int(bit_stream[eoh:eoh+length_unary]))
+        bit_stream = bit_stream[eoh+length_unary:]
+        if rl == '1': return rld(MiddleOutDecompressor.bit_decompression(bit_stream, length)[0])
+        return MiddleOutDecompressor.bit_decompression(bit_stream, length)[0]
+
+    @staticmethod
+    def compress(byte_stream, size=1, debug=False):
+        assert len(byte_stream) > 0, print('no values to compress')
+        MiddleOutCompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
+        mo_compressed = MiddleOut.middle_out(byte_stream, size)
         pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         return convert_to_list(mo_compressed)
 
+
     @staticmethod
-    def middle_out_decomp(bitstream, debug=False):
+    def decompress(bit_stream, debug=False):
         MiddleOutDecompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
-        rl, bitstream = bitstream[0], bitstream[1:]
-        bitstream = remove_padding(bitstream)
-        length_unary = unaryToInt(bitstream)
-        eof = length_unary + 1
-        length = positive_int(bitstream[eof:eof+length_unary]) + 1
-        bitstream = bitstream[eof+length_unary:]
-        length_unary = unaryToInt(bitstream)
-        eoh = length_unary + 1
-        MiddleOutCompressor.LIBRARY_BIT_SIZE = minimum_bits(positive_int(bitstream[eoh:eoh+length_unary]))
-        bitstream = bitstream[eoh+length_unary:]
-        if rl == '1':
-            return rld(MiddleOutDecompressor.bit_decompression(bitstream, length)[0])
-        return MiddleOutDecompressor.bit_decompression(bitstream, length)[0]
+        bit_stream = remove_padding(bit_stream)
+        return MiddleOut.middle_out_decomp(bit_stream)

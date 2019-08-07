@@ -24,7 +24,7 @@ if __name__ == '__main__':
     total_size = 0
     pbar = tqdm(partitions, desc='running middle-out compression scheme')
     for p in pbar:
-        mo_compressed = MiddleOut.middle_out(lz4compressor(p))
+        mo_compressed = MiddleOut.compress(lz4compressor(p), size=4)
         writeFileBytes(mo_compressed, fileName=compressed_file+'.bin')
         total_size += len(mo_compressed)
 

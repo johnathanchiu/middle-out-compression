@@ -21,7 +21,7 @@ if __name__ == '__main__':
     pbar = tqdm(range(1), desc='running middle-out decompression scheme')
     for _ in pbar:
         bitstream = readFile(compressed_file)
-        decomp = lz4decompressor(array.array('B',  MiddleOut.middle_out_decomp(bitstream)))
+        decomp = lz4decompressor(MiddleOut.decompress(bitstream))
         writeFileBytes(decomp, decompressed)
 
     print("file saved to:", decompressed)

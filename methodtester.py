@@ -42,12 +42,12 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
-        return MiddleOut.middle_out(bytes, size=size, debug=debug)
+        return MiddleOut.compress(bytes, size=size, debug=debug)
 
     @staticmethod
     def run_middelout_decomp(compressed_bytes, debug=False):
         bits = positiveBin_list(compressed_bytes)
-        return MiddleOut.middle_out_decomp(bits, debug=debug)
+        return MiddleOut.decompress(bits, debug=debug)
 
     @staticmethod
     def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debugc=False, debugd=False):
