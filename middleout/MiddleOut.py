@@ -2,14 +2,13 @@
 # © Johnathan Chiu, 2019
 
 from middleout.runlength import rld, rle, rlepredict
+from middleout.modified_huffman import Node
 from middleout.utils import *
 
 from collections import Counter
 from functools import partial
 from multiprocessing import Pool
 from operator import itemgetter
-
-import random
 
 
 class MiddleOutUtils:
@@ -70,15 +69,22 @@ class MiddleOutUtils:
         counter, split_set, occurrence_count = 0, set([]), Counter(byte_array)
         if len(occurrence_count) == 1:
             return '', byte_array, [], '0', '1'
-        while counter / len(byte_array) < MiddleOutCompressor.SPLIT:
-            large = MiddleOutUtils.max_key(occurrence_count)
-            split_set.add(large)
-            counter += occurrence_count[large]
-            occurrence_count[large] = 0
-        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) <= 0.50 or \
-                len(occurrence_count) <= 2:
+        split_set = MiddleOutUtils.huffman_division(occurrence_count).get_set()
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) >= 0.25:
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
+
+    @staticmethod
+    def huffman_division(counter):
+        huffman_dictionary = {}
+        for i in counter:
+            size = counter[i]
+            huffman_dictionary[Node(i, size)] = size
+        while len(huffman_dictionary) > 2:
+            smallest = MiddleOutUtils.min_key(huffman_dictionary); del huffman_dictionary[smallest]
+            second_smallest = MiddleOutUtils.min_key(huffman_dictionary); del huffman_dictionary[second_smallest]
+            smallest.merge_node(second_smallest); huffman_dictionary[smallest] = smallest.get_size()
+        return MiddleOutUtils.min_key(huffman_dictionary)
 
     @staticmethod
     def branch(byte_array, left_tree):
@@ -108,10 +114,10 @@ class MiddleOutUtils:
 class MiddleOutCompressor:
     """ Compressor Class """
 
-    SPLIT = 0.40
+    BIT_DEPTH = 8
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
-    BIT_DEPTH = 8
+    LIBRARY_RATIO = None
     LIBRARY_LIST = None
     LIBRARY = None
     DEBUG = False
@@ -144,6 +150,7 @@ class MiddleOutCompressor:
             MiddleOutCompressor.LIBRARY_LIST = list(map(itemgetter(0), results))
             values = list(map(itemgetter(1), results))
         best, ratio = max(enumerate(values), key=itemgetter(1))
+        MiddleOutCompressor.LIBRARY_RATIO = ratio
         MiddleOutCompressor.LIBRARY = MiddleOutCompressor.LIBRARY_LIST[best]
         return best + 1
 
@@ -206,7 +213,7 @@ class MiddleOutDecompressor:
 class MiddleOut:
     """ Passes values into the compressor and decompressor, pads streams"""
 
-    PRINTER = True
+    PRINTER = False
 
     @staticmethod
     def middle_out(stream, size=1, debug=False):
