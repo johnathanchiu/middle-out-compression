@@ -86,7 +86,7 @@ if __name__ == '__main__':
     LARGEST_GENERATED_NUM = 255
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(100, 10000)
+            size = np.random.randint(1000, 100000)
             seedstart = np.random.randint(1000000)
             print('size:', size)
             print('seed value:', seedstart)
