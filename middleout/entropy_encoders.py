@@ -57,7 +57,7 @@ def brotlidecompressor(values):
 
 
 def zstdcompressor(values):
-    return list(zstd.compress(bytes(values), 22))
+    return list(zstd.compress(bytes(values), 5))
 
 
 def zstddecompressor(values):
