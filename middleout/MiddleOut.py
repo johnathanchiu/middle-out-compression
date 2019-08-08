@@ -42,7 +42,7 @@ class MiddleOutUtils:
                 dictionary[partition] += 1
             count += 1
         large_occur = MiddleOutUtils.max_key(dictionary)
-        ratio = dictionary[large_occur] * size / len(byte_stream) / 1.1
+        ratio = dictionary[large_occur] * size / len(byte_stream) / 1.5
         return large_occur, ratio
 
     @staticmethod
@@ -55,7 +55,7 @@ class MiddleOutUtils:
 
     @staticmethod
     def grab_count(values, total, size):
-        count, ent, remaining = size*8, 0, 0
+        count, ent, remaining = size*MiddleOutCompressor.BIT_DEPTH, 0, 0
         if MiddleOutUtils.DEBUG: print(count, total)
         while ent < total:
             if values[count] == '0':
@@ -70,7 +70,7 @@ class MiddleOutUtils:
         if len(occurrence_count) == 1:
             return '', byte_array, [], '0', '1'
         split_set = MiddleOutUtils.huffman_division(occurrence_count).get_set()
-        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) >= 0.25:
+        if MiddleOutCompressor.MAX_LIBRARY_SIZE <= 1 or len(split_set) / len(occurrence_count) >= 0.10:
             return MiddleOutUtils.branch(byte_array, split_set)
         return '', byte_array, [], '0', '0'
 
@@ -114,7 +114,7 @@ class MiddleOutUtils:
 class MiddleOutCompressor:
     """ Compressor Class """
 
-    BIT_DEPTH = 8
+    BIT_DEPTH = 4
     MAX_LIBRARY_SIZE = 8
     LIBRARY_BIT_SIZE = 3
     LIBRARY_RATIO = None
@@ -126,7 +126,7 @@ class MiddleOutCompressor:
     def byte_compress(values):
         if len(values) == 0: return ''
         back_transform, left, right, split, diff = MiddleOutUtils.split_definer(values)
-        if MiddleOutCompressor.DEBUG: print("split:", split == '1', "singular:", diff == '1')
+        if MiddleOutCompressor.DEBUG: print("split:", split == '1', " singular:", diff == '1')
         left_c, left_u = '', left; size_bits, lib = '', ''
         if split == '0':
             if diff == '1':
@@ -136,7 +136,7 @@ class MiddleOutCompressor:
                 if MiddleOutCompressor.DEBUG: print("size:", size, "library:", MiddleOutCompressor.LIBRARY)
                 left_c, left_u = MiddleOutCompressor.library_compressor(values, size=size)
                 size_bits = positive_binary(size - 1, bits=MiddleOutCompressor.LIBRARY_BIT_SIZE)
-                lib = positiveBin_list(MiddleOutCompressor.LIBRARY, bits=MiddleOutCompressor.BIT_DEPTH)
+                lib = unsigned_bin_list(MiddleOutCompressor.LIBRARY, bits=MiddleOutCompressor.BIT_DEPTH)
         header = split + diff + back_transform + size_bits + lib
         left, right = MiddleOutCompressor.byte_compress(left_u), MiddleOutCompressor.byte_compress(right)
         return header + left_c + left + right
@@ -187,7 +187,8 @@ class MiddleOutDecompressor:
             return MiddleOutUtils.merge_split(back_trans, left, right), bitstream
         else:
             if diff == '1':
-                return [positive_int(bitstream[:8])] * length, bitstream[8:]
+                return [positive_int(bitstream[:MiddleOutCompressor.BIT_DEPTH])] * length, \
+                       bitstream[MiddleOutCompressor.BIT_DEPTH:]
             size_bits = positive_int(bitstream[:MiddleOutCompressor.LIBRARY_BIT_SIZE]) + 1
             bitstream = bitstream[MiddleOutCompressor.LIBRARY_BIT_SIZE:]
             part_size, remainder = MiddleOutUtils.grab_count(bitstream, length, size_bits)
@@ -198,8 +199,9 @@ class MiddleOutDecompressor:
 
     @staticmethod
     def library_values(stream, remaining, lib_size):
-        bin_lib, stream = stream[:lib_size*8], stream[lib_size*8:]
-        lib = tuple(positiveInt_list(bin_lib, bits=MiddleOutCompressor.BIT_DEPTH))
+        bin_lib = stream[:lib_size*MiddleOutCompressor.BIT_DEPTH]
+        stream = stream[lib_size*MiddleOutCompressor.BIT_DEPTH:]
+        lib = tuple(unsigned_int_list(bin_lib, bits=MiddleOutCompressor.BIT_DEPTH))
         r_count, uncompressed = 0, []
         for i in stream:
             if i == '1':
@@ -245,11 +247,15 @@ class MiddleOut:
         return MiddleOutDecompressor.bit_decompression(bit_stream, length)[0]
 
     @staticmethod
-    def compress(byte_stream, size=1, debug=False):
+    def compress(byte_stream, size=1, bitdepth=4, debug=False):
         assert len(byte_stream) > 0, print('no values to compress')
+        MiddleOutCompressor.BIT_DEPTH = bitdepth
         MiddleOutCompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
-        mo_compressed = MiddleOut.middle_out(byte_stream, size)
-        pad = pad_stream(len(mo_compressed)); num_padded = convertBin(pad, bits=4)
+        if bitdepth == 8:
+            mo_compressed = '1' + MiddleOut.middle_out(byte_stream, size)
+        else:
+            mo_compressed = '0' + MiddleOut.middle_out(byte_stream, size)
+        pad = pad_stream(len(mo_compressed)); num_padded = signed_bin(pad, bits=4)
         mo_compressed += ('0' * pad) + num_padded
         return convert_to_list(mo_compressed)
 
@@ -258,4 +264,11 @@ class MiddleOut:
     def decompress(bit_stream, debug=False):
         MiddleOutDecompressor.DEBUG, MiddleOutUtils.DEBUG = debug, debug
         bit_stream = remove_padding(bit_stream)
-        return MiddleOut.middle_out_decomp(bit_stream)
+        depth, bit_stream = bit_stream[0], bit_stream[1:]
+        if depth == '1':
+            MiddleOutCompressor.BIT_DEPTH = 8
+            return MiddleOut.middle_out_decomp(bit_stream)
+        else:
+            MiddleOutCompressor.BIT_DEPTH = 4
+            return nibble_to_bytes(MiddleOut.middle_out_decomp(bit_stream))
+

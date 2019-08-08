@@ -42,11 +42,13 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(bytes, size=2, debug=False):
+        if NIBBLE:
+            bytes = nibble_list(bytes)
         return MiddleOut.compress(bytes, size=size, debug=debug)
 
     @staticmethod
     def run_middelout_decomp(compressed_bytes, debug=False):
-        bits = positiveBin_list(compressed_bytes)
+        bits = unsigned_bin_list(compressed_bytes)
         return MiddleOut.decompress(bits, debug=debug)
 
     @staticmethod
@@ -82,6 +84,7 @@ if __name__ == '__main__':
     start_time = time.time()
     TESTMO = True
     TESTRL = False
+    NIBBLE = True
     NUM_RUNS = 5
     LARGEST_GENERATED_NUM = 255
     if TESTMO:
@@ -91,7 +94,6 @@ if __name__ == '__main__':
             print('size:', size)
             print('seed value:', seedstart)
             TestMiddleOut.test_middleout(size=size, libsize=8, seeding=True, seed=seedstart, debugc=False, debugd=False)
-    # TestMiddleOut.test_middleout(size=9, libsize=8, seeding=True, seed=457691)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)

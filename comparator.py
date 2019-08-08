@@ -21,7 +21,7 @@ if __name__ == '__main__':
     file_name = args.original
     compressed_file = args.compressed + os.path.splitext(os.path.basename(file_name))[0] + \
                       os.path.splitext(os.path.basename(file_name))[1]
-    bytes_of_file = readFileBytes(file_name)
+    bytes_of_file = read_file_bytes(file_name)
     start_time = time.time()
 
     partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))

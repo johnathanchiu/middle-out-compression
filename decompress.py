@@ -20,9 +20,9 @@ if __name__ == '__main__':
 
     pbar = tqdm(range(1), desc='running middle-out decompression scheme')
     for _ in pbar:
-        bitstream = readFile(compressed_file)
+        bitstream = read_file_bits(compressed_file)
         decomp = lz4decompressor(MiddleOut.decompress(bitstream))
-        writeFileBytes(decomp, decompressed)
+        write_file_bytes(decomp, decompressed)
 
     print("file saved to:", decompressed)
     print("decompression converges!")
