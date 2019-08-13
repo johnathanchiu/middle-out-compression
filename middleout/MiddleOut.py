@@ -14,8 +14,15 @@ from operator import itemgetter
 class MiddleOutUtils:
 
     @staticmethod
-    def count_stride_bits(bit_stream):
-        return
+    def partition_compressed_bits(bit_stream):
+        bit_partition = []
+        right_count, bit_count = 0, 0
+        for i in bit_stream:
+            if i == '1':
+                bit_count += 1; right_count += 1
+            else:
+
+        return bit_partition
 
 
 class MiddleOutCompressor:
@@ -70,7 +77,7 @@ class MiddleOutDecompressor:
     """ Decompressor Class """
 
     @staticmethod
-    def helper_decomp(compressed, right, length):
+    def merge_bytes(compressed, right, length):
         decompress, pointer, right_pos = [], 0, 0
         while pointer < len(compressed):
             if compressed[pointer] == '1':
@@ -92,13 +99,29 @@ class MiddleOut:
     DISTANCE_ENCODER, MAX_DISTANCE = 3, 9
 
     @staticmethod
+    def middle_out_compress(partitions):
+        with Pool(8) as p:
+            compression = p.map(MiddleOutCompressor.byte_compression, partitions)
+        return compression
+
+    @staticmethod
+    def middle_out_decompress(bit_stream):
+        return
+
+    @staticmethod
     def compress(byte_stream, stride=256, distance=9):
+        assert stride > 256 and stride % 256 == 0, print("invalid back reference size")
         MiddleOut.DISTANCE_ENCODER = minimum_bits(distance - 2)
         MiddleOut.BIT_DEPTH, MiddleOut.MAX_DISTANCE = minimum_bits(stride-1), distance
         partitions = split_file(byte_stream, chunksize=stride)
-        with Pool(8) as p:
-            compression = p.map(MiddleOutCompressor.byte_compression, partitions)
-        return ''.join(compression)
+        mo, minbits = MiddleOut.middle_out_compress(partitions), minimum_bits(len(byte_stream))
+        compressed = unaryconverter(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + ''.join(mo)
+        compressed =
+        return
+
+    @staticmethod
+    def decompress(compressed_bits):
+        return MiddleOut.middle_out_decompress(compressed_bits)
 
 
 
