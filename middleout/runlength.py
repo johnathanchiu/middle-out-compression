@@ -2,7 +2,7 @@
 # © Johnathan Chiu, 2019
 
 import array
-from middleout.utils import positive_int
+from middleout.utils import unsigned_int
 
 
 def rle(uncompressed, debug=False):
@@ -109,12 +109,12 @@ def compressed_count(values, length):
     trace = False
     count, counter, prev = 0, 0, None
     while count < length:
-        print(count); print(positive_int(values[counter:counter+8]))
-        if positive_int(values[counter:counter+8]) == prev and not trace:
-            print(positive_int(values[counter+8:counter+16]))
-            trace = True; count += 1 + positive_int(values[counter+8:counter+16]); counter += 8
+        print(count); print(unsigned_int(values[counter:counter + 8]))
+        if unsigned_int(values[counter:counter + 8]) == prev and not trace:
+            print(unsigned_int(values[counter + 8:counter + 16]))
+            trace = True; count += 1 + unsigned_int(values[counter + 8:counter + 16]); counter += 8
         else: trace = False; count += 1
         counter += 8
-        prev = positive_int(values[counter:counter+8])
+        prev = unsigned_int(values[counter:counter + 8])
     return counter // 8
 

@@ -5,12 +5,12 @@ import array
 import os
 
 
-def positive_binary(num, bits=8):
+def unsigned_binary(num, bits=8):
     length = '{0:0' + str(bits) + 'b}'
     return length.format(num)
 
 
-def positive_int(binary):
+def unsigned_int(binary):
     return int(binary, 2)
 
 
@@ -32,7 +32,7 @@ def signed_int(binary, bits=8):
     binary = int(binary, 2)
     """compute the 2's complement of int value val"""
     if (binary & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
-        binary = binary - (1 << bits)  # compute negative value
+        binary -= (1 << bits)  # compute negative value
     return binary  # return positive value as is
 
 
@@ -51,7 +51,7 @@ def signed_int_list(binary, bits=8):
         binary = int(binary, 2)
         """compute the 2's complement of int value val"""
         if (binary & (1 << (bits - 1))) != 0:  # if sign bit is set e.g., 8bit: 128-255
-            binary = binary - (1 << bits)  # compute negative value
+            binary -= (1 << bits)  # compute negative value
         return binary  # return positive value as is
     intList = []
     for x in range(0, len(binary), bits):
@@ -77,7 +77,7 @@ def nibble_list(eight_bit_list):
 def nibble_to_bytes(nibble_list):
     bytes_list = []; append = bytes_list.append
     for i in range(0, len(nibble_list), 2):
-        append(positive_int(positive_binary(nibble_list[i], bits=4) + positive_binary(nibble_list[i+1], bits=4)))
+        append(unsigned_int(unsigned_binary(nibble_list[i], bits=4) + unsigned_binary(nibble_list[i + 1], bits=4)))
     return bytes_list
 
 
@@ -133,7 +133,7 @@ def read_file_bits(fileName):
     size = os.stat(fileName).st_size
     with open(fileName, 'rb') as f:
         bytes = f.read(int(size))
-    return ''.join([positive_binary(b, bits=8) for b in bytes])
+    return ''.join([unsigned_binary(b, bits=8) for b in bytes])
 
 
 def read_file_bytes(fileName, bitdepth=8, partial=0):
