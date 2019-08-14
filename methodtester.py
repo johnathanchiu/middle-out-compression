@@ -41,24 +41,23 @@ class TestMiddleOut:
         return np.random.randint(0, LARGEST_GENERATED_NUM, size=size).tolist()
 
     @staticmethod
-    def run_middleout(bytes, size=2, debug=False):
-        if NIBBLE:
-            bytes = nibble_list(bytes)
-        return MiddleOut.compress(bytes, size=size, debug=debug)
+    def run_middleout(values, stride, encode):
+        return MiddleOut.compress(values, stride, encode)
 
     @staticmethod
-    def run_middelout_decomp(compressed_bytes, debug=False):
+    def run_middelout_decomp(compressed_bytes):
         bits = unsigned_bin_list(compressed_bytes)
-        return MiddleOut.decompress(bits, debug=debug)
+        return MiddleOut.decompress(bits)
 
     @staticmethod
-    def test_middleout(bytes=None, size=5, libsize=2, seeding=False, seed=1, debugc=False, debugd=False):
+    def test_middleout(bytes=None, stride=256, encoder=9, size=None, seeding=False, seed=1):
         if bytes is None:
+            assert size is not None, "input a size for the dataset"
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
-        c = TestMiddleOut.run_middleout(bytes, size=libsize, debug=debugc)
+        c = TestMiddleOut.run_middleout(bytes, stride, encoder)
         print("size of middleout", len(c), "bytes")
-        de = TestMiddleOut.run_middelout_decomp(c, debug=debugd)
+        de = TestMiddleOut.run_middelout_decomp(c)
         if len(bytes) < 1000: print("decompressed", de); print("original", bytes)
         TestMiddleOut.check_differences(bytes, de)
         print("compression: ", len(c) / len(bytes))
@@ -82,25 +81,23 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO = True
-    TESTRL = False
-    NIBBLE = True
-    NUM_RUNS = 5
-    LARGEST_GENERATED_NUM = 255
+    TESTMO, TESTRL = False, False
+    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(1000, 100000)
+            size = np.random.randint(10000, 500000)
             seedstart = np.random.randint(1000000)
-            print('size:', size)
-            print('seed value:', seedstart)
-            TestMiddleOut.test_middleout(size=size, libsize=8, seeding=True, seed=seedstart, debugc=False, debugd=False)
+            print('size:', size); print('seed value:', seedstart)
+            TestMiddleOut.test_middleout(stride=256, encoder=9, size=size, seeding=True, seed=seedstart)
+    file_name = '/Users/johnathanchiu/Documents/jpeg-research/CompressionPics/tests/IMG_1072.jpg'
+    bytes_of_file = read_file_bytes(file_name)
+    TestMiddleOut.test_middleout(bytes=bytes_of_file, stride=256, encoder=9, size=443, seeding=True, seed=113924)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
             seedstart = np.random.randint(1000000)
-            print('size:', size)
-            print('seed value:', seedstart)
-            TestMiddleOut.test_runlength(size=size, seeding=True, seed=seedstart, debug=False)
+            print('size:', size); print('seed value:', seedstart)
+            TestMiddleOut.test_runlength(size=size, seeding=True, seed=seedstart)
     print("\nfinished running all tests, all test cases passed!")
     print("--- %s seconds ---" % (time.time() - start_time))
 

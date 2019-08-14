@@ -35,7 +35,7 @@ if __name__ == '__main__':
         gziptest = gzipcompressor(p)
         brotlitest = brotlicompressor(p)
         zstdtest = zstdcompressor(p)
-        motest = MiddleOut.compress(lz4test, size=4)
+        motest = MiddleOut.compress(lz4test)
 
     print('original file size:', len(bytes_of_file))
     compressors = ('bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo')
