@@ -19,6 +19,7 @@ if __name__ == '__main__':
     bit_stream = read_file_bits(compressed_file)
     decompressed_mo = MiddleOut.decompress(bit_stream)
     file_bytes = lz4decompressor(decompressed_mo)
+    # file_bytes = decompressed_mo
     write_file_bytes(file_bytes, decompressed)
 
     print("file saved to:", decompressed)

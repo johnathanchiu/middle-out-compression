@@ -2,6 +2,7 @@
 # © Johnathan Chiu, 2019
 
 from middleout.runlength import rld, rle, rlepredict
+from methodtester import *
 from middleout.utils import *
 
 from multiprocessing import Pool
@@ -43,7 +44,7 @@ class MiddleOutCompressor:
             if match_iden in preceding:
                 if preceding[match_iden] + MiddleOut.MAX_DISTANCE <= match_start:
                     if i == len(uncompressed):
-                        match_pos = unsigned_binary(preceding[match_iden])
+                        match_pos = unsigned_binary(preceding[match_iden], bits=MiddleOut.BIT_DEPTH)
                         match_length = unsigned_binary(len(match_iden) - 2, bits=MiddleOut.DISTANCE_ENCODER)
                         compressed_stream += '0' + match_pos + match_length
                         match = []
@@ -58,7 +59,8 @@ class MiddleOutCompressor:
                     [right.append(c) for c in match]; match, match_start = [], i + 1
             else:
                 if i == len(uncompressed):
-                    compressed_stream += '1' * len(match); [right.append(c) for c in match]; match = []
+                    compressed_stream += '1' * len(match)
+                    [right.append(c) for c in match]; match = []
                 else:
                     if len(match_iden) == 2:
                         literal_count += len(match_iden)
@@ -68,7 +70,7 @@ class MiddleOutCompressor:
                     else:
                         hanging, match_iden = match[-1], tuple(match[:-1])
                         if match_iden in preceding:
-                            match_pos = unsigned_binary(preceding[match_iden])
+                            match_pos = unsigned_binary(preceding[match_iden], bits=MiddleOut.BIT_DEPTH)
                             match_length = unsigned_binary(len(match_iden) - 2, bits=MiddleOut.DISTANCE_ENCODER)
                             compressed_stream += '0' + match_pos + match_length
                             match, match_start = [hanging], i
@@ -78,7 +80,7 @@ class MiddleOutCompressor:
                     if tuple(forward_values[:j]) not in preceding:
                         preceding[tuple(forward_values[:j])] = position
                 position += 1
-        if literal_count > len(uncompressed) * 0.90:
+        if literal_count > len(uncompressed) * 0.80:
             return '1' + unsigned_bin_list(uncompressed)
         return '0' + compressed_stream + MiddleOutCompressor.byte_compression(right)
 
@@ -103,12 +105,15 @@ class MiddleOutDecompressor:
 
     @staticmethod
     def bit_decompress(compressed, length):
+        if length == 0: return [], ''
         iden, compressed = compressed[0], compressed[1:]
+
         if iden == '1':
             return unsigned_int_list(compressed[:length*8]), compressed[length*8:]
         partition, remaining, back_trans_count = MiddleOutUtils.partition_compressed_bits(compressed, length)
         right, compressed = MiddleOutDecompressor.bit_decompress(remaining, back_trans_count)
-        return MiddleOutDecompressor.merge_bytes(partition, right), compressed
+        total = MiddleOutDecompressor.merge_bytes(partition, right)
+        return total, compressed
 
 
 class MiddleOut:
@@ -142,9 +147,12 @@ class MiddleOut:
 
     @staticmethod
     def compress(byte_stream, stride=256, distance=9, visualizer=True):
-        assert stride >= 256 and stride % 256 == 0, print("invalid back reference size")
+        assert stride >= 256 and stride % 256 == 0, "invalid back reference size"
 
         partitions = split_file(byte_stream, chunksize=stride)
+
+        TestMiddleOut.DEBUGGER = partitions
+
         if visualizer:
             parts = tqdm(partitions, desc='running middle-out compression scheme')
         else:

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     bytes_of_file = read_file_bytes(file_name)
     start_time = time.time()
 
-    mo_compressed = MiddleOut.compress(lz4compressor(bytes_of_file))
+    mo_compressed = MiddleOut.compress(lz4compressor(bytes_of_file), stride=512)
     write_file_bytes(mo_compressed, fileName=compressed_file + '.bin')
 
     print("compression converges!")

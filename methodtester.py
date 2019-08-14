@@ -12,6 +12,8 @@ import time
 
 class TestMiddleOut:
 
+    DEBUGGER = None
+
     @staticmethod
     def check_differences(checker, sample, arr=True):
         def end_of_loop():
@@ -81,17 +83,14 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL = False, False
-    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
+    TESTMO, TESTRL = True, False
+    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 50
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(10000, 500000)
+            size = np.random.randint(300000, 400000)
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
-            TestMiddleOut.test_middleout(stride=256, encoder=9, size=size, seeding=True, seed=seedstart)
-    file_name = '/Users/johnathanchiu/Documents/jpeg-research/CompressionPics/tests/IMG_1072.jpg'
-    bytes_of_file = read_file_bytes(file_name)
-    TestMiddleOut.test_middleout(bytes=bytes_of_file, stride=256, encoder=9, size=443, seeding=True, seed=113924)
+            TestMiddleOut.test_middleout(stride=512, encoder=9, size=size, seeding=True, seed=seedstart)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)

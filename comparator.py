@@ -24,23 +24,16 @@ if __name__ == '__main__':
     bytes_of_file = read_file_bytes(file_name)
     start_time = time.time()
 
-    partitions = split_file(bytes_of_file, chunksize=len(bytes_of_file))
-    total_size = 0
+    sizes = []
+    partitions = [bz2compressor, lz4compressor, lzmacompressor, gzipcompressor, brotlicompressor, zstdcompressor]
     pbar = tqdm(partitions, desc='running compression scheme(s)')
-    bz2test, gziptest, lz4test, lzmatest, motest = None, None, None, None, None
     for p in pbar:
-        bz2test = bz2compressor(p)
-        lz4test = lz4compressor(p)
-        lzmatest = lzmacompressor(p)
-        gziptest = gzipcompressor(p)
-        brotlitest = brotlicompressor(p)
-        zstdtest = zstdcompressor(p)
-        motest = MiddleOut.compress(lz4test)
+        sizes.append(p(bytes_of_file))
+    sizes.append(MiddleOut.compress(lz4compressor(bytes_of_file), stride=512))
 
     print('original file size:', len(bytes_of_file))
-    compressors = ('bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo')
-    performance = (len(bz2test), len(gziptest), len(lz4test), len(lzmatest),
-                   len(brotlitest), len(zstdtest), len(motest))
+    compressors = ['bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo']
+    performance = [len(c) for c in sizes]
 
     for i, v in zip(compressors, performance):
         print(str(i + ':'), v, '------->', str(100 * v / len(bytes_of_file)), '%')
