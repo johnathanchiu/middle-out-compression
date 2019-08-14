@@ -1,9 +1,9 @@
 # This program produces the results of compression on a specific file
 # © Johnathan Chiu, 2019
 
-from middleout.utils import *
 from middleout.middle_out import MiddleOut
 from middleout.entropy_encoders import *
+from middleout.huffman import *
 
 from tqdm import tqdm
 import argparse
@@ -29,8 +29,9 @@ if __name__ == '__main__':
     pbar = tqdm(partitions, desc='running compression scheme(s)')
     for p in pbar:
         sizes.append(p(bytes_of_file))
+    frame = Huffman()
     bytes_of_file = lz4compressor(bytes_of_file)
-    sizes.append(MiddleOut.compress(bytes_of_file, stride=512, distance=9))
+    sizes.append(frame.compress(MiddleOut.compress(bytes_of_file, stride=512, distance=9)))
 
     print('original file size:', len(bytes_of_file))
     compressors = ['bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo']
