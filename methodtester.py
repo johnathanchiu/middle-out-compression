@@ -1,9 +1,9 @@
 # test cases for employed algorithms
 # © Johnathan Chiu, 2019
 
-from middleout.MiddleOut import *
-from middleout.runlength import rle, rld
-from middleout.entropy_encoders import *
+from middleout.middle_out import *
+from middleout.run_length import rle, rld
+from middleout.huffman import *
 
 import numpy as np
 
@@ -73,18 +73,41 @@ class TestMiddleOut:
         return rld(comp, debug=debug)
 
     @staticmethod
-    def test_runlength(arr=None, size=100, seeding=False, seed=1, debug=False):
-        if arr is None:
-            arr = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
-        rl = TestMiddleOut.rletest(arr, debug=debug)
+    def test_runlength(bytes=None, size=100, seeding=False, seed=1, debug=False):
+        if bytes is None:
+            bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
+        rl = TestMiddleOut.rletest(bytes, debug=debug)
         rd = TestMiddleOut.rldtest(rl, debug=debug)
-        TestMiddleOut.check_differences(arr, rd)
+        TestMiddleOut.check_differences(bytes, rd)
+
+    @staticmethod
+    def huffcompress(bytes):
+        frame = Huffman()
+        return frame.compress(bytes)
+
+    @staticmethod
+    def huffdecompress(bits):
+        bytes = unsigned_bin_list(bits)
+        frame = Huffman()
+        return frame.decompress(bytes)
+
+    @staticmethod
+    def test_huffman(bytes=None, size=None, seeding=False, seed=1):
+        if bytes is None:
+            assert size is not None, "input a size for the dataset"
+            bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
+        print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
+        c = TestMiddleOut.huffcompress(bytes)
+        print("size of middleout", len(c), "bytes")
+        de = TestMiddleOut.huffdecompress(c)
+        TestMiddleOut.check_differences(bytes, de)
+        print("compression: ", len(c) / len(bytes))
 
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL = True, False
-    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 50
+    TESTMO, TESTRL, TESTHUFF = False, False, True
+    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
     if TESTMO:
         for i in range(NUM_RUNS):
             size = np.random.randint(300000, 400000)
@@ -97,6 +120,12 @@ if __name__ == '__main__':
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
             TestMiddleOut.test_runlength(size=size, seeding=True, seed=seedstart)
+    if TESTHUFF:
+        for i in range(NUM_RUNS):
+            size = np.random.randint(100000, 1000000)
+            seedstart = np.random.randint(1000000)
+            print('size:', size); print('seed value:', seedstart)
+            TestMiddleOut.test_huffman(size=size, seeding=True, seed=seedstart)
     print("\nfinished running all tests, all test cases passed!")
     print("--- %s seconds ---" % (time.time() - start_time))
 

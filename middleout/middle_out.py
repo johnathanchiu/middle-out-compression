@@ -1,7 +1,7 @@
 # Middle-Out Compression Algorithm
 # © Johnathan Chiu, 2019
 
-from middleout.runlength import *
+from middleout.run_length import *
 from middleout.utils import *
 
 from multiprocessing import Pool

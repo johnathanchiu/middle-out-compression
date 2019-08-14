@@ -2,11 +2,8 @@
 # all rights to the following algorithms belong to respective owners
 
 import lz4.frame as lz
-import brotli
-import zstd
-import lzma
-import bz2
-import gzip
+import brotli, zstd
+import bz2, gzip, lzma
 
 
 def lz4compressor(values):

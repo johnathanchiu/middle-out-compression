@@ -2,7 +2,7 @@
 # © Johnathan Chiu, 2019
 
 from middleout.utils import *
-from middleout.MiddleOut import MiddleOut
+from middleout.middle_out import MiddleOut
 from middleout.entropy_encoders import *
 
 from tqdm import tqdm
