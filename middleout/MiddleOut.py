@@ -1,8 +1,7 @@
 # Middle-Out Compression Algorithm
 # © Johnathan Chiu, 2019
 
-from middleout.runlength import rld, rle, rlepredict
-from methodtester import *
+from middleout.runlength import *
 from middleout.utils import *
 
 from multiprocessing import Pool
@@ -148,10 +147,14 @@ class MiddleOut:
     @staticmethod
     def compress(byte_stream, stride=256, distance=9, visualizer=True):
         assert stride >= 256 and stride % 256 == 0, "invalid back reference size"
+        try:
+            assert (2 ** minimum_bits(distance - 2)) - 1 == distance - 2
+        except AssertionError:
+            dist = distance
+            while (2 ** minimum_bits(dist)) - 1 > distance - 2:
+                distance += 1
 
         partitions = split_file(byte_stream, chunksize=stride)
-
-        TestMiddleOut.DEBUGGER = partitions
 
         if visualizer:
             parts = tqdm(partitions, desc='running middle-out compression scheme')
