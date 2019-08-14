@@ -29,7 +29,8 @@ if __name__ == '__main__':
     pbar = tqdm(partitions, desc='running compression scheme(s)')
     for p in pbar:
         sizes.append(p(bytes_of_file))
-    sizes.append(MiddleOut.compress(lz4compressor(bytes_of_file), stride=512))
+    bytes_of_file = lz4compressor(bytes_of_file)
+    sizes.append(MiddleOut.compress(bytes_of_file, stride=512, distance=9))
 
     print('original file size:', len(bytes_of_file))
     compressors = ['bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo']
