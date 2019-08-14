@@ -25,7 +25,7 @@ def lz4decompressor(values):
 
 
 def bz2compressor(values):
-    return list(bz2.compress(bytes(values), 9))
+    return list(bz2.compress(bytes(values)))
 
 
 def bz2decompressor(values):
@@ -41,7 +41,7 @@ def lzmadecomressor(values):
 
 
 def gzipcompressor(values):
-    return list(gzip.compress(bytes(values), 9))
+    return list(gzip.compress(bytes(values)))
 
 
 def gzipdecompressor(values):
