@@ -2,11 +2,9 @@ from middleout.MiddleOut import MiddleOut
 from middleout.entropy_encoders import *
 from middleout.utils import *
 
-import array
 import os
 
 import argparse
-from tqdm import tqdm
 import time
 
 if __name__ == '__main__':
@@ -18,11 +16,10 @@ if __name__ == '__main__':
     decompressed = args.path + os.path.splitext(os.path.basename(compressed_file))[0]
     start_time = time.time()
 
-    pbar = tqdm(range(1), desc='running middle-out decompression scheme')
-    for _ in pbar:
-        bitstream = read_file_bits(compressed_file)
-        decomp = lz4decompressor(MiddleOut.decompress(bitstream))
-        write_file_bytes(decomp, decompressed)
+    bit_stream = read_file_bits(compressed_file)
+    decompressed_mo = MiddleOut.decompress(bit_stream)
+    file_bytes = lz4decompressor(decompressed_mo)
+    write_file_bytes(file_bytes, decompressed)
 
     print("file saved to:", decompressed)
     print("decompression converges!")

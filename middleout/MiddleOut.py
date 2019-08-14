@@ -5,6 +5,7 @@ from middleout.runlength import rld, rle, rlepredict
 from middleout.utils import *
 
 from multiprocessing import Pool
+from tqdm import tqdm
 
 
 class MiddleOutUtils:
@@ -120,13 +121,17 @@ class MiddleOut:
     def middle_out_compress(partitions):
         with Pool(8) as p:
             compression = p.map(MiddleOutCompressor.byte_compression, partitions)
-        return compression
+        return ''.join(compression)
 
     @staticmethod
-    def middle_out_decompress(bit_stream, bytes_count):
+    def middle_out_decompress(bit_stream, bytes_count, visualizer=True):
         byte_chunks = []
         partitions, remainder = bytes_count // MiddleOut.STRIDE, bytes_count % MiddleOut.STRIDE
-        for c in range(partitions + 1):
+        if visualizer:
+            parts = tqdm(range(partitions + 1), desc='running middle-out decompression scheme')
+        else:
+            parts = range(partitions + 1)
+        for c in parts:
             if c == partitions:
                 decompressed, bit_stream = MiddleOutDecompressor.bit_decompress(bit_stream, remainder)
                 byte_chunks.append(decompressed)
@@ -136,26 +141,31 @@ class MiddleOut:
         return (lambda l: [item for sublist in l for item in sublist])(byte_chunks)
 
     @staticmethod
-    def compress(byte_stream, stride=256, distance=9):
+    def compress(byte_stream, stride=256, distance=9, visualizer=True):
         assert stride >= 256 and stride % 256 == 0, print("invalid back reference size")
 
         partitions = split_file(byte_stream, chunksize=stride)
+        if visualizer:
+            parts = tqdm(partitions, desc='running middle-out compression scheme')
+        else:
+            parts = partitions
 
         MiddleOut.DISTANCE_ENCODER, MiddleOut.STRIDE = minimum_bits(distance - 2), stride
         MiddleOut.BIT_DEPTH, MiddleOut.MAX_DISTANCE = minimum_bits(stride - 1), distance
 
-        mo, minbits = MiddleOut.middle_out_compress(partitions), minimum_bits(len(byte_stream))
+        mo, minbits = MiddleOut.middle_out_compress(parts), minimum_bits(len(byte_stream))
 
         stride_bits, distance_bits = unaryconverter(stride // 256), unsigned_binary(distance)
         header = unaryconverter(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + stride_bits + distance_bits
 
-        compressed = header + ''.join(mo); pad = pad_stream(len(compressed)); num_padded = signed_bin(pad, bits=4)
+        compressed = header + mo; pad = pad_stream(len(compressed)); num_padded = signed_bin(pad, bits=4)
         mo_compressed = compressed + ('0' * pad) + num_padded
 
-        return convert_to_list(mo_compressed)
+        return unsigned_int_list(mo_compressed)
 
     @staticmethod
-    def decompress(compressed_bits):
+    def decompress(compressed_bits, visualizer=True):
+
         compressed_bits = remove_padding(compressed_bits)
 
         bit_count_length = unary_to_int(compressed_bits)
@@ -167,11 +177,4 @@ class MiddleOut:
         MiddleOut.DISTANCE_ENCODER, MiddleOut.STRIDE = minimum_bits(distance - 2), stride_size
         MiddleOut.BIT_DEPTH, MiddleOut.MAX_DISTANCE = minimum_bits(stride_size - 1), distance
 
-        return MiddleOut.middle_out_decompress(compressed_bits, length)
-
-
-
-
-
-
-
+        return MiddleOut.middle_out_decompress(compressed_bits, length, visualizer=visualizer)
