@@ -1,6 +1,5 @@
 from collections import Counter
 from middleout.utils import *
-import array
 
 
 class Node:
@@ -69,8 +68,7 @@ class Huffman:
         return Huffman.min_key(huffman_dictionary).get_set()
 
     def branch(self, byte_array, left_tree):
-        split = ''
-        right, left = array.array('B', []), array.array('B', [])
+        split, right, left = '', [], []
         for v in byte_array:
             if v in left_tree:
                 split += '0'; left.append(v)
@@ -90,7 +88,7 @@ class Huffman:
 
     def compress(self, byte_array):
         minbits = minimum_bits(len(byte_array))
-        header = unaryconverter(minbits) + unsigned_binary(len(byte_array), bits=minbits)
+        header = unsigned_unary(minbits) + unsigned_binary(len(byte_array), bits=minbits)
         huff = self.huffman_compression(byte_array)
         compressed = header + huff; pad = pad_stream(len(compressed)); num_padded = signed_bin(pad, bits=4)
         return unsigned_int_list(compressed + ('0' * pad) + num_padded)

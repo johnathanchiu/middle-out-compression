@@ -57,7 +57,7 @@ def nibble_int_high(eight_bit):
     return eight_bit & 0x0F
 
 
-def unaryconverter(num):
+def unsigned_unary(num):
     unary = ''
     for _ in range(num):
         unary += '1'
