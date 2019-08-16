@@ -37,25 +37,41 @@ class MiddleOutCompressor:
         compressed_stream = ''
         preceding, match, right = {}, [], []
         literal_count, pointer, match_start = 0, 0, 0
-        while pointer < len(uncompressed) + 1:
+        while pointer < len(uncompressed):
             match = uncompressed[pointer:pointer+2]
+            match_start = pointer
 
-            print("pointer:", pointer, "match:", match)
+            # print("pointer:", pointer, "match:", match)
+            # print("match start:", match_start)
+            # print("compressed:", compressed_stream)
+            # frmt = "{:>3}"*len(uncompressed)
+            # print(frmt.format(*list(range(0, len(uncompressed)))))
+            # print(frmt.format(*uncompressed))
 
-            while tuple(match) in preceding:
+            while tuple(match) in preceding and match_start - len(match) >= preceding[tuple(match)]:
+                # print(match, match_start, pointer)
                 if len(match) == 2:
                     pointer += 1
-                pointer += 1; match.append(uncompressed[pointer])
+                pointer += 1
+                # print("pointer:", pointer)
+                if pointer >= len(uncompressed):
+                    back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
+                    reference_size = unsigned_binary(len(match) - 2, bits=MiddleOut.DISTANCE_ENCODER)
+                    compressed_stream += '0' + back_reference + reference_size; match = []
+                    break
+                match.append(uncompressed[pointer])
 
             if len(match) > 2:
                 hanging, match = match[-1:], match[:-1]
                 back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
-                reference_size = unsigned_binary(len(match), bits=MiddleOut.DISTANCE_ENCODER)
+                reference_size = unsigned_binary(len(match) - 2, bits=MiddleOut.DISTANCE_ENCODER)
                 compressed_stream += '0' + back_reference + reference_size
+                pointer -= 1
 
             else:
-                compressed_stream += '1'; right.append(match[0])
-                pointer += 1
+                if len(match) >= 1:
+                    literal_count += 1
+                    compressed_stream += '1'; right.append(match[0])
 
             if pointer <= len(uncompressed) - MiddleOut.MAX_DISTANCE:
                 forward_values = uncompressed[pointer:pointer+MiddleOut.MAX_DISTANCE]
@@ -63,6 +79,8 @@ class MiddleOutCompressor:
                     if tuple(forward_values[:j]) not in preceding:
                         preceding[tuple(forward_values[:j])] = pointer
             pointer += 1
+            # print(compressed_stream); print()
+        # print("literal count", literal_count, len(uncompressed) * 0.90, compressed_stream)
         if literal_count > len(uncompressed) * 0.90:
             return '1' + unsigned_bin_list(uncompressed)
         return '0' + compressed_stream + MiddleOutCompressor.byte_compression(right)
@@ -94,7 +112,6 @@ class MiddleOutDecompressor:
         if iden == '1':
             return unsigned_int_list(compressed[:length*8]), compressed[length*8:]
         partition, remaining, back_trans_count = MiddleOutUtils.partition_compressed_bits(compressed, length)
-        print(partition)
         right, compressed = MiddleOutDecompressor.bit_decompress(remaining, back_trans_count)
         total = MiddleOutDecompressor.merge_bytes(partition, right)
         return total, compressed
