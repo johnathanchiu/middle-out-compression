@@ -4,6 +4,7 @@
 from middleout.middle_out import *
 from middleout.run_length import rle, rld
 from middleout.huffman import *
+from middleout.entropy_encoders import *
 
 import numpy as np
 
@@ -44,12 +45,12 @@ class TestMiddleOut:
 
     @staticmethod
     def run_middleout(values, stride, encode):
-        return MiddleOut.compress(values, stride, encode)
+        return MiddleOut.compress(values, stride, encode, visualizer=False)
 
     @staticmethod
     def run_middelout_decomp(compressed_bytes):
         bits = unsigned_bin_list(compressed_bytes)
-        return MiddleOut.decompress(bits)
+        return MiddleOut.decompress(bits, visualizer=False)
 
     @staticmethod
     def test_middleout(bytes=None, stride=256, encoder=9, size=None, seeding=False, seed=1):
@@ -106,14 +107,15 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL, TESTHUFF = False, False, True
-    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
+    TESTMO, TESTRL, TESTHUFF = False, False, False
+    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 5
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(300000, 400000)
+            size = np.random.randint(20, 30)
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
             TestMiddleOut.test_middleout(stride=512, encoder=9, size=size, seeding=True, seed=seedstart)
+    TestMiddleOut.test_middleout(stride=512, encoder=9, size=26, seeding=True, seed=363493)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
