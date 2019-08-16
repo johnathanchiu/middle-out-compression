@@ -41,19 +41,18 @@ class MiddleOutCompressor:
             match = uncompressed[pointer:pointer+2]
             match_start = pointer
 
-            # print("pointer:", pointer, "match:", match)
-            # print("match start:", match_start)
-            # print("compressed:", compressed_stream)
-            # frmt = "{:>3}"*len(uncompressed)
-            # print(frmt.format(*list(range(0, len(uncompressed)))))
-            # print(frmt.format(*uncompressed))
+            if MiddleOut.DEBUG:
+                print("pointer:", pointer, "match:", match)
+                print("match start:", match_start)
+                print("compressed:", compressed_stream)
+                frmt = "{:>3}"*len(uncompressed)
+                print(frmt.format(*list(range(0, len(uncompressed)))))
+                print(frmt.format(*uncompressed))
 
             while tuple(match) in preceding and match_start - len(match) >= preceding[tuple(match)]:
-                # print(match, match_start, pointer)
                 if len(match) == 2:
                     pointer += 1
                 pointer += 1
-                # print("pointer:", pointer)
                 if pointer >= len(uncompressed):
                     back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
                     reference_size = unsigned_binary(len(match) - 2, bits=MiddleOut.DISTANCE_ENCODER)
@@ -79,8 +78,6 @@ class MiddleOutCompressor:
                     if tuple(forward_values[:j]) not in preceding:
                         preceding[tuple(forward_values[:j])] = pointer
             pointer += 1
-            # print(compressed_stream); print()
-        # print("literal count", literal_count, len(uncompressed) * 0.90, compressed_stream)
         if literal_count > len(uncompressed) * 0.90:
             return '1' + unsigned_bin_list(uncompressed)
         return '0' + compressed_stream + MiddleOutCompressor.byte_compression(right)
@@ -122,6 +119,7 @@ class MiddleOut:
 
     BIT_DEPTH, STRIDE = 8, 256
     DISTANCE_ENCODER, MAX_DISTANCE = 3, 9
+    DEBUG = False
 
     @staticmethod
     def middle_out_compress(partitions):
