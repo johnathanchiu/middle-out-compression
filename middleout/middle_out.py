@@ -38,56 +38,25 @@ class MiddleOutCompressor:
         preceding, match, right = {}, [], []
         literal_count, pointer, match_start = 0, 0, 0
         while pointer < len(uncompressed) + 1:
-            """ cases are fine """
-            if len(match) == 0 and pointer < len(uncompressed) - 1:
-                print("two")
-                match = uncompressed[pointer:pointer+2]; match_start = pointer
-            else:
-                if pointer < len(uncompressed):
-                    print("one")
-                    match.append(uncompressed[pointer])
-            matches = tuple(match)
-            print(matches, "pointer", pointer, match_start)
-            frmt = "{:>3}"*len(uncompressed)
-            print(frmt.format(*list(range(0, len(uncompressed)))))
-            print(frmt.format(*uncompressed))
-            if matches in preceding:
-                """ makes sense """
-                if match_start - len(matches) >= preceding[matches]:
-                    if len(match) == MiddleOut.MAX_DISTANCE:
-                        print("hi")
-                        back_reference = unsigned_binary(preceding[matches], bits=MiddleOut.BIT_DEPTH)
-                        pointer_size = unsigned_binary(len(matches) - 2, bits=MiddleOut.DISTANCE_ENCODER)
-                        compressed_stream += '0' + back_reference + pointer_size; match = []
-                    elif pointer == len(uncompressed):
-                        back_reference = unsigned_binary(preceding[matches], bits=MiddleOut.BIT_DEPTH)
-                        pointer_size = unsigned_binary(len(matches) - 2, bits=MiddleOut.DISTANCE_ENCODER)
-                        compressed_stream += '0' + back_reference + pointer_size; match = []
-                    else:
-                        if len(match) == 2:
-                            print("he"); pointer += 1
-                else:
-                    print("that")
-                    if len(match) > 2:
-                        pointer -= 1
-                    compressed_stream += '1'; right.append(match[0]); literal_count += 1; match = []
+            match = uncompressed[pointer:pointer+2]
+
+            print("pointer:", pointer, "match:", match)
+
+            while tuple(match) in preceding:
+                if len(match) == 2:
+                    pointer += 1
+                pointer += 1; match.append(uncompressed[pointer])
+
+            if len(match) > 2:
+                hanging, match = match[-1:], match[:-1]
+                back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
+                reference_size = unsigned_binary(len(match), bits=MiddleOut.DISTANCE_ENCODER)
+                compressed_stream += '0' + back_reference + reference_size
 
             else:
-                if pointer == len(uncompressed):
-                    compressed_stream += '1' * len(matches); literal_count += len(matches);
-                    [right.append(c) for c in matches]
-                if len(match) >= 2:
-                    if len(match) == 2:
-                        print("bye")
-                        compressed_stream += '1'; right.append(match[0]); literal_count += 1; match = []
-                    else:
-                        print("gone")
-                        hanging, match = match[-1:], match[:-1]
-                        matches, match_start = tuple(match), pointer
-                        back_reference = unsigned_binary(preceding[matches], bits=MiddleOut.BIT_DEPTH)
-                        pointer_size = unsigned_binary(len(matches) - 2, bits=MiddleOut.DISTANCE_ENCODER)
-                        compressed_stream += '0' + back_reference + pointer_size; match = []
-                        pointer -= 1
+                compressed_stream += '1'; right.append(match[0])
+                pointer += 1
+
             if pointer <= len(uncompressed) - MiddleOut.MAX_DISTANCE:
                 forward_values = uncompressed[pointer:pointer+MiddleOut.MAX_DISTANCE]
                 for j in range(2, len(forward_values) + 1):

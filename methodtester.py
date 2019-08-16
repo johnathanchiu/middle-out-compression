@@ -111,7 +111,7 @@ if __name__ == '__main__':
     NUM_RUNS, LARGEST_GENERATED_NUM = 5, 5
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(20, 30)
+            size = np.random.randint(5, 10)
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
             TestMiddleOut.test_middleout(stride=512, encoder=9, size=size, seeding=True, seed=seedstart)
