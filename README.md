@@ -1,6 +1,6 @@
 # Middle-Out-Compression
 
-Middleout Compression is a novel lossless entropy encoder.
+Middleout Compression is a novel compression algorithm that presents a proof of concept to increase compression ratios for LZ77 based compressors.
 
 This algorithm uses top-down and left-right compression simultaneously.
 
@@ -20,7 +20,7 @@ Middleout is stacked upon lz4 to give higher compression ratios.
 
 # Compression Explained
 
-To be updated soon...
+Middle-Out algorithm uses prefix codes to define literals and compressed data. Additionally, uncompressed literals are pushed to the right to be compressed again. This process is recursive and extremely fast.
 
 # Dependencies
 
