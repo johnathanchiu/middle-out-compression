@@ -1,7 +1,6 @@
 # Middle-Out Compression Algorithm
 # © Johnathan Chiu, 2019
 
-from middleout.run_length import *
 from middleout.utils import *
 
 from multiprocessing import Pool
@@ -78,7 +77,7 @@ class MiddleOutCompressor:
                     if tuple(forward_values[:j]) not in preceding:
                         preceding[tuple(forward_values[:j])] = pointer
             pointer += 1
-        if literal_count > len(uncompressed) * 0.90:
+        if literal_count > len(uncompressed) * 0.75:
             return '1' + unsigned_bin_list(uncompressed)
         return '0' + compressed_stream + MiddleOutCompressor.byte_compression(right)
 
@@ -166,8 +165,8 @@ class MiddleOut:
 
         mo, minbits = MiddleOut.middle_out_compress(parts), minimum_bits(len(byte_stream))
 
-        stride_bits, distance_bits = unaryconverter(stride // 256), unsigned_binary(distance)
-        header = unaryconverter(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + stride_bits + distance_bits
+        stride_bits, distance_bits = unsigned_unary(stride // 256), unsigned_binary(distance)
+        header = unsigned_unary(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + stride_bits + distance_bits
 
         compressed = header + mo; pad = pad_stream(len(compressed)); num_padded = signed_bin(pad, bits=4)
         mo_compressed = compressed + ('0' * pad) + num_padded

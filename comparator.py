@@ -22,10 +22,11 @@ if __name__ == '__main__':
     compressed_file = args.compressed + os.path.splitext(os.path.basename(file_name))[0] + \
                       os.path.splitext(os.path.basename(file_name))[1]
     bytes_of_file = read_file_bytes(file_name)
+    original = bytes_of_file
     start_time = time.time()
 
     sizes = []
-    partitions = [bz2compressor, lz4compressor, lzmacompressor, gzipcompressor, brotlicompressor, zstdcompressor]
+    partitions = [bz2compressor, gzipcompressor, lz4compressor, lzmacompressor, brotlicompressor, zstdcompressor]
     pbar = tqdm(partitions, desc='running compression scheme(s)')
     for p in pbar:
         sizes.append(p(bytes_of_file))
@@ -33,11 +34,11 @@ if __name__ == '__main__':
     bytes_of_file = lz4compressor(bytes_of_file)
     sizes.append(frame.compress(MiddleOut.compress(bytes_of_file, stride=512, distance=9)))
 
-    print('original file size:', len(bytes_of_file))
+    print('original file size:', len(original))
     compressors = ['bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo']
     performance = [len(c) for c in sizes]
 
     for i, v in zip(compressors, performance):
-        print(str(i + ':'), v, '------->', str(100 * v / len(bytes_of_file)), '%')
+        print(str(i + ':'), v, '------->', str(100 * v / len(original)), '%')
 
     print("--- %s seconds ---" % (time.time() - start_time))
