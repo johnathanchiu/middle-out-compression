@@ -2,6 +2,7 @@
 # © Johnathan Chiu, 2019
 
 from middleout.utils import *
+from middleout.run_length import *
 
 from multiprocessing import Pool
 from tqdm import tqdm
@@ -34,6 +35,8 @@ class MiddleOutCompressor:
     @staticmethod
     def byte_compression(uncompressed):
         compressed_stream = ''
+        if len(uncompressed) == 0:
+            return compressed_stream
         preceding, match, right = {}, [], []
         literal_count, pointer, match_start = 0, 0, 0
         while pointer < len(uncompressed):
@@ -61,7 +64,7 @@ class MiddleOutCompressor:
                     else:
                         if tuple(match) in preceding:
                             back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
-                            reference_size = unsigned_binary(len(match) - 2, bits=MiddleOut.DISTANCE_ENCODER)
+                            reference_size = unsigned_unary(len(match) - 2)
                             compressed_stream += '01' + back_reference + reference_size
                         else:
                             compressed_stream += '1' * len(match); [right.append(i) for i in match]
@@ -70,14 +73,14 @@ class MiddleOutCompressor:
 
             if len(match) > 2:
                 hanging, match = match[-1:], match[:-1]
-                if match.count(match[0]) == len(match) and MiddleOut.BIT_DEPTH * 2 < len(match) * 8:
+                if match.count(match[0]) == len(match) and len(match) > 2:
                     back_reference = unsigned_binary(match_start, bits=MiddleOut.BIT_DEPTH)
                     reference_size = unsigned_binary(len(match), bits=MiddleOut.BIT_DEPTH)
                     compressed_stream += '00' + back_reference + reference_size
                 else:
                     if tuple(match) in preceding:
                         back_reference = unsigned_binary(preceding[tuple(match)], bits=MiddleOut.BIT_DEPTH)
-                        reference_size = unsigned_binary(len(match) - 2, bits=MiddleOut.DISTANCE_ENCODER)
+                        reference_size = unsigned_unary(len(match) - 2)
                         compressed_stream += '01' + back_reference + reference_size
                 pointer -= 1
 
