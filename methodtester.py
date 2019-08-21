@@ -107,7 +107,7 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL, TESTHUFF = True, False, False
+    TESTMO, TESTRL, TESTHUFF = False, False, False
     NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
     if TESTMO:
         for i in range(NUM_RUNS):
