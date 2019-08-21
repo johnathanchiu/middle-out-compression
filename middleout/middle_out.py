@@ -14,21 +14,28 @@ class MiddleOutUtils:
     @staticmethod
     def partition_compressed_bits(bit_stream, size):
         pointer, back_transform, total = 0, 0, 0
-        dist, max_bits = MiddleOut.DISTANCE_ENCODER, MiddleOut.BIT_DEPTH
+        max_bits = MiddleOut.BIT_DEPTH
 
         while total < size:
-            if bit_stream[pointer] == '1':
+            if bit_stream[0] == '1':
+                bit_stream = bit_stream[1:]
                 total += 1; back_transform += 1; pointer += 1
             else:
-                pointer += 1
-                if bit_stream[pointer] == '0':
+                if bit_stream[:2] == '01':
+                    pointer += max_bits + 2; copy_size = unary_to_int(bit_stream[pointer:]) + 3
+                    pointer += copy_size - 3 + 1; total += copy_size
+                elif bit_stream[:4] == '0010':
+                    pointer += 4; copy_size = unary_to_int(bit_stream[pointer:]) + 3
+                    pointer += copy_size - 3 + 1; total += copy_size
+                elif bit_stream[:4] == '0011':
+                    pointer += 3; copy_size = unary_to_int(bit_stream[pointer:]) + 3
+                    pointer += copy_size - 3 + 1; total += copy_size
+                elif bit_stream[:5] == '00010':
+                    pointer += 5; copy_size = unary_to_int(bit_stream[pointer:]) + 3
+                    pointer += copy_size - 3 + 1; total += copy_size
                 else:
-                    pointer += 1
-                    count = unary_to_int(bit_stream[pointer:])
-                    start, end = pointer + max_bits, pointer + max_bits + dist
-                    total += unsigned_int(bit_stream[start:end]) + 2
-                    pointer += dist + max_bits
-
+                    pointer += 5 + max_bits; copy_size = unary_to_int(bit_stream[pointer:]) + 3
+                    pointer += copy_size - 3 + 1; total += copy_size
         return bit_stream[:pointer], bit_stream[pointer:], back_transform
 
 
@@ -95,7 +102,7 @@ class MiddleOutCompressor:
                         else:
                             back_reference = unsigned_binary(match_begin, bits=MiddleOut.BIT_DEPTH)
                             compressed_stream += '01' + back_reference + reference_size
-                        prev_one, prev_two = match_start, prev_one
+                        prev_one, prev_two = match_begin, prev_one
                 pointer -= 1
 
             else:
@@ -124,19 +131,43 @@ class MiddleOutDecompressor:
     """ Decompressor Class """
 
     @staticmethod
-    def merge_bytes(compressed, right):
-        bit_depth, distance_encoder = MiddleOut.BIT_DEPTH, MiddleOut.DISTANCE_ENCODER
-        decompress, pointer, right_pos = [], 0, 0
-        while pointer < len(compressed):
-            if compressed[pointer] == '1':
-                decompress.append(right[right_pos])
-                right_pos += 1; pointer += 1
+    def merge_bytes(bit_stream, right):
+        uncompressed, right_pointer = [], 0
+        prev_one, prev_two = None, None
+
+        while len(bit_stream) > 0:
+            if bit_stream[0] == '1':
+                bit_stream = bit_stream[1:]
+                uncompressed.append(right[right_pointer])
+                right_pointer += 1
             else:
-                back_reference = unsigned_int(compressed[pointer+1:pointer+bit_depth+1])
-                copy_length = unsigned_int(compressed[pointer+bit_depth+1:pointer+bit_depth+distance_encoder+1]) + 2
-                decompress += decompress[back_reference:back_reference+copy_length]
-                pointer += 1 + bit_depth + distance_encoder
-        return decompress
+                if bit_stream[:2] == '01':
+                    bit_stream = bit_stream[2:]; back_ref = unsigned_int(bit_stream[:MiddleOut.BIT_DEPTH])
+                    bit_stream = bit_stream[MiddleOut.BIT_DEPTH:]; copy_size = unary_to_int(bit_stream) + 3
+                    bit_stream = bit_stream[copy_size - 3 + 1:]
+                    [uncompressed.append(uncompressed[i+back_ref]) for i in range(copy_size)]
+                    prev_one, prev_two = back_ref, prev_one
+                elif bit_stream[:4] == '0010':
+                    bit_stream = bit_stream[4:]; copy_size = unary_to_int(bit_stream) + 3
+                    bit_stream = bit_stream[copy_size - 3 + 1]
+                    [uncompressed.append(uncompressed[i+prev_two]) for i in range(copy_size)]
+                    prev_one, prev_two = prev_two, prev_one
+                elif bit_stream[:4] == '0011':
+                    bit_stream = bit_stream[4:]
+                    uncompressed.append(uncompressed[prev_one])
+                elif bit_stream[:5] == '00010':
+                    bit_stream = bit_stream[4:]; copy_size = unary_to_int(bit_stream) + 3
+                    bit_stream = bit_stream[copy_size - 3 + 1]
+                    [uncompressed.append(uncompressed[i+prev_one]) for i in range(copy_size)]
+                    prev_one, prev_two = prev_one, prev_one
+                else:
+                    bit_stream = bit_stream[5:]; back_ref = unsigned_int(bit_stream[:MiddleOut.BIT_DEPTH])
+                    bit_stream = bit_stream[MiddleOut.BIT_DEPTH:]
+                    copy_size = unsigned_int(bit_stream[:MiddleOut.BIT_DEPTH])
+                    bit_stream = bit_stream[MiddleOut.BIT_DEPTH:]
+                    [uncompressed.append(uncompressed[back_ref+i]) for i in range(copy_size)]
+        return uncompressed
+
 
     @staticmethod
     def bit_decompress(compressed, length):
@@ -145,17 +176,16 @@ class MiddleOutDecompressor:
 
         if iden == '1':
             return unsigned_int_list(compressed[:length*8]), compressed[length*8:]
-        partition, remaining, back_trans_count = MiddleOutUtils.partition_compressed_bits(compressed, length)
-        right, compressed = MiddleOutDecompressor.bit_decompress(remaining, back_trans_count)
-        decompressed = MiddleOutDecompressor.merge_bytes(partition, right)
-        return decompressed, compressed
+        partition, compressed, back_transform = MiddleOutUtils.partition_compressed_bits(compressed, length)
+        right, compressed = MiddleOutDecompressor.bit_decompress(compressed, back_transform)
+        return MiddleOutDecompressor.merge_bytes(partition, right), compressed
 
 
 class MiddleOut:
     """ Passes values into the compressor and decompressor, pads streams """
 
     BIT_DEPTH, STRIDE = 8, 256
-    DISTANCE_ENCODER, MAX_DISTANCE = 3, 9
+    MAX_DISTANCE = 9
     DEBUG = False
 
     @staticmethod
@@ -198,13 +228,13 @@ class MiddleOut:
         else:
             parts = partitions
 
-        MiddleOut.DISTANCE_ENCODER, MiddleOut.STRIDE = minimum_bits(distance - 2), stride
+        MiddleOut.STRIDE = stride
         MiddleOut.BIT_DEPTH, MiddleOut.MAX_DISTANCE = minimum_bits(stride - 1), distance
 
         mo, minbits = MiddleOut.middle_out_compress(parts), minimum_bits(len(byte_stream))
 
-        stride_bits, distance_bits = unsigned_unary(stride // 256), unsigned_binary(distance)
-        header = unsigned_unary(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + stride_bits + distance_bits
+        stride_bits = unsigned_unary(stride // 256)
+        header = unsigned_unary(minbits) + unsigned_binary(len(byte_stream), bits=minbits) + stride_bits
 
         compressed = header + mo; pad = pad_stream(len(compressed)); num_padded = signed_bin(pad, bits=4)
         mo_compressed = compressed + ('0' * pad) + num_padded
@@ -220,9 +250,8 @@ class MiddleOut:
         compressed_bits = compressed_bits[bit_count_length+1:]
         length, compressed_bits = unsigned_int(compressed_bits[:bit_count_length]), compressed_bits[bit_count_length:]
         stride_size = unary_to_int(compressed_bits) * 256; compressed_bits = compressed_bits[int(stride_size//256)+1:]
-        distance, compressed_bits = unsigned_int(compressed_bits[:8]), compressed_bits[8:]
+        compressed_bits = compressed_bits[8:]
 
-        MiddleOut.DISTANCE_ENCODER, MiddleOut.STRIDE = minimum_bits(distance - 2), stride_size
-        MiddleOut.BIT_DEPTH, MiddleOut.MAX_DISTANCE = minimum_bits(stride_size - 1), distance
+        MiddleOut.STRIDE, MiddleOut.BIT_DEPTH = stride_size, minimum_bits(stride_size - 1)
 
         return MiddleOut.middle_out_decompress(compressed_bits, length, visualizer=visualizer)

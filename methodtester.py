@@ -107,14 +107,14 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL, TESTHUFF = False, False, False
+    TESTMO, TESTRL, TESTHUFF = True, False, False
     NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(10000, 100000)
+            size = np.random.randint(100, 100000)
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
-            TestMiddleOut.test_middleout(stride=512, encoder=9, size=size, seeding=True, seed=seedstart)
+            TestMiddleOut.test_middleout(stride=256, encoder=17, size=size, seeding=True, seed=seedstart)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)

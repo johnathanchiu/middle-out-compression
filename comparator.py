@@ -31,8 +31,8 @@ if __name__ == '__main__':
     for p in pbar:
         sizes.append(p(bytes_of_file))
     frame = Huffman()
-    # bytes_of_file = lz4compressor(bytes_of_file)
-    sizes.append(MiddleOut.compress(bytes_of_file, stride=16384*8, distance=17))
+    bytes_of_file = lz4compressor(bytes_of_file)
+    sizes.append(MiddleOut.compress(bytes_of_file, stride=16384 * 2, distance=17))
 
     print('original file size:', len(original))
     compressors = ['bz2', 'gzip', 'lz4', 'lzma', 'brotli', 'zstd', 'mo']
