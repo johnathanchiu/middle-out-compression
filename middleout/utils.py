@@ -69,7 +69,7 @@ def unary_to_int(unr):
     num = 0
     while unr[num] != '0':
         num += 1
-    return 1 if num == 0 else num
+    return num
 
 
 def minimum_bits(num):
