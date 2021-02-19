@@ -57,6 +57,7 @@ class TestMiddleOut:
         if bytes is None:
             assert size is not None, "input a size for the dataset"
             bytes = TestMiddleOut.generate_random_data(size, seeding=seeding, seed=seed)
+        print("original array", bytes)
         print("size before middleout", len(bytes), "(bytes)", ", ", len(bytes) * 8, "(bits)")
         c = TestMiddleOut.run_middleout(bytes, stride, encoder)
         print("size of middleout", len(c), "bytes")
@@ -107,14 +108,15 @@ class TestMiddleOut:
 
 if __name__ == '__main__':
     start_time = time.time()
-    TESTMO, TESTRL, TESTHUFF = True, False, False
-    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 255
+    TESTMO, TESTRL, TESTHUFF = False, False, False
+    NUM_RUNS, LARGEST_GENERATED_NUM = 5, 10
     if TESTMO:
         for i in range(NUM_RUNS):
-            size = np.random.randint(100, 100000)
+            size = np.random.randint(20, 50)
             seedstart = np.random.randint(1000000)
             print('size:', size); print('seed value:', seedstart)
-            TestMiddleOut.test_middleout(stride=256, encoder=17, size=size, seeding=True, seed=seedstart)
+            TestMiddleOut.test_middleout(stride=256, encoder=9, size=size, seeding=True, seed=seedstart)
+    TestMiddleOut.test_middleout(stride=256, encoder=9, size=34, seeding=True, seed=908401)
     if TESTRL:
         for i in range(NUM_RUNS):
             size = np.random.randint(10000, 10000000)
