@@ -1,8 +1,8 @@
 # Middle-Out-Compression
 
-Middleout Compression is a novel lossless entropy encoder.
+This implementation is a proof of concept to attempt to increase compression ratios.
 
-This algorithm uses top-down and left-right compression simultaneously.
+This algorithm uses top-down and left-right compression simultaneously and runs similar to LZ algorithms.
 
 # Stacking Compression Algorithms
 
@@ -20,12 +20,8 @@ Middleout is stacked upon lz4 to give higher compression ratios.
 
 # Compression Explained
 
-To be updated soon...
+This algorithm uses prefix codes to build a dictionary defining previously seen literals to compress data. Additionally, uncompressed literals are pushed to the right to be compressed again. This process is recursive and extremely fast.
 
 # Dependencies
 
 To be updated soon...
-
-# Additional
-
-__*DISCLAIMER: All rights and intellectual property to and for the algorithm belongs to the original creator of the algorithm (Johnathan Chiu). Any attempts to use this algorithm in a for-profit manner without the permission of the original creator is strictly prohibited.*__
