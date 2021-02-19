@@ -25,7 +25,3 @@ Middle-Out algorithm uses prefix codes to define literals and compressed data. A
 # Dependencies
 
 To be updated soon...
-
-# Additional
-
-__*DISCLAIMER: All rights and intellectual property to and for the algorithm belongs to the original creator of the algorithm (Johnathan Chiu). Any attempts to use this algorithm in a for-profit manner without the permission of the original creator is strictly prohibited.*__
