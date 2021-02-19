@@ -1,8 +1,8 @@
 # Middle-Out-Compression
 
-Middleout Compression is a novel compression algorithm that presents a proof of concept to increase compression ratios for LZ77 based compressors.
+This implementation is a proof of concept to attempt to increase compression ratios.
 
-This algorithm uses top-down and left-right compression simultaneously.
+This algorithm uses top-down and left-right compression simultaneously and runs similar to LZ algorithms.
 
 # Stacking Compression Algorithms
 
@@ -20,7 +20,7 @@ Middleout is stacked upon lz4 to give higher compression ratios.
 
 # Compression Explained
 
-Middle-Out algorithm uses prefix codes to define literals and compressed data. Additionally, uncompressed literals are pushed to the right to be compressed again. This process is recursive and extremely fast.
+This algorithm uses prefix codes to build a dictionary defining previously seen literals to compress data. Additionally, uncompressed literals are pushed to the right to be compressed again. This process is recursive and extremely fast.
 
 # Dependencies
 
