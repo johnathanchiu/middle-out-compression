@@ -1,5 +1,7 @@
 # Middle-Out-Compression
 
+(Honestly was trying stuff back then and experimenting, this was just some engineering/research experimentation)
+
 This implementation is a proof of concept to attempt to increase compression ratios.
 
 This algorithm uses top-down and left-right compression simultaneously and runs similar to LZ algorithms.
