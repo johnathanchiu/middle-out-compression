@@ -1,6 +1,6 @@
 # Middle-Out-Compression
 
-(Honestly was trying stuff back then and experimenting, this was just some engineering/research experimentation)
+**(Honestly was trying stuff back then and experimenting, this was just some engineering/research experimentation)**
 
 This implementation is a proof of concept to attempt to increase compression ratios.
 
